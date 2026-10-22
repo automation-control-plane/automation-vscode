@@ -1,0 +1,12 @@
+{
+  "matching_source_payload_files": 710,
+  "processed_documentation": [
+    {
+      "source": "sema4ai/README.md",
+      "zip_path": "extension/readme.md",
+      "source_sha256": "5b0d66d7128e41f143015c553455c863f3a0f3e922eff345dcf463504fb142ca",
+      "zip_sha256": "c82b1cc1051d1af23ac4d9f11d5fe2ee801d296deab2f248937fcb9c9a45af77",
+      "note": "VSCE normalizes readme filename and rewrites Markdown links. This is documentation, not executable runtime payload."
+    }
+  ]
+}

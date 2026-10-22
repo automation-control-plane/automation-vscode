@@ -1,0 +1,46 @@
+spec-version: v2
+name: Published compatibility smoke
+description: Action package description
+version: 0.0.1
+dependencies:
+  conda-forge:
+  - python=3.12.12
+  - uv=0.8.17
+  pypi:
+  - actions-core=1.0.3
+  - actions-work-items=0.4.4
+  - debugpy=1.8.22
+dev-dependencies:
+  conda-forge:
+  - pytest=8.4.2
+  - types-requests=2.32.4.20250913
+  - ruff=0.14.3
+  - mypy=1.18.2
+dev-tasks:
+  test: pytest tests
+  lint: 'ruff check .
+
+    ruff format --check .
+
+    '
+  typecheck: mypy --follow-imports=silent --strict .
+  prettify: 'ruff format .
+
+    '
+packaging:
+  exclude:
+  - ./.git/**
+  - ./.vscode/**
+  - ./devdata/**
+  - ./output/**
+  - ./venv/**
+  - ./.venv/**
+  - ./.DS_store/**
+  - ./**/*.pyc
+  - ./**/*.zip
+  - ./**/.env
+  - ./**/__MACOSX
+  - ./**/__pycache__
+  - ./**/*_cache/**
+  - ./**/.git
+  - ./node_modules/**

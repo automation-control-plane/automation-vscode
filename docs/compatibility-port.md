@@ -75,14 +75,14 @@ intact. Windows/macOS were not executed; path policy checks are static coverage.
 | --- | --- | --- |
 | Published acquisition / executable choice | Linux release digests and real versions; configured paths and preservation regression checks | Automatic activation download in a working Extension Host |
 | Action/Robot homes and Holotrees | Real environments and executions use independent roots; private Holotree mode; separate metadata, locks and failure caches | Installed-host terminal/debug environment display |
-| Action Package creation, discovery, lint, run | Real minimal template created through backend, Core pinned 1.0.3; actual collection/lint and `Hello Dakota` result | Other template workloads and installed UI flows |
-| Robot creation and run | Real RCC template `01-python`, environment creation and `Robot Task passed` | Installed UI creation/run flows |
-| Action and Robot debug | Real debugpy DAP breakpoint, exact source/line, stack trace and exit 0 for both workloads | Installed extension command and debug UI; Python debugger extension must be installed |
+| Action Package creation, discovery, lint, run | All 6 published templates created through installed backend, Core pinned 1.0.3 and Work Items 0.4.4 where present; actual minimal-package collection/lint and `Hello Dakota` result | Functional workloads for other templates and installed UI flows |
+| Robot creation and run | All 6 RCC templates created; `01-python` environment/run yielded `Robot Task passed` | Installed UI creation/run flows |
+| Action and Robot debug | Real installed compute_launch profiles through debugpy DAP: exact source/line breakpoint, stack trace and exit 0 for both workloads; internalConsole used in headless client | Installed extension command and debug UI; Python debugger extension must be installed |
 | Runtime / local service | Actual published outer wrapper HTTP server, OpenAPI, `/config` 1.0.4 and POST action result `Hello HTTP Dakota`; state under actions/action-server | **Runtime 1.0.4 bundles RCC 18.19.3.** Its artifact adapter rejects 18.19.7; owner/upstream decision required for a uniform 18.19.7 server composition |
 | Work Items | Real Core/Work Items 0.4.4 FileAdapter roundtrip (7 → observed 7); TS RPA-to-RC controls translated, explicit RC controls preserved; local LSP listing tests | Installed Work Items editing/selection UI |
-| Base environment / Python language server | Checked-in Linux bootstrap spec built by RCC 18.19.7; interpreter reports RCC_VERSION v18.19.7; 8 local TCP Work Items/code-lens tests passed | Final packaged stdio proof and installed-host activation |
+| Base environment / Python language server | Checked-in Linux bootstrap spec built by RCC 18.19.7; interpreter reports RCC_VERSION v18.19.7; 8 local TCP Work Items/code-lens tests passed | Installed artifact stdio initialize/discovery/interpreter resolution, real Core code lenses and action metadata passed; installed-host activation remains blocked |
 | Terminals / interpreter configuration | Explicit language-server Python now honored; home routing, quoting and additional paths adapted | Actual installed-host terminal UI |
-| Web inspector | Real system Chromium 154.0.8037.57, HTTP page, picker injection and selected-button locator callback; original and boxed captures retained | Installed Inspector UI and recorder; original file-URL tests hit managed browser policy |
+| Web inspector | Actual RCC bootstrap Python 3.11.10 / Playwright 1.52.0 with system Chromium 154.0.8037.57, HTTP page, picker injection and selected-button callback; original/boxed captures and real inspector-worker JSON-RPC passed | Installed Inspector UI and recorder; original file-URL tests hit managed browser policy |
 | Image inspector / desktop recorder | Existing implementations retained | Graphical session required; no DISPLAY/WAYLAND_DISPLAY in this cloud |
 | Windows / Java inspectors | Existing implementations retained | Windows UI automation / Java Access Bridge operator hosts required |
 | OAuth / authentication | Actual `oauth2 actions-config` returned 2 providers and correct actions/action-server config path; callback path adapted | Provider login and credentialed service operations require authorized backend access |
@@ -188,7 +188,7 @@ needs a published compatible Runtime release or an explicit owner composition de
   permission, local LSP tests then revealed that their common fixture eagerly
   downloaded unrelated vendor Agent CLI. That dependency is removed from local
   language-server initialization; backend-specific tests must request their tools.
-- Two attempted build commands ran from the repository root instead of `sema4ai`
+- Several early build/check commands ran from the repository root instead of `sema4ai`
   and failed to find `package.json` / `pyproject.toml`; subsequent checks use the
   documented project directory.
 
@@ -209,8 +209,8 @@ and code-lens checks. Those tests did not run Action/Robot workloads.
 Most new regression checks use temporary files and captured process arguments;
 they are not substitutes for real executable, debugger, inspector or UI acceptance.
 
-Later source checks passed 5 Node policy tests, 43 Python tests with 1 skip,
-14 focused policy tests, and 8 local TCP language-server tests. Most policy tests
+Final implementation checks passed 6 Node policy tests and 53 Python regression
+tests with 1 skip (the legacy metadata scenario for Actions <=1.0.1). Most policy tests
 use mocks or temporary files. The real executable/DAP/HTTP/browser smoke results
 are recorded separately; no mocked result is counted as a live workload.
 
@@ -225,3 +225,38 @@ not normalized to a false exit 0 claim. Lifecycle exit-status compatibility rema
 a published Runtime follow-up. Earlier HTTP smokes used a task-owned process
 termination fallback after the unhandled redirect; those are not graceful-shutdown
 acceptance.
+
+## Qualified installed checkpoint (2026-10-22)
+
+Implementation commit: `871151ceafc7b07dc59f7715d9c4f70153734794`.
+Linux VSIX SHA256: `daa4c3ffefb635358c8e945e82034eb10475e75ca4e5ee92b1618b7637ab34b0`
+(3,941,431 bytes, 713 ZIP entries). Actual Code CLI installation/extension listing
+passed; 711 payload files matched the VSIX, with only Code's `__metadata` added to
+the installed manifest. **All 11 live smoke stages then ran from this installed
+extension tree**, including creation, RCC environments/run, Actions/Core/Work Items,
+Action/Robot debugpy breakpoints, Runtime HTTP action and local package build.
+These remain backend/CLI proofs, not Extension Host UI acceptance.
+
+The private VSIX is in Library as `libfile_e4df12846b14819183182e285930de9f`.
+Original/boxed Runtime UI and web-inspector images, selected-value reports, exact
+commands and all 119 command IDs are archived in
+[evidence/published-port-20261022](evidence/published-port-20261022/README.md).
+The Runtime UI screenshot shows its real synthetic run history with a Passed row;
+no VS Code success or environment-loading screenshot was fabricated.
+
+### Full scope remains open
+
+The command inventory confirms all 119 original command IDs remain registered;
+debugger, task, menu, view and keybinding contributions remain present. This is a
+preservation check, not acceptance of every handler. Besides the explicit backend
+and operator blockers above, further verification/adaptation remains for profile
+import/switch, both-home cache/diagnostic/rebuild operations, development tasks,
+workspace editing/configuration, recorder and Studio/Agent/MCP/support flows.
+Those areas are not silently dropped or declared optional. The requested full
+feature port is **not complete**. Parent escalation should resolve the published
+Runtime/RCC version contract and Agent/Data backend contracts while continuing
+this ledger and the remaining feature qualification.
+
+The final evidence-only repository update does not change VSIX runtime payload.
+A focused policy-test cleanup removes an unused import; no installed behavior is
+changed after the qualified implementation commit.
