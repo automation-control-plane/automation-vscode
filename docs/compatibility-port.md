@@ -53,7 +53,8 @@ to published Core 1.0.3 and Work Items 0.4.4 where those dependencies occur.
 - Explicit per-kind environment variables take precedence. Legacy `sema4ai.home`,
   `SEMA4AI_HOME`, or `ROBOCORP_HOME` roots receive separate `actions/` and `robots/`
   children. Existing directories are never migrated.
-- Each RCC process receives `ROBOCORP_HOME` for its selected kind and
+- RCC Control Room/credential commands use the Robot home; Runtime authentication
+  uses Action state. Each RCC process receives `ROBOCORP_HOME` for its selected kind and
   `RCC_HOLOTREE_MODE=private`. Extension environment metadata and mutex names are
   partitioned by that home. Colliding home aliases fail before data creation.
 - `sema4ai.rcc.location` / `AUTOMATION_RCC_LOCATION` and

@@ -71,6 +71,11 @@ def test_rcc_process_routes_homes_and_supported_flags(monkeypatch, tmp_path):
         assert env["RCC_HOLOTREE_MODE"] == "private"
         assert rcc.get_robocorp_code_datadir(kind).parent == Path(env["ROBOCORP_HOME"])
     assert captured[0][1]["ROBOCORP_HOME"] != captured[1][1]["ROBOCORP_HOME"]
+    for args in (["cloud", "workspace"], ["config", "credentials", "--json"]):
+        assert rcc._run_rcc(args).success
+        assert captured[-1][1]["ROBOCORP_HOME"] == str(tmp_path / "r")
+    assert rcc._run_rcc(["cloud", "workspace"], kind="actions").success
+    assert captured[-1][1]["ROBOCORP_HOME"] == str(tmp_path / "a")
 
 
 def test_missing_explicit_rcc_never_downloads(monkeypatch, tmp_path):

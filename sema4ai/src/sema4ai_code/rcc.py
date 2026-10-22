@@ -230,7 +230,7 @@ class Rcc:
         show_interactive_output: bool = False,
         hide_in_log: str | None = None,
         send_to_stdin: str | None = None,
-        kind: RuntimeKind = "actions",
+        kind: RuntimeKind | None = None,
     ) -> LaunchActionResult[str]:
         """
         Returns an ActionResult where the result is the stdout of the executed command.
@@ -261,6 +261,14 @@ class Rcc:
         env["PYTHONIOENCODING"] = "utf-8"
         env["PYTHONUNBUFFERED"] = "1"
 
+        if kind is None:
+            # RCC owns Robot Control Room credentials; Runtime owns Action auth.
+            # Keep credential lookup and the corresponding cloud calls together.
+            kind = (
+                "robots"
+                if args[:1] == ["cloud"] or args[:2] == ["config", "credentials"]
+                else "actions"
+            )
         env.update(runtime_environment(kind, self.get_robocorp_home_from_settings()))
         robocorp_home = env["ROBOCORP_HOME"]
         if mutex_name:
