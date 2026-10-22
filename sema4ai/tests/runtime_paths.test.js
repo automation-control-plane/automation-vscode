@@ -62,3 +62,20 @@ test("Studio discovery keeps its original home while local environments stay sep
     assert.equal(vendorStudioHome("/configured", env, "linux"), "/configured");
     assert.deepEqual(runtimeHomes("", env, "linux"), { actions: "/a", robots: "/r" });
 });
+
+test("Optional Studio/Data backends preserve explicit operator environment", () => {
+    const { withStudioEnvironment } = require("../vscode-client/out/runtimePaths");
+    assert.deepEqual(withStudioEnvironment({ ACTIONS_HOME: "/a" }), { ACTIONS_HOME: "/a" });
+    assert.deepEqual(withStudioEnvironment({}, "http://localhost:1", "discovered"), {
+        SEMA4AI_CREDENTIAL_API: "http://localhost:1",
+        SEMA4AI_DATA_SERVER_INFO: "discovered",
+    });
+    assert.deepEqual(
+        withStudioEnvironment(
+            { SEMA4AI_CREDENTIAL_API: "operator", SEMA4AI_DATA_SERVER_INFO: "operator-data" },
+            "discovered",
+            "discovered-data"
+        ),
+        { SEMA4AI_CREDENTIAL_API: "operator", SEMA4AI_DATA_SERVER_INFO: "operator-data" }
+    );
+});

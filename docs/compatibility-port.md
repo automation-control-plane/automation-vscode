@@ -89,7 +89,7 @@ intact. Windows/macOS were not executed; path policy checks are static coverage.
 | Action package build / metadata | Actual Runtime build and metadata passed after adapting missing output-directory creation; automatic ZIP override removed | Cloud upload/status/publish require service access/authorization |
 | Data Server / data sources | Existing API integration retained | Requested published releases supply no standalone Data Server; identify compatible backend contract or owner-provided service |
 | Agent creation/import/validation/build/registry | Existing commands retained; explicit operator executable setting supported | Requires Agent CLI project/package/registry contract (previously v2.3.3). No matching implementation is supplied by the requested published releases; automatic vendor download is refused |
-| Studio integration | Discovery still uses configured original Studio home; port runtime homes remain separate | Installed Studio/backend interoperability and agent CLI decision |
+| Studio integration | Discovery still uses configured original Studio home; local launch attaches existing Studio/Data backends only when discovered, preserves explicit environment and logs discovery errors; port homes remain separate | Installed Studio/backend interoperability and agent CLI decision |
 | VSIX installation / Extension Host | VSIX built and ZIP/license/content checked; actual VS Code CLI successfully installed it in a fresh private profile | VS Code aborts before host startup because extracted SUID sandbox helper lacks root ownership/mode 4755. No security changes or sandbox-disable flags applied |
 
 ## Cloud host and screenshots

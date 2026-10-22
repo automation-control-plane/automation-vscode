@@ -62,3 +62,18 @@ export function publishedWorkItemEnvironment(env: { [key: string]: string }): { 
     }
     return result;
 }
+
+/** Attach discovered optional backends while retaining operator-provided values. */
+export function withStudioEnvironment(
+    environment: { [key: string]: string },
+    credentialApi?: string,
+    dataServerInfo?: string
+): { [key: string]: string } {
+    return {
+        ...environment,
+        ...(credentialApi && !environment.SEMA4AI_CREDENTIAL_API ? { SEMA4AI_CREDENTIAL_API: credentialApi } : {}),
+        ...(dataServerInfo && !environment.SEMA4AI_DATA_SERVER_INFO
+            ? { SEMA4AI_DATA_SERVER_INFO: dataServerInfo }
+            : {}),
+    };
+}

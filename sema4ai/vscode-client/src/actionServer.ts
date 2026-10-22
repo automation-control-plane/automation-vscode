@@ -9,14 +9,13 @@ import { listAndAskRobotSelection } from "./activities";
 import { ActionResult, ActionServerVerifyLoginOutput, ActionServerListOrganizationsOutput } from "./protocols";
 import { Tool, getToolVersion, downloadTool } from "./tools";
 import { langServer } from "./extension";
-import { fetchDataServerStatus } from "./dataExtension";
+import { DATA_SERVER_STATUS_COMMAND_ID, fetchDataServerStatus } from "./dataExtension";
 import { convertDataServerInfoToEnvVar } from "./robo/actionPackage";
 import { createHash } from "crypto";
+import { withStudioEnvironment } from "./runtimePaths";
 
 const ACTION_SERVER_DEFAULT_PORT = 8082;
 const ACTION_SERVER_TERMINAL_NAME = "Sema4.ai: Action Server";
-
-let globalLocation: string | undefined = undefined;
 
 function downloadActionServer(): Thenable<string> {
     return downloadTool(Tool.ActionServer);
@@ -130,7 +129,29 @@ const startActionServerInternal = async (directory: Uri) => {
         return;
     }
 
-    const env = createEnvWithRobocorpHome(await getRobocorpHome());
+    let env = createEnvWithRobocorpHome(await getRobocorpHome());
+    // Retain separately installed Studio/Data integrations. Local startup must
+    // also work when those optional backends are absent.
+    let credentialApi: string | undefined;
+    let dataServerInfo: string | undefined;
+    try {
+        if (!env.SEMA4AI_CREDENTIAL_API) {
+            credentialApi = await langServer.sendRequest("getExternalApiUrl");
+        }
+        if (
+            !env.SEMA4AI_DATA_SERVER_INFO &&
+            (await commands.getCommands(true)).includes(DATA_SERVER_STATUS_COMMAND_ID)
+        ) {
+            const status = await fetchDataServerStatus();
+            if (status?.data) {
+                dataServerInfo = convertDataServerInfoToEnvVar(status.data);
+            }
+        }
+    } catch (error) {
+        OUTPUT_CHANNEL.appendLine("Optional Studio/Data backend discovery failed: " + error);
+        window.showWarningMessage("The Studio/Data backend could not be loaded. See the SDK output for details.");
+    }
+    env = withStudioEnvironment(env, credentialApi, dataServerInfo);
     env["RC_ADD_SHUTDOWN_API"] = "1";
     env["ACTIONS_SKIP_UPDATE_CHECK"] = "1";
 
