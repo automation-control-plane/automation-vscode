@@ -46,10 +46,12 @@ ENGINE_TO_ARGS = {
 
 @lru_cache
 def browsers_path() -> Path:
-    if platform.system() == "Windows":
-        return Path.home() / "AppData" / "Local" / "robocorp" / "playwright"
-    else:
-        return Path.home() / ".robocorp" / "playwright"
+    configured = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
+    if configured:
+        return Path(configured)
+    from sema4ai_code.runtime_paths import runtime_homes
+
+    return runtime_homes()["actions"] / "playwright"
 
 
 def _build_install_command_line(engine, force):

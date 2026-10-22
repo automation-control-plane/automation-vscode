@@ -191,7 +191,7 @@ class ActionServerAsService:
             args.append(f"--ssl-keyfile={self._ssl_keyfile}")
 
         if self._ssl_certfile:
-            args.append(f"--ssl-cerfile={self._ssl_certfile}")
+            args.append(f"--ssl-certfile={self._ssl_certfile}")
 
         args.append("--kill-lock-holder")
 
@@ -525,14 +525,14 @@ class ActionServer:
         if not self._cached_sema4ai_oauth2_config:
             # FOR SUPPORT: action-server oauth2
             action_result = self._run_action_server_command(
-                ["oauth2", "sema4ai-config"], timeout=10
+                ["oauth2", "actions-config"], timeout=10
             )
             if not action_result.success:
                 raise RuntimeError(action_result.message)
 
             if not action_result.result:
                 raise RuntimeError(
-                    "Output of `action-server oauth2 sema4ai-config` is empty."
+                    "Output of `action-server oauth2 actions-config` is empty."
                 )
             try:
                 oauth2_config = yaml.safe_load(action_result.result)
@@ -808,6 +808,8 @@ class ActionServer:
             workspace_dir, path to the current workspace.
             output_dir, path to the directory where the package will be built.
         """
+        # Published Runtime 1.0.4 does not create the requested output directory.
+        os.makedirs(output_dir, exist_ok=True)
         args = [
             "package",
             "build",
@@ -815,7 +817,6 @@ class ActionServer:
             workspace_dir,
             "--output-dir",
             output_dir,
-            "--override",
             "--json",
         ]
 

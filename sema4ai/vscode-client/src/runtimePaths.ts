@@ -4,6 +4,19 @@ import * as fs from "fs";
 
 export type RuntimeKind = "actions" | "robots";
 
+export function vendorStudioHome(legacyHome = "", env: NodeJS.ProcessEnv = process.env, platform = process.platform) {
+    if (legacyHome || env.SEMA4AI_HOME) {
+        return legacyHome || env.SEMA4AI_HOME;
+    }
+    if (platform === "win32") {
+        if (!env.LOCALAPPDATA) {
+            throw new Error("LOCALAPPDATA must be set to discover the separately installed Studio.");
+        }
+        return path.win32.join(env.LOCALAPPDATA, "sema4ai");
+    }
+    return path.posix.join(env.HOME || os.homedir(), ".sema4ai");
+}
+
 export function runtimeHomes(legacyHome = "", env: NodeJS.ProcessEnv = process.env, platform = process.platform) {
     const paths = platform === "win32" ? path.win32 : path.posix;
     const legacy = legacyHome || env.SEMA4AI_HOME || env.ROBOCORP_HOME;
@@ -34,4 +47,18 @@ export function runtimeEnvironment(kind: RuntimeKind, legacyHome = "") {
         ROBOCORP_HOME: homes[kind],
         RCC_HOLOTREE_MODE: "private",
     };
+}
+
+export function publishedWorkItemEnvironment(env: { [key: string]: string }): { [key: string]: string } {
+    const result = { ...env };
+    if (env.RPA_OUTPUT_WORKITEM_PATH || env.RPA_INPUT_WORKITEM_PATH) {
+        result.RC_WORKITEM_ADAPTER = env.RC_WORKITEM_ADAPTER || "FileAdapter";
+        if (env.RPA_INPUT_WORKITEM_PATH) {
+            result.RC_WORKITEM_INPUT_PATH = env.RC_WORKITEM_INPUT_PATH || env.RPA_INPUT_WORKITEM_PATH;
+        }
+        if (env.RPA_OUTPUT_WORKITEM_PATH) {
+            result.RC_WORKITEM_OUTPUT_PATH = env.RC_WORKITEM_OUTPUT_PATH || env.RPA_OUTPUT_WORKITEM_PATH;
+        }
+    }
+    return result;
 }

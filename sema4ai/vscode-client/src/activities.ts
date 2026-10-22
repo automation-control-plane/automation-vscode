@@ -1,3 +1,4 @@
+import { publishedWorkItemEnvironment } from "./runtimePaths";
 import {
     commands,
     window,
@@ -918,7 +919,7 @@ export async function updateLaunchEnvironmentCommonTasksAndActions(
         }
     }
 
-    return newEnv;
+    return publishedWorkItemEnvironment(newEnv);
 }
 
 /**
@@ -1069,6 +1070,7 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
                 "libs_and_version": [
                     ["rpaframework", "11.3"],
                     ["robocorp-workitems", "0.0.1"], // Any version will do
+                    ["actions-work-items", "0.4.4"],
                 ],
             }
         );
@@ -1127,7 +1129,7 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
             return "cancelled";
         }
         if (selectedItem.label === noWorkItemLabel) {
-            return newEnv;
+            return publishedWorkItemEnvironment(newEnv);
         }
 
         // No need to await.
@@ -1136,5 +1138,5 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
         newEnv["RPA_INPUT_WORKITEM_PATH"] = selectedItem.action;
     }
 
-    return newEnv;
+    return publishedWorkItemEnvironment(newEnv);
 }

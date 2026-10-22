@@ -30,8 +30,8 @@ def get_json_contents():
     from sema4ai_code import __version__
 
     base_package_contents = {
-        "name": "sema4ai",
-        "publisher": "sema4ai",
+        "name": "automation-vscode",
+        "publisher": "automation-control-plane",
         "displayName": "Sema4.ai SDK",
         "description": "Sema4.ai SDK: Visual Studio Code Extension for AI Agent, Actions and Automation Tasks development",
         "author": {
@@ -42,20 +42,21 @@ def get_json_contents():
         "homepage": "https://sema4.ai",
         "repository": {
             "type": "git",
-            "url": "https://github.com/Sema4AI/vscode-extension/.git",
+            "url": "https://github.com/automation-control-plane/automation-vscode.git",
         },
-        "license": "SEE LICENSE",
+        "license": "Apache-2.0",
         "version": __version__,
         "icon": "images/icon.png",
         "engines": {"vscode": f"^1.101.0"},
         "categories": ["Debuggers"],
         "scripts": {
             "setup": "npm install",
-            "vscode:prepublish": "cd vscode-client && npm run compile && cd ..",
+            "vscode:prepublish": "npm run compile && node scripts/prepare-package.js",
             "compile": "cd vscode-client && tsc -p ./ && cd ..",
             "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
             "pretest": "cd vscode-client && tsc -p ./ && cd ..",
-            "test": "node ./vscode-client/out/tests/runTests.js",
+            "test": "node tests/runtime_paths.test.js",
+            "test:host": "node ./vscode-client/out/tests/runTests.js",
             "prettier": "npx prettier -c vscode-client/**/*.ts",
             "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
             "vsce:package": "vsce package",
@@ -78,7 +79,7 @@ def get_json_contents():
             "vscode-languageclient": "^7.0.0",
             "vscode-nls": "^4.1.2",
         },
-        "main": "./vscode-client/out/extension",
+        "main": "./vscode-client/out/extension.js",
         "prettier": {
             "tabWidth": 4,
             "printWidth": 120,

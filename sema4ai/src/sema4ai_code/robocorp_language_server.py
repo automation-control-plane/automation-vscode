@@ -35,7 +35,7 @@ from sema4ai_ls_core.python_ls import BaseLintManager, PythonLanguageServer
 from sema4ai_ls_core.watchdog_wrapper import IFSObserver
 
 from sema4ai_code import commands
-from sema4ai_code.action_server import get_default_sema4ai_home
+from sema4ai_code.runtime_paths import vendor_studio_home
 from sema4ai_code.agents.agent_spec_handler import ErrorCode
 from sema4ai_code.inspector.inspector_language_server import InspectorLanguageServer
 from sema4ai_code.protocols import (
@@ -1231,7 +1231,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         )
 
     def m_get_external_api_url(self) -> str | None:
-        home = get_default_sema4ai_home()
+        home = vendor_studio_home(self._rcc.get_robocorp_home_from_settings())
         external_api_pid = home / "sema4ai-studio" / "external-api-server.pid"
 
         if not external_api_pid.exists():

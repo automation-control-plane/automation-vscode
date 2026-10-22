@@ -2,25 +2,63 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { runtimeHomes } = require("../vscode-client/out/runtimePaths");
 const { publishedTool } = require("../vscode-client/out/publishedTools");
+const { publishedWorkItemEnvironment } = require("../vscode-client/out/runtimePaths");
+const { vendorStudioHome } = require("../vscode-client/out/runtimePaths");
 
 test("Unix defaults and explicit homes remain separate", () => {
     assert.deepEqual(runtimeHomes("", { HOME: "/operator" }, "linux"), {
-        actions: "/operator/.actions", robots: "/operator/.robots"
+        actions: "/operator/.actions",
+        robots: "/operator/.robots",
     });
     assert.deepEqual(runtimeHomes("/legacy", { HOME: "/operator", ACTIONS_HOME: "/a", ROBOTS_HOME: "/r" }, "linux"), {
-        actions: "/a", robots: "/r"
+        actions: "/a",
+        robots: "/r",
     });
 });
 
 test("Windows paths retain their drive and separators", () => {
     assert.deepEqual(runtimeHomes("", { LOCALAPPDATA: "C:\\Users\\Operator\\AppData\\Local" }, "win32"), {
-        actions: "C:\\Users\\Operator\\AppData\\Local\\actions", robots: "C:\\Users\\Operator\\AppData\\Local\\robots"
+        actions: "C:\\Users\\Operator\\AppData\\Local\\actions",
+        robots: "C:\\Users\\Operator\\AppData\\Local\\robots",
     });
-    assert.throws(() => runtimeHomes("", { LOCALAPPDATA: "C:\\Local", ACTIONS_HOME: "C:\\Same", ROBOTS_HOME: "c:\\same" }, "win32"), /different directories/);
+    assert.throws(
+        () =>
+            runtimeHomes("", { LOCALAPPDATA: "C:\\Local", ACTIONS_HOME: "C:\\Same", ROBOTS_HOME: "c:\\same" }, "win32"),
+        /different directories/
+    );
 });
 
 test("Published artifacts have exact identity and no architecture fallback", () => {
-    assert.equal(publishedTool("rcc", "linux", "x64").sha256, "f8e0394be7f47ee84d6f4cd734822b87b492a4d6102f977f6a18f29453703d48");
+    assert.equal(
+        publishedTool("rcc", "linux", "x64").sha256,
+        "f8e0394be7f47ee84d6f4cd734822b87b492a4d6102f977f6a18f29453703d48"
+    );
     assert.equal(publishedTool("action-server", "win32", "x64").name, "actions-runtime-1.0.4-windows64.exe");
     assert.throws(() => publishedTool("rcc", "linux", "arm64"), /No published/);
+});
+
+test("Published Work Items receives FileAdapter paths and preserves explicit controls", () => {
+    const legacy = {
+        RPA_WORKITEMS_ADAPTER: "RPA.Robocorp.WorkItems.FileAdapter",
+        RPA_INPUT_WORKITEM_PATH: "/input.json",
+        RPA_OUTPUT_WORKITEM_PATH: "/output.json",
+    };
+    const result = publishedWorkItemEnvironment(legacy);
+    assert.equal(result.RC_WORKITEM_ADAPTER, "FileAdapter");
+    assert.equal(result.RC_WORKITEM_INPUT_PATH, "/input.json");
+    assert.equal(result.RC_WORKITEM_OUTPUT_PATH, "/output.json");
+    const overridden = publishedWorkItemEnvironment({
+        ...legacy,
+        RC_WORKITEM_ADAPTER: "custom.Adapter",
+        RC_WORKITEM_INPUT_PATH: "/operator.json",
+    });
+    assert.equal(overridden.RC_WORKITEM_ADAPTER, "custom.Adapter");
+    assert.equal(overridden.RC_WORKITEM_INPUT_PATH, "/operator.json");
+});
+
+test("Studio discovery keeps its original home while local environments stay separate", () => {
+    const env = { HOME: "/operator", SEMA4AI_HOME: "/studio", ACTIONS_HOME: "/a", ROBOTS_HOME: "/r" };
+    assert.equal(vendorStudioHome("", env, "linux"), "/studio");
+    assert.equal(vendorStudioHome("/configured", env, "linux"), "/configured");
+    assert.deepEqual(runtimeHomes("", env, "linux"), { actions: "/a", robots: "/r" });
 });

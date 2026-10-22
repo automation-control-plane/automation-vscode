@@ -1,6 +1,6 @@
 {
-    "name": "sema4ai",
-    "publisher": "sema4ai",
+    "name": "automation-vscode",
+    "publisher": "automation-control-plane",
     "displayName": "Sema4.ai SDK",
     "description": "Sema4.ai SDK: Visual Studio Code Extension for AI Agent, Actions and Automation Tasks development",
     "author": {
@@ -11,10 +11,10 @@
     "homepage": "https://sema4.ai",
     "repository": {
         "type": "git",
-        "url": "https://github.com/Sema4AI/vscode-extension/.git"
+        "url": "https://github.com/automation-control-plane/automation-vscode.git"
     },
-    "license": "SEE LICENSE",
-    "version": "2.20.0",
+    "license": "Apache-2.0",
+    "version": "2.20.1",
     "icon": "images/icon.png",
     "engines": {
         "vscode": "^1.101.0"
@@ -24,11 +24,12 @@
     ],
     "scripts": {
         "setup": "npm install",
-        "vscode:prepublish": "cd vscode-client && npm run compile && cd ..",
+        "vscode:prepublish": "npm run compile && node scripts/prepare-package.js",
         "compile": "cd vscode-client && tsc -p ./ && cd ..",
         "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
         "pretest": "cd vscode-client && tsc -p ./ && cd ..",
-        "test": "node ./vscode-client/out/tests/runTests.js",
+        "test": "node tests/runtime_paths.test.js",
+        "test:host": "node ./vscode-client/out/tests/runTests.js",
         "prettier": "npx prettier -c vscode-client/**/*.ts",
         "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
         "vsce:package": "vsce package",
@@ -51,7 +52,7 @@
         "vscode-languageclient": "^7.0.0",
         "vscode-nls": "^4.1.2"
     },
-    "main": "./vscode-client/out/extension",
+    "main": "./vscode-client/out/extension.js",
     "prettier": {
         "tabWidth": 4,
         "printWidth": 120,

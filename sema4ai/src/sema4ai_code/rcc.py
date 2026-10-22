@@ -146,7 +146,7 @@ class Rcc:
     # It should store the contents of conda which couldn't be resolved.
     # After being stored once here, it'll only be tried again when
     # the user restarts the language server (or changes the conda config).
-    broken_conda_configs: dict[str, ActionResult] = {}
+    broken_conda_configs: dict[tuple[str, str], ActionResult] = {}
 
     def __init__(self, config_provider: IConfigProvider) -> None:
         self._config_provider = weakref.ref(config_provider)
@@ -395,7 +395,7 @@ class Rcc:
 
     @implements(IRcc.get_template_names)
     def get_template_names(self) -> ActionResult[list[RobotTemplate]]:
-        result = self._run_rcc("robot initialize -l --json".split())
+        result = self._run_rcc("robot initialize -l --json".split(), kind="robots")
         if not result.success:
             return ActionResult(success=False, message=result.message)
 
@@ -487,7 +487,7 @@ class Rcc:
         if force:
             args.append("-f")
         args = self._add_config_to_args(args)
-        return self._run_rcc(args, error_msg="Error creating robot.")
+        return self._run_rcc(args, error_msg="Error creating robot.", kind="robots")
 
     @implements(IRcc.add_credentials)
     def add_credentials(self, credential: str) -> ActionResult:
@@ -911,9 +911,11 @@ class Rcc:
             conda_yaml_contents
         )
 
-        broken_action_result = self.broken_conda_configs.get(
-            formatted_conda_yaml_contents
+        failure_key = (
+            str(self.get_robocorp_code_datadir(kind).resolve()),
+            formatted_conda_yaml_contents,
         )
+        broken_action_result = self.broken_conda_configs.get(failure_key)
 
         if broken_action_result is not None:
             msg = f"Environment from previously broken {conda_or_package_yaml_path.name} requested: {conda_or_package_yaml_path}.\n-- VSCode restart required to retry."
@@ -1039,7 +1041,7 @@ class Rcc:
                 False, msg, None
             )
 
-            self.broken_conda_configs[formatted_conda_yaml_contents] = action_result
+            self.broken_conda_configs[failure_key] = action_result
 
             with space_info.acquire_lock():
                 # If some failure happened, mark this as just created (so, it

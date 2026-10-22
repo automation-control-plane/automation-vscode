@@ -339,6 +339,9 @@ class LaunchProcess:
         self._cmdline = cmdline
 
     MANAGED_ENV_VARIABLES = [
+        "RC_WORKITEM_OUTPUT_PATH",
+        "RC_WORKITEM_INPUT_PATH",
+        "RC_WORKITEM_ADAPTER",
         "RPA_OUTPUT_WORKITEM_PATH",
         "RPA_INPUT_WORKITEM_PATH",
         "RPA_WORKITEMS_ADAPTER",

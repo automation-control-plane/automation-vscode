@@ -9,6 +9,7 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import { fileExists, getExtensionRelativeFile, makeDirs, verifyFileExists } from "./files";
 import {
     collectBaseEnv,
+    createEnvWithRobocorpHome,
     feedbackRobocorpCodeError,
     getRccLocation,
     getRobocorpHome,
@@ -21,7 +22,7 @@ import {
 import { Timing } from "./time";
 import { execFilePromise, ExecFileReturn } from "./subprocess";
 import { sleep } from "./time";
-import { getProceedwithlongpathsdisabled, setProceedwithlongpathsdisabled } from "./robocorpSettings";
+import { getProceedwithlongpathsdisabled, setProceedwithlongpathsdisabled, getLanguageServerPython } from "./robocorpSettings";
 import { ActionResult, InterpreterInfo } from "./protocols";
 import { join } from "path";
 import { GLOBAL_STATE } from "./extension";
@@ -612,6 +613,17 @@ export const CACHE_KEY_LAST_WORKED = "LAST_WORKED";
  * Provides the python information needed to start the language server.
  */
 export async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | undefined> {
+    const configuredPython = getLanguageServerPython();
+    if (configuredPython) {
+        if (!(await fileExists(configuredPython))) {
+            throw new Error("Configured language-server Python does not exist: " + configuredPython);
+        }
+        return {
+            pythonExe: configuredPython,
+            environ: createEnvWithRobocorpHome(await getRobocorpHome()),
+            additionalPythonpathEntries: [],
+        };
+    }
     const getRccLocationPromise: Promise<string | undefined> = getRccLocation();
 
     const startupHelper = new StartupHelper();

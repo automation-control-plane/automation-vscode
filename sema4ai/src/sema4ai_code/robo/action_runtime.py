@@ -1,12 +1,18 @@
 """Select an installed Action API in the target interpreter, preferring Actions Core."""
 
 import importlib
+from importlib.metadata import PackageNotFoundError, version
 import sys
 
 
 def load_actions():
     for name in ("actions", "sema4ai.actions", "robocorp.actions"):
         try:
+            if name == "actions":
+                try:
+                    version("actions-core")
+                except PackageNotFoundError:
+                    continue
             module = importlib.import_module(name)
             cli = importlib.import_module(f"{name}.cli")
             return module, cli

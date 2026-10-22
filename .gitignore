@@ -140,3 +140,9 @@ rcc.exe
 /sema4ai/bin/actions-runtime-*
 /sema4ai/bin/action-server*
 /sema4ai/bin/agent-cli*
+
+# Local packaging outputs copied from the attributed source tree.
+/sema4ai/LICENSE.txt
+/sema4ai/COPYRIGHT
+/sema4ai/ThirdPartyNotices.txt
+/sema4ai/src/sema4ai_code/vendored/sema4ai_ls_core/

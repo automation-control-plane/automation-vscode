@@ -122,14 +122,8 @@ def _get_action_server_user_sema4_path() -> Path:
     Note: use the same folder as the action server (to reuse the certificate
     that was generated there if available).
     """
-    if sys.platform == "win32":
-        localappdata = os.environ.get("LOCALAPPDATA")
-        if not localappdata:
-            raise RuntimeError("Error. LOCALAPPDATA not defined in environment!")
-        home = Path(localappdata) / "sema4ai"
-    else:
-        # Linux/Mac
-        home = Path("~/.sema4ai").expanduser()
+    from sema4ai_code.runtime_paths import runtime_homes
+    home = runtime_homes()["actions"]
 
     user_sema4_path = home / "action-server"
     user_sema4_path.mkdir(parents=True, exist_ok=True)

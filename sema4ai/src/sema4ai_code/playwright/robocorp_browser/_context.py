@@ -186,8 +186,15 @@ def _browser_launcher() -> Callable[..., Browser]:
 
     def launch(**kwargs: dict) -> Browser:
         launch_options = {**browser_type_launch_args(), **kwargs}
+        configured_executable = os.environ.get("AUTOMATION_BROWSER_EXECUTABLE")
+        if configured_executable and "executable_path" not in launch_options:
+            if not os.path.isfile(configured_executable):
+                raise RuntimeError(
+                    f"Configured browser executable does not exist: {configured_executable}"
+                )
+            launch_options["executable_path"] = configured_executable
 
-        if "channel" not in launch_options:
+        if "channel" not in launch_options and "executable_path" not in launch_options:
             engine = _browser_config().browser_engine
             _, channel = ENGINE_TO_ARGS[engine]
             if channel is not None:

@@ -3,7 +3,7 @@ import * as path from "path";
 import * as pathModule from "path";
 import * as os from "os";
 import { runtimeHomes, runtimeEnvironment } from "./runtimePaths";
-import { publishedTool } from "./publishedTools";
+import { publishedTool, extensionIdentity } from "./publishedTools";
 import { createHash } from "crypto";
 import { configure as configureXHR } from "./requestLight";
 import { fileExists, getExtensionRelativeFile } from "./files";
@@ -407,7 +407,7 @@ export async function collectIssueLogs(logPath: string): Promise<CollectedLogs> 
 }
 
 async function collectIssueBaseMetadata(): Promise<any> {
-    let version = extensions.getExtension("sema4ai.sema4ai").packageJSON.version;
+    const version = extensionIdentity().version;
     const metadata = {
         platform: os.platform(),
         osRelease: os.release(),

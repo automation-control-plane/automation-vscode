@@ -1,3 +1,4 @@
+import { vendorStudioHome } from "./runtimePaths";
 /*
 Original work Copyright (c) Microsoft Corporation (MIT)
 See ThirdPartyNotices.txt in the project root for license information.
@@ -852,7 +853,7 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
             return;
         }
 
-        const sema4aiHome = await getRobocorpHome();
+        const sema4aiHome = vendorStudioHome(roboConfig.getHome());
         if (!sema4aiHome) {
             vscode.window.showErrorMessage(`Unable to publish because no Sema4.ai Home was found.`);
             return;

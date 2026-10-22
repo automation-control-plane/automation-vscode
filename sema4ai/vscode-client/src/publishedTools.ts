@@ -31,3 +31,16 @@ export function publishedTool(name: "rcc" | "action-server", platform = process.
         url: `https://github.com/${tool.repository}/releases/download/${tool.tag}/${asset.name}`,
     };
 }
+
+export function extensionIdentity() {
+    const manifest: unknown = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../package.json"), "utf8"));
+    if (
+        !isRecord(manifest) ||
+        typeof manifest.name !== "string" ||
+        typeof manifest.publisher !== "string" ||
+        typeof manifest.version !== "string"
+    ) {
+        throw new Error("Invalid extension manifest identity.");
+    }
+    return { id: `${manifest.publisher}.${manifest.name}`, version: manifest.version };
+}

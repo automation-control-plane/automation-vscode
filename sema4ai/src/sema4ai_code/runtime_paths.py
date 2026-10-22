@@ -7,6 +7,18 @@ from typing import Literal, Mapping
 RuntimeKind = Literal["actions", "robots"]
 
 
+def vendor_studio_home(legacy_home: str | None = None) -> Path:
+    """Keep the separately installed Studio's existing discovery directory."""
+    import sys
+
+    override = legacy_home or os.environ.get("SEMA4AI_HOME")
+    if override:
+        return Path(override)
+    if sys.platform == "win32":
+        return Path(os.environ["LOCALAPPDATA"]) / "sema4ai"
+    return Path.home() / ".sema4ai"
+
+
 def runtime_homes(
     legacy_home: str | None = None,
     environ: Mapping[str, str] | None = None,

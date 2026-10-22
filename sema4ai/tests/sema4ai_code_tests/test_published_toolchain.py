@@ -166,3 +166,113 @@ def test_package_creation_preserves_existing_data(tmp_path):
     result = server.create_action_package(str(tmp_path), "minimal", "New")
     assert not result.success
     assert target.read_text() == "operator data"
+
+
+def test_oauth_callback_state_and_browser_cache_respect_actions_home(
+    monkeypatch, tmp_path
+):
+    from sema4ai_code.vendored_deps.url_callback_server import (
+        _get_action_server_user_sema4_path,
+    )
+    from sema4ai_code.playwright.robocorp_browser._engines import browsers_path
+
+    monkeypatch.setenv("ACTIONS_HOME", str(tmp_path / "a"))
+    monkeypatch.setenv("ROBOTS_HOME", str(tmp_path / "r"))
+    monkeypatch.delenv("PLAYWRIGHT_BROWSERS_PATH", raising=False)
+    _get_action_server_user_sema4_path.cache_clear()
+    browsers_path.cache_clear()
+    try:
+        assert _get_action_server_user_sema4_path() == tmp_path / "a" / "action-server"
+        assert browsers_path() == tmp_path / "a" / "playwright"
+        monkeypatch.setenv(
+            "PLAYWRIGHT_BROWSERS_PATH", str(tmp_path / "operator-browser-cache")
+        )
+        browsers_path.cache_clear()
+        assert browsers_path() == tmp_path / "operator-browser-cache"
+    finally:
+        _get_action_server_user_sema4_path.cache_clear()
+        browsers_path.cache_clear()
+
+
+def test_legacy_project_actions_filename_does_not_shadow_api(tmp_path):
+    import importlib.metadata
+    import subprocess
+    import sys
+    from sema4ai_code.robo import action_runtime
+
+    (tmp_path / "actions.py").write_text(
+        'raise RuntimeError("user workload must not run during API selection")'
+    )
+    result = subprocess.run(
+        [sys.executable, action_runtime.__file__, "--library-version"],
+        cwd=tmp_path,
+        text=True,
+        capture_output=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == importlib.metadata.version("sema4ai-actions")
+
+
+def test_action_run_output_never_deletes_or_reuses_existing_data(tmp_path):
+    from sema4ai_code.robo.launch_actions import create_and_rotate_directories
+
+    for index in range(1, 24):
+        directory = tmp_path / f"run-{index}"
+        directory.mkdir()
+        (directory / "owner-data.txt").write_text(str(index))
+    selected = Path(create_and_rotate_directories(str(tmp_path), "run", max_count=20))
+    assert selected.name == "run-24"
+    assert len(list(tmp_path.iterdir())) == 24
+    assert (tmp_path / "run-1/owner-data.txt").read_text() == "1"
+
+
+def test_operator_browser_executable_is_used_without_downloading(monkeypatch, tmp_path):
+    from sema4ai_code.playwright.robocorp_browser import _context
+
+    executable = tmp_path / "browser"
+    executable.touch()
+    calls = []
+
+    class BrowserType:
+        def launch(self, **kwargs):
+            calls.append(kwargs)
+            return "operator-browser"
+
+    monkeypatch.setenv("AUTOMATION_BROWSER_EXECUTABLE", str(executable))
+    monkeypatch.setattr(_context, "_browser_type", lambda: BrowserType())
+    monkeypatch.setattr(
+        _context, "browser_type_launch_args", lambda: {"headless": True}
+    )
+    launcher = _context._browser_launcher.__wrapped__()
+    assert launcher() == "operator-browser"
+    assert calls == [{"headless": True, "executable_path": str(executable)}]
+    executable.unlink()
+    with pytest.raises(RuntimeError, match="Configured browser executable"):
+        launcher()
+
+
+def test_package_build_creates_output_and_never_forces_zip_override(
+    monkeypatch, tmp_path
+):
+    import json
+    from types import SimpleNamespace
+    from sema4ai_code.action_server import ActionServer
+
+    class Endpoint:
+        pass
+
+    provider, endpoint = Provider({}), Endpoint()
+    server = ActionServer(provider, endpoint)
+    captured = []
+
+    def run(args, **kwargs):
+        captured.append(args)
+        return SimpleNamespace(
+            success=True, result=json.dumps({"package_path": "new.zip"})
+        )
+
+    monkeypatch.setattr(server, "_run_action_server_command", run)
+    output = tmp_path / "new-output"
+    assert server.package_build(str(tmp_path), str(output)).success
+    assert output.is_dir()
+    assert "--override" not in captured[0]
