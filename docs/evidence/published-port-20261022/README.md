@@ -19,7 +19,7 @@ This is an incomplete full-feature port, built from implementation
   runs. Existing output/state is preserved, so use new output directories.
 - [workloads](workloads): authored synthetic Action/Robot programs and dependency
   specifications. These contain no owner production data or credentials.
-- [extension-host-blocker.log](extension-host-blocker.log): actual VS Code SUID
+- [extension-host-blocker.txt](extension-host-blocker.txt): actual VS Code SUID
   helper abort. Official Debian acquisition and private VSIX install succeeded;
   Extension Host activation did not execute. No sandbox flags/permissions changed.
 
