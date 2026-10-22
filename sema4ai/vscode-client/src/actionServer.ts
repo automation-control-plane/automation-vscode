@@ -58,6 +58,10 @@ function makeRequest(postData: string, options: http.RequestOptions): Promise<st
             });
 
             res.on("end", () => {
+                if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+                    reject(new Error(`Action Server HTTP ${res.statusCode} for ${options.method} ${options.path}`));
+                    return;
+                }
                 resolve(responseData);
             });
         });
@@ -92,7 +96,7 @@ async function fetchData(port: number, path: string, method: "POST" | "GET") {
 }
 
 const shutdownExistingActionServer = async (port) => {
-    await fetchData(port, "/api/shutdown", "POST");
+    await fetchData(port, "/api/shutdown/", "POST");
 };
 
 export const getActionServerTerminal = (): undefined | Terminal => {

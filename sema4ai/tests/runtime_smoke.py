@@ -39,6 +39,7 @@ def serve_action(
         stderr=subprocess.STDOUT,
     )
     base = f"http://127.0.0.1:{port}"
+    evidence = None
     try:
         deadline = time.monotonic() + 300
         while time.monotonic() < deadline:
@@ -78,26 +79,39 @@ def serve_action(
         bundled_version = subprocess.check_output(
             [str(bundled), "--version"], env=env, text=True
         ).strip()
-        return {
+        evidence = {
             "command": command,
             "result": result,
             "datadir": str(datadir),
             "runtime_version": config["version"],
             "bundled_rcc_version": bundled_version,
         }
+        return evidence
     finally:
+        shutdown_status = None
+        forced = False
         try:
-            urllib.request.urlopen(
+            response = urllib.request.urlopen(
                 urllib.request.Request(
-                    base + "/api/shutdown", data=b"{}", method="POST"
+                    base + "/api/shutdown/", data=b"{}", method="POST"
                 ),
                 timeout=5,
-            ).close()
+            )
+            shutdown_status = response.status
+            response.close()
         except OSError:
             pass
         try:
             process.wait(timeout=10)
         except subprocess.TimeoutExpired:
+            forced = True
             process.terminate()
             process.wait(timeout=10)
         output.close()
+        if evidence is not None:
+            evidence.update(
+                shutdown_status=shutdown_status,
+                runtime_exit_code=process.returncode,
+                forced_termination=forced,
+            )
+            assert shutdown_status == 200 and not forced, evidence

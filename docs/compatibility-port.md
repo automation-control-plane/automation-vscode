@@ -212,3 +212,15 @@ Later source checks passed 5 Node policy tests, 43 Python tests with 1 skip,
 14 focused policy tests, and 8 local TCP language-server tests. Most policy tests
 use mocks or temporary files. The real executable/DAP/HTTP/browser smoke results
 are recorded separately; no mocked result is counted as a live workload.
+
+## Shutdown API compatibility
+
+A real Runtime request exposed a redirect: POST `/api/shutdown` returns 307; Node's
+HTTP client did not follow it. The extension and smoke now use the published
+`/api/shutdown/` route and reject non-2xx API responses. That route returned 200 and
+the unchanged outer wrapper stopped without forced termination. The wrapper returns
+exit **1** after its normal shutdown API interruption; this is retained in evidence,
+not normalized to a false exit 0 claim. Lifecycle exit-status compatibility remains
+a published Runtime follow-up. Earlier HTTP smokes used a task-owned process
+termination fallback after the unhandled redirect; those are not graceful-shutdown
+acceptance.
