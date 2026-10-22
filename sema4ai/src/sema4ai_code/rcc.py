@@ -35,6 +35,7 @@ from sema4ai_code.protocols import (
 )
 from sema4ai_code.rcc_space_info import RCCSpaceInfo, SpaceState
 from sema4ai_code.tools import Tool
+from sema4ai_code.runtime_paths import RuntimeKind, runtime_environment, runtime_homes
 
 log = get_logger(__name__)
 
@@ -63,7 +64,7 @@ def download_rcc(
     """
     from sema4ai_code.tools import download_tool
 
-    RCC_VERSION = "v21.3.0"
+    RCC_VERSION = "v18.19.7"
     download_tool(
         Tool.RCC,
         location,
@@ -81,12 +82,7 @@ def get_default_rcc_location() -> str:
 
 
 def get_default_app_home_location() -> Path:
-    if sys.platform == "win32":
-        path = r"$LOCALAPPDATA\sema4ai"
-    else:
-        path = r"$HOME/.sema4ai"
-    home_str = os.path.expandvars(path)
-    return Path(home_str)
+    return runtime_homes()["actions"]
 
 
 class RccRobotMetadata:
@@ -178,15 +174,11 @@ class Rcc:
 
         return self._get_str_optional_setting(SEMA4AI_HOME)
 
-    def get_robocorp_code_datadir(self) -> Path:
-        robocorp_home_str = self.get_robocorp_home_from_settings()
-        if not robocorp_home_str:
-            app_home = get_default_app_home_location()
-        else:
-            app_home = Path(robocorp_home_str)
-
-        directory = app_home / ".sema4ai_code"
-        return directory
+    def get_robocorp_code_datadir(self, kind: RuntimeKind = "actions") -> Path:
+        return (
+            runtime_homes(self.get_robocorp_home_from_settings())[kind]
+            / ".sema4ai_code"
+        )
 
     @property
     def config_location(self) -> str | None:
@@ -213,10 +205,16 @@ class Rcc:
         from sema4ai_code import settings
 
         rcc_location = self._get_str_optional_setting(settings.SEMA4AI_RCC_LOCATION)
+        rcc_location = rcc_location or os.environ.get("AUTOMATION_RCC_LOCATION")
+        configured = bool(rcc_location)
         if not rcc_location:
             rcc_location = get_default_rcc_location()
+        if configured and not os.path.isfile(rcc_location):
+            raise RuntimeError(
+                f"Configured RCC executable does not exist: {rcc_location}"
+            )
 
-        if download_if_missing and not os.path.exists(rcc_location):
+        if download_if_missing and not configured:
             download_rcc(rcc_location)
         return rcc_location
 
@@ -232,6 +230,7 @@ class Rcc:
         show_interactive_output: bool = False,
         hide_in_log: str | None = None,
         send_to_stdin: str | None = None,
+        kind: RuntimeKind = "actions",
     ) -> LaunchActionResult[str]:
         """
         Returns an ActionResult where the result is the stdout of the executed command.
@@ -262,16 +261,20 @@ class Rcc:
         env["PYTHONIOENCODING"] = "utf-8"
         env["PYTHONUNBUFFERED"] = "1"
 
-        robocorp_home = self.get_robocorp_home_from_settings()
-        if robocorp_home:
-            env["ROBOCORP_HOME"] = robocorp_home
-            env["SEMA4AI_HOME"] = robocorp_home
+        env.update(runtime_environment(kind, self.get_robocorp_home_from_settings()))
+        robocorp_home = env["ROBOCORP_HOME"]
+        if mutex_name:
+            import hashlib
+
+            mutex_name += (
+                "-" + hashlib.sha256(env["ROBOCORP_HOME"].encode()).hexdigest()[:16]
+            )
 
         kwargs: dict = build_subprocess_kwargs(cwd, env, stderr=stderr)
         args = (
             [rcc_location]
             + args
-            + ["--bundled", "--sema4ai", "--controller", "Sema4aiCode"]
+            + ["--bundled", "--robocorp", "--controller", "Sema4aiCode"]
         )
         cmdline = list2cmdline([str(x) for x in args])
 
@@ -898,8 +901,11 @@ class Rcc:
         from sema4ai_code.holetree_manager import HolotreeManager
         from sema4ai_code.rcc_space_info import format_conda_contents_to_compare
 
+        kind: RuntimeKind = "robots" if robot_yaml_path is not None else "actions"
         if holotree_manager is None:
-            holotree_manager = HolotreeManager(self)
+            holotree_manager = HolotreeManager(
+                self, directory=self.get_robocorp_code_datadir(kind)
+            )
 
         formatted_conda_yaml_contents = format_conda_contents_to_compare(
             conda_yaml_contents
@@ -1078,6 +1084,7 @@ class Rcc:
                 ),
                 timeout=timeout,  # Creating the env may be really slow!
                 show_interactive_output=True,
+                kind=kind,
             )
 
             if not ret.success:
@@ -1104,6 +1111,9 @@ class Rcc:
                 msg = f"Did not find PYTHON_EXE in {environ}"
                 return return_failure(msg)
 
+            environ.update(
+                runtime_environment(kind, self.get_robocorp_home_from_settings())
+            )
             with space_info.acquire_lock():
                 space_info.env_json_path.write_text(json.dumps(environ), "utf-8")
                 space_info.state_path.write_text(SpaceState.ENV_READY.value, "utf-8")

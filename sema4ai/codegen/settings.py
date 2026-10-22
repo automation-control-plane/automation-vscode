@@ -57,6 +57,18 @@ SETTINGS = [
         setting_type="string",
     ),
     Setting(
+        "sema4ai.actionServer.location",
+        "",
+        "Path to an explicitly configured Actions Runtime executable. No download or replacement is attempted for this path.",
+        setting_type="string",
+    ),
+    Setting(
+        "sema4ai.agentCli.location",
+        "",
+        "Path to an explicitly configured compatible Agent CLI. This port has no published Agent CLI download mapping yet.",
+        setting_type="string",
+    ),
+    Setting(
         "sema4ai.rcc.endpoint",
         "",
         "Can be used to specify a different endpoint for rcc.",
@@ -71,7 +83,7 @@ SETTINGS = [
     Setting(
         "sema4ai.home",
         "",
-        "Specifies the value for SEMA4AI_HOME (where the conda environments will be downloaded). Must point to a directory without spaces in it.",
+        "Legacy tooling root. Actions and Robots use separate actions/ and robots/ children. ACTIONS_HOME and ROBOTS_HOME override their respective children. No data is migrated.",
         setting_type="string",
     ),
     Setting(

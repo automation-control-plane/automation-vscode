@@ -106,13 +106,13 @@ async function enableWindowsLongPathSupport(rccLocation: string) {
     try {
         try {
             // Expected failure if not admin.
-            await execFilePromise(rccLocation, ["configure", "longpaths", "--enable", "--bundled", "--sema4ai"], {
+            await execFilePromise(rccLocation, ["configure", "longpaths", "--enable", "--bundled", "--robocorp"], {
                 env: { ...process.env },
             });
             await sleep(100);
         } catch (error) {
             // Expected error (it means we need an elevated shell to run the command).
-            await runAsAdminWin32(rccLocation, ["configure", "longpaths", "--enable", "--bundled", "--sema4ai"], {
+            await runAsAdminWin32(rccLocation, ["configure", "longpaths", "--enable", "--bundled", "--robocorp"], {
                 ...process.env,
             });
             // Wait a second for the command to be executed as admin before proceeding.

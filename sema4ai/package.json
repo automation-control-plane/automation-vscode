@@ -259,6 +259,16 @@
                     "default": "",
                     "description": "Specifies the location of the rcc tool."
                 },
+                "sema4ai.actionServer.location": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to an explicitly configured Actions Runtime executable. No download or replacement is attempted for this path."
+                },
+                "sema4ai.agentCli.location": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to an explicitly configured compatible Agent CLI. This port has no published Agent CLI download mapping yet."
+                },
                 "sema4ai.rcc.endpoint": {
                     "type": "string",
                     "default": "",
@@ -272,7 +282,7 @@
                 "sema4ai.home": {
                     "type": "string",
                     "default": "",
-                    "description": "Specifies the value for SEMA4AI_HOME (where the conda environments will be downloaded). Must point to a directory without spaces in it."
+                    "description": "Legacy tooling root. Actions and Robots use separate actions/ and robots/ children. ACTIONS_HOME and ROBOTS_HOME override their respective children. No data is migrated."
                 },
                 "sema4ai.verifyLSP": {
                     "type": "boolean",

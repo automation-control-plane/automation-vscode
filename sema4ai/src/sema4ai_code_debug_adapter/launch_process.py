@@ -332,7 +332,7 @@ class LaunchProcess:
                 cmdline.append(use_path)
 
             cmdline.append("--bundled")
-            cmdline.append("--sema4ai")
+            cmdline.append("--robocorp")
             cmdline.append("--controller")
             cmdline.append("Sema4aiCode")
 

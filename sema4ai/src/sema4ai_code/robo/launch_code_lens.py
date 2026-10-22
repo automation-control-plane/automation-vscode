@@ -95,7 +95,7 @@ def _is_sema4ai_actions_import(node: "ast.AST") -> bool:
 
     if isinstance(node, ast.ImportFrom):
         # Check if the module is 'sema4ai.actions' and 'action' is in the names
-        if node.module == "sema4ai.actions":
+        if node.module in ("actions", "sema4ai.actions", "robocorp.actions"):
             for alias in node.names:
                 if alias.name == "action":
                     return True

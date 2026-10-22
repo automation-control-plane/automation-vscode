@@ -1,0 +1,42 @@
+{
+    "rcc": {
+        "version": "v18.19.7",
+        "repository": "joshyorko/rcc",
+        "tag": "v18.19.7",
+        "source": "758c97808bef8ae8bc5779d82c23ee11abfa47b3",
+        "assets": {
+            "linux-x64": {
+                "name": "rcc-linux64",
+                "sha256": "f8e0394be7f47ee84d6f4cd734822b87b492a4d6102f977f6a18f29453703d48"
+            },
+            "win32-x64": {
+                "name": "rcc-windows64.exe",
+                "sha256": "d3338be49ef22bbd9f3e42b606e01231cb5c5d86716b18d24fadf85e7630e0be"
+            },
+            "darwin-arm64": {
+                "name": "rcc-macosarm64",
+                "sha256": "324e2ead0e96754eaf0dc2e22bb41928ad2bec90c7e1e7ad069038a100bca595"
+            }
+        }
+    },
+    "action-server": {
+        "version": "1.0.4",
+        "repository": "joshyorko/actions",
+        "tag": "actions-runtime-1.0.4",
+        "source": "d222f94edca26953c1506ab258adc458ded17c56",
+        "assets": {
+            "linux-x64": {
+                "name": "actions-runtime-1.0.4-linux64",
+                "sha256": "d3c450a2b10b226613588cc40cc6ec18873b23c7427958b0752711e4531a1de4"
+            },
+            "win32-x64": {
+                "name": "actions-runtime-1.0.4-windows64.exe",
+                "sha256": "0111026e5ff739f364b40c74daab57cc391f061be432396ffa86282d616bc6d7"
+            },
+            "darwin-arm64": {
+                "name": "actions-runtime-1.0.4-macos-arm64",
+                "sha256": "cd4a4e93a17b54fbbb085e97ae136d98f0520453c262150ca0903fa73cc0959f"
+            }
+        }
+    }
+}

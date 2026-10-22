@@ -134,3 +134,9 @@ node_modules
 environments/
 rcc
 rcc.exe
+
+# Verified published tools are downloaded locally, never committed.
+/sema4ai/bin/rcc-*
+/sema4ai/bin/actions-runtime-*
+/sema4ai/bin/action-server*
+/sema4ai/bin/agent-cli*

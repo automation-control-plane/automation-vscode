@@ -68,3 +68,9 @@ node_modules/**/*.map
 node_modules/**/LICENSE*
 node_modules/**/license*
 node_modules/**/.github/**
+# Executables are acquired by verified platform-specific download after activation.
+bin/rcc*
+bin/actions-runtime*
+bin/action-server*
+bin/agent-cli*
+.venv/**

@@ -149,11 +149,25 @@ def create_pm():
     if not x_action_context:
         return None
 
+    import importlib
+
     try:
-        from sema4ai.actions._customization._extension_points import EPManagedParameters
-        from sema4ai.actions._customization._plugin_manager import PluginManager
-        from sema4ai.actions._managed_parameters import ManagedParameters
-        from sema4ai.actions._request import Request
+        try:
+            from .action_runtime import load_actions
+        except ImportError:
+            from action_runtime import load_actions
+        actions, _ = load_actions()
+        prefix = actions.__name__
+        EPManagedParameters = importlib.import_module(
+            prefix + "._customization._extension_points"
+        ).EPManagedParameters
+        PluginManager = importlib.import_module(
+            prefix + "._customization._plugin_manager"
+        ).PluginManager
+        ManagedParameters = importlib.import_module(
+            prefix + "._managed_parameters"
+        ).ManagedParameters
+        Request = importlib.import_module(prefix + "._request").Request
     except ImportError:
         return None
 
@@ -174,21 +188,11 @@ def create_pm():
 def main():
     from tempfile import gettempdir
 
-    cli = None
-    actions = None
     try:
-        from sema4ai import actions
-        from sema4ai.actions import cli  # noqa #type: ignore
+        from .action_runtime import load_actions
     except ImportError:
-        try:
-            # Backward compatibility
-            from robocorp.actions import cli  # noqa #type: ignore
-
-        except ImportError:
-            pass
-
-        if cli is None:
-            raise  # Raise the sema4ai.actions error
+        from action_runtime import load_actions
+    actions, cli = load_actions()
 
     dir_path = Path(gettempdir()) / "sema4ai-vscode-actions"
     dir_path.mkdir(parents=True, exist_ok=True)
@@ -204,7 +208,7 @@ def main():
             args.append("--print-result")
 
     print(
-        f"Running with sema4ai.actions version: {'.'.join(str(x) for x in actions.version_info)}"
+        f"Running with {actions.__name__} version: {'.'.join(str(x) for x in actions.version_info)}"
     )
     kwargs = {}
     if actions.version_info >= [0, 9, 0]:

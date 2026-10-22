@@ -1,3 +1,5 @@
+import { getRccLocation as getConfiguredRcc } from "./rcc";
+import { runtimeEnvironment } from "./runtimePaths";
 import * as path from "path";
 import * as fs from "fs";
 import {
@@ -250,15 +252,8 @@ export function registerDebugger() {
         if (!env) {
             env = {};
         }
-        let robotHome = roboConfig.getHome();
-        if (robotHome && robotHome.length > 0) {
-            if (env) {
-                env["ROBOCORP_HOME"] = robotHome;
-                env["SEMA4AI_HOME"] = robotHome;
-            } else {
-                env = { "ROBOCORP_HOME": robotHome, "SEMA4AI_HOME": robotHome };
-            }
-        }
+        const homes = runtimeEnvironment("robots", roboConfig.getHome());
+        env = { ...homes, ...env, AUTOMATION_RCC_LOCATION: await getConfiguredRcc() };
         let targetMain: string = path.resolve(__dirname, "../../src/sema4ai_code_debug_adapter/__main__.py");
         if (!fs.existsSync(targetMain)) {
             window.showWarningMessage("Error. Expected: " + targetMain + " to exist.");

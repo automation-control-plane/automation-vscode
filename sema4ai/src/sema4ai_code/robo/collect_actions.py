@@ -115,6 +115,8 @@ def _execute_within_user_env(
 ) -> ActionResult:
     from sema4ai_ls_core.basic import launch_and_return_future
 
+    command_name = " ".join(args[:3])
+
     try:
         for ep in pm.get_implementations(EPResolveInterpreter):
             interpreter_info: IInterpreterInfo = ep.get_interpreter_info_for_doc_uri(
@@ -145,17 +147,15 @@ def _execute_within_user_env(
                         else:
                             return ActionResult.make_success(result.stdout)
                 if result.stderr:
-                    error_msg = (
-                        f"Found errors while running {args[2]} errors: {result.stderr}"
-                    )
+                    error_msg = f"Found errors while running {command_name} errors: {result.stderr}"
                     log.info(error_msg)
                 break
     except BaseException as e:
-        message = f"Unable to execute {args[2]} command. Error: {e}"
+        message = f"Unable to execute {command_name} command. Error: {e}"
         log.exception(message)
         return ActionResult.make_failure(message)
 
-    return ActionResult.make_failure(f"Unable to execute {args[2]} command")
+    return ActionResult.make_failure(f"Unable to execute {command_name} command")
 
 
 def _call_sema4ai_actions(
@@ -184,8 +184,7 @@ def _call_sema4ai_actions(
     path = Path(uris.to_fs_path(uri))
     file_name = path.name
     args = [
-        "-m",
-        "sema4ai.actions",
+        str(Path(__file__).with_name("action_runtime.py")),
         argument,
         "--skip-lint",
     ]
@@ -221,8 +220,8 @@ def _get_actions_version(
 
     from sema4ai_ls_core import uris
 
-    libname = "sema4ai.actions"
-    args = ["-c", f"import {libname};print({libname}.__version__)"]
+    libname = "actions-core"
+    args = [str(Path(__file__).with_name("action_runtime.py")), "--library-version"]
 
     path = Path(uris.to_fs_path(uri))
     if not path.is_dir():

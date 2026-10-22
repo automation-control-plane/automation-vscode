@@ -2,6 +2,9 @@ import * as fs from "fs";
 import * as path from "path";
 import * as pathModule from "path";
 import * as os from "os";
+import { runtimeHomes, runtimeEnvironment } from "./runtimePaths";
+import { publishedTool } from "./publishedTools";
+import { createHash } from "crypto";
 import { configure as configureXHR } from "./requestLight";
 import { fileExists, getExtensionRelativeFile } from "./files";
 import { CancellationToken, commands, extensions, Progress, ProgressLocation, window, workspace } from "vscode";
@@ -25,47 +28,20 @@ export enum Metrics {
 }
 
 export async function getRobocorpHome(): Promise<string> {
-    let home: string = roboConfig.getHome();
-    let details = " (found in settings)";
-
-    if (!home || home.length == 0) {
-        const sema4aiHome = process.env["SEMA4AI_HOME"];
-        if (sema4aiHome) {
-            if (lastPrintedRobocorpHome != sema4aiHome) {
-                lastPrintedRobocorpHome = sema4aiHome;
-                OUTPUT_CHANNEL.appendLine("SEMA4AI_HOME: " + sema4aiHome + " (found in SEMA4AI_HOME env var)");
-            }
-            return sema4aiHome;
-        }
-
-        home = process.env["ROBOCORP_HOME"];
-        if (!home) {
-            // Default from RCC (maybe it should provide an API to get it before creating an env?)
-            details = " (default)";
-            if (process.platform == "win32") {
-                home = path.join(process.env.LOCALAPPDATA, "sema4ai");
-            } else {
-                home = path.join(process.env.HOME, ".sema4ai");
-            }
-        } else {
-            details = " (found in ROBOCORP_HOME env var)";
-        }
-    }
-    if (lastPrintedRobocorpHome != home) {
+    const home = runtimeHomes(roboConfig.getHome()).actions;
+    if (lastPrintedRobocorpHome !== home) {
         lastPrintedRobocorpHome = home;
-        OUTPUT_CHANNEL.appendLine("SEMA4AI_HOME: " + home + details);
+        OUTPUT_CHANNEL.appendLine("ACTIONS_HOME: " + home);
     }
     return home;
 }
 
 export function createEnvWithRobocorpHome(robocorpHome: string): { [key: string]: string } {
-    const base = { "ROBOCORP_HOME": robocorpHome, "SEMA4AI_HOME": robocorpHome };
+    const base = { ...runtimeEnvironment("actions", roboConfig.getHome()), ROBOCORP_HOME: robocorpHome };
     if (getProceedwithlongpathsdisabled()) {
         base["ROBOCORP_OVERRIDE_SYSTEM_REQUIREMENTS"] = "1";
     }
-
-    let env: { [key: string]: string } = mergeEnviron(base);
-    return env;
+    return mergeEnviron(base);
 }
 
 function envArrayToEnvMap(envArray: [], robocorpHome: string): { [key: string]: string | null } {
@@ -133,32 +109,8 @@ async function downloadRcc(
     let httpSettings = workspace.getConfiguration("http");
     configureXHR(httpSettings.get<string>("proxy"), httpSettings.get<boolean>("proxyStrictSSL"));
     let location = getExpectedRccLocation();
-    let relativePath: string;
-    if (process.platform == "win32") {
-        if (process.arch === "x64" || process.env.hasOwnProperty("PROCESSOR_ARCHITEW6432")) {
-            // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
-            relativePath = "/windows64/rcc.exe";
-        } else {
-            throw new Error("Currently only Windows amd64 is supported.");
-        }
-    } else if (process.platform == "darwin") {
-        if (process.arch === "arm64") {
-            relativePath = "/macos-arm64/rcc";
-        } else {
-            throw new Error(MACOS_INTEL_NOT_SUPPORTED_MESSAGE);
-        }
-    } else {
-        // Linux
-        if (process.arch == "x64") {
-            relativePath = "/linux64/rcc";
-        } else {
-            throw new Error("Currently only Linux amd64 is supported.");
-        }
-    }
-    const RCC_VERSION = "v21.3.0";
-    const prefix = "https://cdn.sema4.ai/rcc/releases/" + RCC_VERSION;
-    const url: string = prefix + relativePath;
-    return await downloadWithProgress(url, progress, token, location);
+    const artifact = publishedTool("rcc");
+    return await downloadWithProgress(artifact.url, progress, token, location, artifact.sha256);
 }
 
 // Note: python tests scan this file and get these constants, so, if the format
@@ -222,13 +174,7 @@ async function downloadBaseAsZip(
 }
 
 function getExpectedRccLocation(): string {
-    let location: string;
-    if (process.platform == "win32") {
-        location = getExtensionRelativeFile("../../bin/rcc.exe", false);
-    } else {
-        location = getExtensionRelativeFile("../../bin/rcc", false);
-    }
-    return location;
+    return getExtensionRelativeFile("../../bin/" + publishedTool("rcc").name, false);
 }
 
 // We can't really ship rcc per-platform right now (so, we need to either
@@ -240,8 +186,20 @@ function getExpectedRccLocation(): string {
 // https://github.com/microsoft/vscode/issues/6929#issuecomment-222153748
 
 export async function getRccLocation(): Promise<string | undefined> {
+    const configured = roboConfig.getRccLocation() || process.env.AUTOMATION_RCC_LOCATION;
+    if (configured) {
+        if (!(await fileExists(configured))) {
+            throw new Error("Configured RCC executable does not exist: " + configured);
+        }
+        return configured;
+    }
     const location = getExpectedRccLocation();
-
+    if (await fileExists(location)) {
+        const digest = createHash("sha256").update(fs.readFileSync(location)).digest("hex");
+        if (digest !== publishedTool("rcc").sha256) {
+            throw new Error("Existing RCC does not match the pinned release and was preserved: " + location);
+        }
+    }
     if (!(await fileExists(location))) {
         await window.withProgress(
             {
@@ -338,10 +296,10 @@ export async function runConfigDiagnostics(
     let configureLongpathsOutput: ExecFileReturn | undefined = undefined;
     let timing = new Timing();
     try {
-        let env = mergeEnviron({ "ROBOCORP_HOME": robocorpHome, "SEMA4AI_HOME": robocorpHome });
+        let env = createEnvWithRobocorpHome(robocorpHome);
         configureLongpathsOutput = await execFilePromise(
             rccLocation,
-            ["configure", "diagnostics", "-j", "--bundled", "--sema4ai", "--controller", "Sema4aiCode"],
+            ["configure", "diagnostics", "-j", "--bundled", "--robocorp", "--controller", "Sema4aiCode"],
             { env: env }
         );
         let outputAsJSON = JSON.parse(configureLongpathsOutput.stdout);
@@ -550,7 +508,7 @@ export async function submitIssue(
                 "-r",
                 reportPath,
                 "--bundled",
-                "--sema4ai",
+                "--robocorp",
                 "--controller",
                 "Sema4aiCode",
             ];
@@ -586,7 +544,7 @@ interface IEnvInfo {
 
 export async function feedback(name: string, value: string = "+1") {
     const rccLocation = await getRccLocation();
-    let args: string[] = ["feedback", "metric", "--bundled", "--sema4ai", "-t", "vscode", "-n", name, "-v", value];
+    let args: string[] = ["feedback", "metric", "--bundled", "--robocorp", "-t", "vscode", "-n", name, "-v", value];
 
     const robocorpHome = await getRobocorpHome();
     const env = createEnvWithRobocorpHome(robocorpHome);
@@ -628,7 +586,7 @@ export async function feedbackAnyError(errorType: string, errorCode: string) {
         "-v",
         errorCode,
         "--bundled",
-        "--sema4ai",
+        "--robocorp",
     ];
 
     const robocorpHome = await getRobocorpHome();
@@ -650,7 +608,7 @@ async function enableHolotreeShared(rccLocation: string, env) {
         try {
             const execFileReturn: ExecFileReturn = await execFilePromise(
                 rccLocation,
-                ["holotree", "shared", "--enable", "--once", "--bundled", "--sema4ai"],
+                ["holotree", "shared", "--enable", "--once", "--bundled", "--robocorp"],
                 { "env": env },
                 { "showOutputInteractively": true }
             );
@@ -687,7 +645,7 @@ async function initHolotree(rccLocation: string, env): Promise<boolean> {
     try {
         const execFileReturn = await execFilePromise(
             rccLocation,
-            ["holotree", "init", "--bundled", "--sema4ai"],
+            ["holotree", "init", "--bundled", "--robocorp"],
             { "env": env },
             { "showOutputInteractively": true }
         );
@@ -731,27 +689,8 @@ export async function collectBaseEnv(
         window.showErrorMessage("Unable to find RCC.");
         return;
     }
-    const USE_PROGRAM_DATA_SHARED = true;
-    if (USE_PROGRAM_DATA_SHARED) {
-        const env = createEnvWithRobocorpHome(robocorpHome);
-
-        if (!rccDiagnostics.holotreeShared) {
-            // i.e.: if the shared mode is still not enabled, enable it, download the
-            // base environment .zip and import it.
-            await enableHolotreeShared(rccLocation, env);
-
-            const holotreeInitOk: boolean = await initHolotree(rccLocation, env);
-            if (holotreeInitOk) {
-                await makeSharedHolotreeEnvImport(rccLocation, env);
-            }
-        } else {
-            // It was already shared once
-            if (!spaceInfoPathExists) {
-                // On new env do the shared holotree import
-                await makeSharedHolotreeEnvImport(rccLocation, env);
-            }
-        }
-    }
+    // Build from the checked-in specification in a private Holotree.
+    // Vendor prebuilt environments and system shared caches are not compatible.
 
     let envArray = undefined;
     try {
@@ -791,7 +730,7 @@ export async function collectBaseEnv(
             args.push("-e");
             args.push(envFilename);
         }
-        args.push("--sema4ai");
+        args.push("--robocorp");
         args.push("--bundled");
         args.push("--controller");
         args.push("Sema4aiCode");
@@ -855,7 +794,7 @@ export async function getEndpointUrl(baseUrl): Promise<string> {
         const env = createEnvWithRobocorpHome(robocorpHome);
 
         const rccLocation = await getRccLocation();
-        let args: string[] = ["config", "settings", "--bundled", "--sema4ai", "--json"];
+        let args: string[] = ["config", "settings", "--bundled", "--robocorp", "--json"];
         const execReturn: ExecFileReturn = await execFilePromise(
             rccLocation,
             args,
@@ -911,7 +850,7 @@ async function makeSharedHolotreeEnvImport(rccLocation: string, env: { [key: str
             let timing = new Timing();
             execFileReturn = await execFilePromise(
                 rccLocation,
-                ["holotree", "import", zipDownloadLocation, "--bundled", "--sema4ai"],
+                ["holotree", "import", zipDownloadLocation, "--bundled", "--robocorp"],
                 { "env": env },
                 { "showOutputInteractively": true }
             );

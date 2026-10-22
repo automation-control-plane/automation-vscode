@@ -1,4 +1,4 @@
-import { CancellationToken, Progress, ProgressLocation, Terminal, Uri, window, commands } from "vscode";
+import { CancellationToken, Progress, ProgressLocation, Terminal, Uri, window, commands, workspace } from "vscode";
 import * as roboCommands from "./robocorpCommands";
 import { createEnvWithRobocorpHome, getRobocorpHome } from "./rcc";
 import path = require("path");
@@ -11,6 +11,7 @@ import { Tool, getToolVersion, downloadTool } from "./tools";
 import { langServer } from "./extension";
 import { fetchDataServerStatus } from "./dataExtension";
 import { convertDataServerInfoToEnvVar } from "./robo/actionPackage";
+import { createHash } from "crypto";
 
 const ACTION_SERVER_DEFAULT_PORT = 8082;
 const ACTION_SERVER_TERMINAL_NAME = "Sema4.ai: Action Server";
@@ -26,11 +27,16 @@ export const getActionServerVersion = async (): Promise<string> => {
 };
 
 export const downloadOrGetActionServerLocation = async (): Promise<string | undefined> => {
-    if (globalLocation) {
-        return globalLocation;
+    const configured =
+        workspace.getConfiguration("sema4ai").get<string>("actionServer.location") ||
+        process.env.ACTIONS_RUNTIME_LOCATION;
+    if (configured) {
+        if (!fs.existsSync(configured)) {
+            throw new Error("Configured Actions Runtime executable does not exist: " + configured);
+        }
+        return configured;
     }
-    globalLocation = await downloadActionServer();
-    return globalLocation;
+    return await downloadActionServer();
 };
 
 export const isActionServerAlive = async (port: number = ACTION_SERVER_DEFAULT_PORT) => {
@@ -126,30 +132,27 @@ const startActionServerInternal = async (directory: Uri) => {
 
     const env = createEnvWithRobocorpHome(await getRobocorpHome());
     env["RC_ADD_SHUTDOWN_API"] = "1";
-
-    const externalApiUrl: any = await langServer.sendRequest("getExternalApiUrl");
-    if (externalApiUrl) {
-        env["SEMA4AI_CREDENTIAL_API"] = externalApiUrl;
-    }
-
-    const dataServerStatus = await fetchDataServerStatus();
-    if (dataServerStatus && dataServerStatus["data"]) {
-        const dataServerInfo = convertDataServerInfoToEnvVar(dataServerStatus["data"]);
-        env["SEMA4AI_DATA_SERVER_INFO"] = dataServerInfo;
-    }
+    env["ACTIONS_SKIP_UPDATE_CHECK"] = "1";
 
     actionServerTerminal = window.createTerminal({
         name: "Sema4.ai: Action Server",
         env: env,
         cwd: directory,
+        shellPath: location,
+        shellArgs: [
+            "start",
+            `--port=${ACTION_SERVER_DEFAULT_PORT}`,
+            "--datadir=" +
+                path.join(
+                    env.ACTIONS_HOME,
+                    "action-server",
+                    "vscode-" + createHash("sha256").update(directory.fsPath).digest("hex").slice(0, 12)
+                ),
+        ],
     });
 
     actionServerTerminal.show();
     OUTPUT_CHANNEL.appendLine("Starting action-server (in terminal): " + location);
-
-    actionServerTerminal.sendText(""); // Just add a new line in case something is there already.
-    actionServerTerminal.sendText(`cd ${directory.fsPath}`);
-    actionServerTerminal.sendText(`${location} start --port=${ACTION_SERVER_DEFAULT_PORT}`);
 };
 
 export const findActionPackagePath = async ({ includeSemaOrg = true } = {}): Promise<Uri | undefined> => {

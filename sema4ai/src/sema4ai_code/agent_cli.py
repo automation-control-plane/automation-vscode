@@ -93,9 +93,17 @@ class AgentCli:
         Args:
             download_if_missing: If true, it will attempt to download the Agent CLI if missing.
         """
+        configured = self._get_str_optional_setting(
+            "sema4ai.agentCli.location"
+        ) or os.environ.get("AUTOMATION_AGENT_CLI_LOCATION")
+        if configured:
+            if not os.path.isfile(configured):
+                raise RuntimeError(
+                    f"Configured Agent CLI executable does not exist: {configured}"
+                )
+            return configured
         agent_cli_location = get_default_agent_cli_location()
-
-        if download_if_missing and not os.path.exists(agent_cli_location):
+        if download_if_missing:
             download_agent_cli(agent_cli_location)
 
         return agent_cli_location

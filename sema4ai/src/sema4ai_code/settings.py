@@ -5,6 +5,8 @@ SEMA4AI_LANGUAGE_SERVER_TCP_PORT = "sema4ai.language-server.tcp-port"
 SEMA4AI_LANGUAGE_SERVER_ARGS = "sema4ai.language-server.args"
 SEMA4AI_LANGUAGE_SERVER_PYTHON = "sema4ai.language-server.python"
 SEMA4AI_RCC_LOCATION = "sema4ai.rcc.location"
+SEMA4AI_ACTION_SERVER_LOCATION = "sema4ai.actionServer.location"
+SEMA4AI_AGENT_CLI_LOCATION = "sema4ai.agentCli.location"
 SEMA4AI_RCC_ENDPOINT = "sema4ai.rcc.endpoint"
 SEMA4AI_RCC_CONFIG_LOCATION = "sema4ai.rcc.config_location"
 SEMA4AI_HOME = "sema4ai.home"
@@ -23,6 +25,8 @@ ALL_SEMA4AI_OPTIONS = frozenset(
         SEMA4AI_LANGUAGE_SERVER_ARGS,
         SEMA4AI_LANGUAGE_SERVER_PYTHON,
         SEMA4AI_RCC_LOCATION,
+        SEMA4AI_ACTION_SERVER_LOCATION,
+        SEMA4AI_AGENT_CLI_LOCATION,
         SEMA4AI_RCC_ENDPOINT,
         SEMA4AI_RCC_CONFIG_LOCATION,
         SEMA4AI_HOME,

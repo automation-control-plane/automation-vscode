@@ -13,6 +13,8 @@ export const SEMA4AI_LANGUAGE_SERVER_TCP_PORT = "sema4ai.language-server.tcp-por
 export const SEMA4AI_LANGUAGE_SERVER_ARGS = "sema4ai.language-server.args";
 export const SEMA4AI_LANGUAGE_SERVER_PYTHON = "sema4ai.language-server.python";
 export const SEMA4AI_RCC_LOCATION = "sema4ai.rcc.location";
+export const SEMA4AI_ACTION_SERVER_LOCATION = "sema4ai.actionServer.location";
+export const SEMA4AI_AGENT_CLI_LOCATION = "sema4ai.agentCli.location";
 export const SEMA4AI_RCC_ENDPOINT = "sema4ai.rcc.endpoint";
 export const SEMA4AI_RCC_CONFIG_LOCATION = "sema4ai.rcc.config_location";
 export const SEMA4AI_HOME = "sema4ai.home";
@@ -78,6 +80,36 @@ export function getRccLocation(): string {
 
 export async function setRccLocation(value): Promise<void> {
     let key = SEMA4AI_RCC_LOCATION;
+    let i = key.lastIndexOf('.');
+
+    let config = workspace.getConfiguration(key.slice(0, i));
+    await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
+}
+
+
+export function getActionserverLocation(): string {
+    let key = SEMA4AI_ACTION_SERVER_LOCATION;
+    return get<string>(key);
+}
+
+
+export async function setActionserverLocation(value): Promise<void> {
+    let key = SEMA4AI_ACTION_SERVER_LOCATION;
+    let i = key.lastIndexOf('.');
+
+    let config = workspace.getConfiguration(key.slice(0, i));
+    await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
+}
+
+
+export function getAgentcliLocation(): string {
+    let key = SEMA4AI_AGENT_CLI_LOCATION;
+    return get<string>(key);
+}
+
+
+export async function setAgentcliLocation(value): Promise<void> {
+    let key = SEMA4AI_AGENT_CLI_LOCATION;
     let i = key.lastIndexOf('.');
 
     let config = workspace.getConfiguration(key.slice(0, i));

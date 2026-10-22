@@ -2162,7 +2162,10 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         location = params["location"] if params else self._rcc.get_rcc_location(False)
 
         try:
-            download_rcc(location, endpoint=self._endpoint)
+            if params:
+                download_rcc(location, endpoint=self._endpoint)
+            else:
+                location = self._rcc.get_rcc_location()
         except Exception as e:
             return {
                 "success": False,
@@ -2185,7 +2188,10 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         )
 
         try:
-            download_action_server(location, endpoint=self._endpoint)
+            if params:
+                download_action_server(location, endpoint=self._endpoint)
+            else:
+                location = self._action_server.get_action_server_location()
         except Exception as e:
             return {
                 "success": False,
@@ -2211,7 +2217,10 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         )
 
         try:
-            download_agent_cli(location, endpoint=self._endpoint)
+            if params:
+                download_agent_cli(location, endpoint=self._endpoint)
+            else:
+                location = self._agent_cli.get_agent_cli_location()
         except Exception as e:
             return {
                 "success": False,
