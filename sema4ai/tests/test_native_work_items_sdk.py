@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
-from sema4ai_code.work_items_native import handle
+from sema4ai_code.work_items_native import handle, strict_json
 
 
 class NativeWorkItemsSDK(unittest.TestCase):
@@ -139,6 +139,15 @@ a.release_input(item,State.FAILED,code='SYNTHETIC',message='Synthetic failure')
             self.assertIn(replay, self.call("recover", "sqlite")["recovered"])
         item = next(item for item in self.call("list", "sqlite")["items"] if item["id"] == replay)
         self.assertEqual(item["state"], "PENDING")
+
+    def test_duplicate_json_fields_are_rejected_and_own_names_preserved(self):
+        for text in ('{"value":1,"value":2}', '{"value":1,"\\u0076alue":2}', '{"nested":{"x":1,"x":2}}', '{"value":NaN}'):
+            with self.assertRaises(ValueError):
+                strict_json(text)
+        data = strict_json('{"__proto__":{"polluted":true},"constructor":"business data"}')
+        key = self.call("create", payload=data)["id"]
+        item = next(item for item in self.call("list")["items"] if item["id"] == key)
+        self.assertEqual(item["payload"], data)
 
 
 if __name__ == "__main__":

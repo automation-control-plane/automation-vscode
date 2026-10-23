@@ -1,39 +1,49 @@
-/* Native editor: all data uses textContent; the host owns package paths and SDK calls. */
+/* Form-first Work Items; advanced JSON is optional and never executed. */
 const api = acquireVsCodeApi();
 const byId = id => document.getElementById(id);
 let selected, items = [], mode = 'file', contractRevision, contract = {};
-function send(op, extra = {}) {
-    api.postMessage({op, id: selected?.id, revision: selected?.revision, ...extra});
+let activeDraftKey, payloadDirty = false, proposalTarget;
+const drafts = new Map();
+function copyNode(value) {return value === undefined ? undefined : JSON.parse(JSON.stringify(value));}
+function showPayloadValue(editor, preview, validation) {
+    try {byId(preview).value = editor.getJSON(); byId(validation).textContent = '';}
+    catch (error) {byId(validation).textContent = error.message;}
 }
+const payloadEditor = new WorkItemForms.Editor(byId('payload-fields'), {onChange: editor => {payloadDirty = true; showPayloadValue(editor,'payload','validation');}});
+const parametersEditor = new WorkItemForms.Editor(byId('parameters-fields'), {onChange: editor => showPayloadValue(editor,'parameters','parameters-validation')});
+const proposalEditor = new WorkItemForms.Editor(byId('proposal-fields'));
+function send(op, extra = {}) {api.postMessage({op, id: selected?.id, revision: selected?.revision, ...extra});}
 function object(id) {
-    const value = JSON.parse(byId(id).value);
-    if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('Use a JSON object.');
+    const value = (id === 'parameters' ? parametersEditor : payloadEditor).getValue();
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('This package expects an object payload. Add named fields in the form.');
     return value;
 }
-function select(item) {
-    selected = item;
-    byId('selection').textContent = item ? (item.name || item.id) : 'New input';
-    byId('payload').value = JSON.stringify(item?.payload || {}, null, 2);
-    const output = item?.role === 'output' || item?.queue_name?.endsWith('.outputs');
-    byId('payload').readOnly = !!output || (!!item && mode !== 'file');
-    byId('payload-fields').replaceChildren();
-    if (!output && mode !== 'managed') for (const [name, kind] of Object.entries(contract)) {
-        const label = document.createElement('label'); label.textContent = name + ' (' + kind + ', required) ';
-        const input = document.createElement(['object','array'].includes(kind) ? 'textarea' : 'input');
-        const value = item?.payload?.[name];
-        input.disabled = !!item && mode !== 'file';
-        if (kind === 'boolean') {input.type = 'checkbox'; input.checked = value === true;}
-        else {input.type = ['number','integer'].includes(kind) ? 'number' : 'text'; input.value = value === undefined ? '' : typeof value === 'object' ? JSON.stringify(value) : String(value); if (kind === 'integer') input.step = '1';}
-        input.oninput = () => {
-            try {
-                if (['number','integer'].includes(kind) && input.value.trim() === '') throw Error(name + ' is required.');
-                const payload = object('payload');
-                payload[name] = kind === 'boolean' ? input.checked : ['number','integer'].includes(kind) ? Number(input.value) : ['object','array','null'].includes(kind) ? JSON.parse(input.value) : input.value;
-                byId('payload').value = JSON.stringify(payload, null, 2); byId('validation').textContent = '';
-            } catch (error) {byId('validation').textContent = error.message;}
-        };
-        label.append(input); byId('payload-fields').append(label);
+function stashDraft() {
+    if (activeDraftKey && payloadDirty) drafts.set(activeDraftKey, {root:copyNode(payloadEditor.root), error:payloadEditor.error, revision:selected?.revision});
+}
+function select(item, fresh = false) {
+    stashDraft();
+    selected = item ? {...item} : undefined;
+    activeDraftKey = mode + ':' + (item?.id || 'new');
+    if (fresh) drafts.delete(activeDraftKey);
+    const saved = drafts.get(activeDraftKey);
+    let unchanged = false;
+    if (saved?.root && item) try {unchanged = WorkItemForms.stringify(WorkItemForms.toValue(saved.root)) === WorkItemForms.stringify(item.payload);} catch {}
+    if (saved && !unchanged) {
+        payloadEditor.root = copyNode(saved.root); payloadEditor.error = saved.error; payloadEditor.render(); payloadDirty = true;
+        if (selected) selected.revision = saved.revision;
+    } else {
+        drafts.delete(activeDraftKey); payloadEditor.setValue(item ? item.payload : {}); payloadDirty = false;
+        if (!item) for (const [name, type] of Object.entries(contract)) {
+            payloadEditor.root.entries.push({key:name,node:WorkItemForms.node(['integer','number'].includes(type) ? 'number' : type)});
+        }
     }
+    byId('selection').textContent = item ? (item.name || item.id) : 'New input';
+    const output = item?.role === 'output' || item?.queue_name?.endsWith('.outputs');
+    payloadEditor.setReadOnly(!!output || (!!item && mode !== 'file'));
+    byId('payload').readOnly = payloadEditor.readOnly;
+    byId('payload-apply-json').disabled = payloadEditor.readOnly;
+    showPayloadValue(payloadEditor,'payload','validation');
     byId('details').textContent = item ? JSON.stringify(item, null, 2) : '';
     byId('files').replaceChildren();
     for (const name of item?.files || []) {
@@ -45,6 +55,29 @@ function select(item) {
     byId('replay').disabled = !item || mode === 'managed' || mode === 'published';
     for (const id of ['run','debug']) byId(id).disabled = !item || !!output || mode === 'managed' || mode === 'published';
 }
+byId('payload-apply-json').onclick = () => {try {payloadEditor.setJSON(byId('payload').value);} catch(error) {byId('validation').textContent=error.message;}};
+byId('parameters-apply-json').onclick = () => {try {parametersEditor.setJSON(byId('parameters').value);} catch(error) {byId('parameters-validation').textContent=error.message;}};
+byId('reload-payload').onclick = () => select(items.find(item => item.id === selected?.id), true);
+byId('propose-fields').onclick = () => send('proposePayload', {instructions:byId('proposal-instructions').value});
+byId('apply-proposal').onclick = () => {
+    try {
+        if(!proposalTarget || proposalTarget.mode !== mode || proposalTarget.input_id !== selected?.id)throw Error('Return to the original draft before applying this proposal.');
+        const target=mode==='managed'?managedPayloadEditor:payloadEditor;
+        if(target.readOnly)throw Error('Create a new input draft before applying a proposal.');
+        target.setValue(proposalEditor.getValue());
+        if(mode==='managed')showPayloadValue(target,'managed-payload','managed-payload-validation');
+        else {payloadDirty=true;showPayloadValue(target,'payload','validation');}
+        byId('proposal-review').hidden=true;byId('status').textContent='Applied to draft only. Save or run requires a separate action.';
+    }
+    catch(error){byId('proposal-status').textContent=error.message;}
+};
+window.addEventListener('message', ({data}) => {
+    if(data.type === 'proposal-cancelled'){byId('status').textContent='Proposal cancelled. Draft unchanged.';return;}
+    if(data.type !== 'payload-proposal')return;
+    byId('status').textContent='Proposal ready for review.';
+    try {proposalEditor.setJSON(data.json);proposalTarget={mode:data.mode,input_id:data.input_id};byId('proposal-review').hidden=false;byId('proposal-status').textContent='Review these proposed fields and values, then explicitly apply them to the draft.';}
+    catch(error){proposalTarget=undefined;byId('proposal-review').hidden=true;byId('proposal-status').textContent='Proposal rejected: '+error.message;}
+});
 for (const id of ['create','save','replay','attach','run','debug']) byId(id).onclick = () => {
     try {
         const extra = {name: byId('name').value};
@@ -54,13 +87,9 @@ for (const id of ['create','save','replay','attach','run','debug']) byId(id).onc
         byId('validation').textContent = ''; send(id, extra);
     } catch (error) { byId('validation').textContent = error.message; }
 };
-byId('new').onclick = () => select(undefined);
+byId('new').onclick = () => select(undefined, true);
 byId('connect').onclick = () => send(mode === 'managed' ? 'managed.connect' : 'connect');
 byId('recover').onclick = () => send('recover');
-byId('contract-save').onclick = () => {
-    try {send('contract', {payload: object('contract'), revision: contractRevision});}
-    catch (error) {byId('validation').textContent = error.message;}
-};
 function showMode() {byId('local-root').hidden = mode === 'managed'; byId('managed-root').hidden = mode !== 'managed'; byId('local-queue-label').hidden = mode === 'managed';}
 byId('refresh').onclick = () => send(mode === 'managed' ? 'managed.refresh' : 'mode', {mode: byId('mode').value, queue: byId('queue').value});
 byId('mode').onchange = () => {mode = byId('mode').value; showMode(); items = []; byId('items').replaceChildren(); byId('receipts').replaceChildren(); select(undefined); send('mode', {mode, queue: byId('queue').value});};
@@ -73,12 +102,11 @@ window.addEventListener('message', ({data}) => {
     showMode();
     byId('mode').value = mode;
     byId('queue').value = data.queue || 'input';
-    byId('contract-save').disabled = mode === 'managed' || mode === 'published';
     byId('recover').disabled = mode !== 'sqlite';
     byId('run').textContent = mode === 'sqlite' ? 'Run next queue input (FIFO)' : 'Save & Run selected input';
     byId('debug').textContent = mode === 'sqlite' ? 'Debug next queue input (FIFO)' : 'Save & Debug selected input';
     contractRevision = data.contract_revision; contract = data.contract || {};
-    byId('contract').value = JSON.stringify(contract, null, 2);
+    byId('validation-hints').textContent = Object.keys(contract).length ? 'Declared required fields: ' + Object.entries(contract).map(([name,type]) => name + ' (' + type + ')').join(', ') : 'Add fields and choose their value types. No schema is required.';
     byId('package').textContent = data.package; byId('authority').textContent = data.authority;
     byId('status').textContent = items.length ? items.length + ' items. SQLite consumption is FIFO; refresh shows SDK-owned state.' : 'No items yet. Create an input with its payload, then add attachments and Run or Debug.';
     byId('items').replaceChildren();
@@ -89,10 +117,18 @@ window.addEventListener('message', ({data}) => {
         button.onclick = () => select(item); byId('items').append(button);
     }
     byId('receipts').replaceChildren();
+    const latest=(data.receipts || []).at(-1);
+    byId('last-execution').textContent=latest ? latest.state==='EXITED' ? 'Last execution '+(latest.exit_code===0?'succeeded':'failed')+' (exit '+latest.exit_code+').' : 'Last execution: '+latest.state+(latest.state==='TERMINATED'?' — exit code was not reported.':'') : '';
+    byId('latest-outputs').replaceChildren();
+    if(latest) for(const item of items.filter(item=>item.parent_id===latest.input || item.id.replaceAll('\\','/').includes('/native-'+latest.id+'/'))) {
+        const button=document.createElement('button');
+        const preview=item.payload && typeof item.payload==='object' ? Object.entries(item.payload).slice(0,3).map(([name,value])=>name+': '+(value===null?'null':typeof value==='object'?'structured value':String(value))).join(', ') : String(item.payload);
+        button.textContent='Output · '+preview;button.onclick=()=>select(item);byId('latest-outputs').append(button);
+    }
     for (const receipt of data.receipts || []) {
         const card = document.createElement('section');
         const title = document.createElement('h3'); title.textContent = receipt.mode + ' · ' + receipt.state + (receipt.exit_code !== undefined ? ' · exit ' + receipt.exit_code : ''); card.append(title);
-        const input = document.createElement('button'); input.textContent = 'Input: ' + receipt.input;
+        const input = document.createElement('button'); input.textContent = 'Input: ' + (items.find(item=>item.id===receipt.input)?.name || receipt.input);
         input.onclick = () => select(items.find(item => item.id === receipt.input)); card.append(input);
         const outputs = items.filter(item => item.parent_id === receipt.input || item.id.replaceAll('\\', '/').includes('/native-' + receipt.id + '/'));
         for (const output of outputs) {const button = document.createElement('button'); button.textContent = (receipt.mode === 'sqlite' ? 'SDK-related output: ' : 'Output: ') + output.id; button.onclick = () => select(output); card.append(button);}
@@ -103,4 +139,4 @@ window.addEventListener('message', ({data}) => {
     }
     select(items.find(item => item.id === (data.selectId || selected?.id)));
 });
-select(undefined); send('refresh');
+showPayloadValue(parametersEditor,'parameters','parameters-validation');select(undefined); send('refresh');

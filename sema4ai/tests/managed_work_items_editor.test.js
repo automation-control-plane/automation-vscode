@@ -10,7 +10,7 @@ test('Managed editor keeps queue/review/Run identity separate and gates controls
         set innerHTML(_){assert.fail('Runtime content must never become HTML');}};}
     const document={getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},createElement:element};
     const scope={document,acquireVsCodeApi:()=>({postMessage:message=>messages.push(JSON.parse(JSON.stringify(message)))}),window:{addEventListener:(_,callback)=>receivers.push(callback)}};
-    vm.runInNewContext(fs.readFileSync('resources/work-items/editor.js','utf8')+'\n'+fs.readFileSync('resources/work-items/managed-editor.js','utf8'),scope);
+    vm.runInNewContext(fs.readFileSync('resources/work-items/form.js','utf8')+'\n'+fs.readFileSync('resources/work-items/editor.js','utf8')+'\n'+fs.readFileSync('resources/work-items/managed-editor.js','utf8'),scope);
     const get=document.getElementById;
     get('mode').value='managed';get('mode').onchange();
     assert.equal(get('local-root').hidden,true);assert.equal(get('managed-root').hidden,false);

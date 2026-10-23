@@ -1,5 +1,7 @@
 /* Canonical Runtime projections; the host retains targets, bindings and keys. */
 let managedState = {}, managedLogCursor;
+const managedPayloadEditor=new WorkItemForms.Editor(byId('managed-payload-fields'),{onChange:editor=>showPayloadValue(editor,'managed-payload','managed-payload-validation')});
+byId('managed-payload-apply-json').onclick=()=>{try{managedPayloadEditor.setJSON(byId('managed-payload').value);}catch(error){byId('managed-payload-validation').textContent=error.message;}};
 function managedSend(op, extra = {}) {api.postMessage({op: 'managed.' + op, ...extra});}
 function managedButton(parent, label, callback) {const button = document.createElement('button'); button.textContent = label; button.onclick = callback; parent.append(button);}
 function managedAllowed(operation) {
@@ -17,7 +19,7 @@ byId('managed-more-reviews').onclick = () => managedSend('moreReviews');
 byId('managed-more-logs').onclick = () => managedSend('logs', {id:managedState.logs?.run_id,cursor:managedLogCursor});
 byId('managed-snapshot').onclick = () => managedSend('snapshot');
 byId('managed-enqueue').onclick = () => {
-    try {managedSend('enqueue', {payload:JSON.parse(byId('managed-payload').value)});}
+    try {managedSend('enqueue', {payload:managedPayloadEditor.getValue()});}
     catch (error) {byId('managed-status').textContent = error.message;}
 };
 for (const operation of ['retry','cancel']) byId('managed-' + operation).onclick = () => managedSend(operation,

@@ -17,6 +17,21 @@ from uuid import uuid4
 MAX_BYTES = 2 * 1024 * 1024
 
 
+def strict_json(text):
+    def pairs(entries):
+        result = {}
+        for name, value in entries:
+            if name in result:
+                raise ValueError(f"Duplicate field name: {name}")
+            result[name] = value
+        return result
+
+    def constant(value):
+        raise ValueError(f"Non-finite JSON value: {value}")
+
+    return json.loads(text, object_pairs_hook=pairs, parse_constant=constant)
+
+
 def component(value):
     if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,79}", value):
         raise ValueError("Use 1–80 letters, digits, underscores, dots or dashes.")
@@ -65,7 +80,7 @@ def handle(request):
     if mode not in {"file", "sqlite"}:
         raise ValueError("This bridge supports FileAdapter and SDK SQLite only.")
     contract_path = storage / "payload-contract.json"
-    contract = json.loads(contract_path.read_text()) if contract_path.exists() else {}
+    contract = strict_json(contract_path.read_text()) if contract_path.exists() else {}
 
     def checked_payload(value):
         value = payload(value)
@@ -107,7 +122,7 @@ def handle(request):
         if not any(path.is_relative_to(child(root, folder)) for folder in
                    ("devdata/work-items-in", "devdata/work-items-out")):
             raise ValueError("Not a local Work Item fixture.")
-        data = json.loads(path.read_text())
+        data = strict_json(path.read_text())
         if not isinstance(data, list) or not 0 <= int(index) < len(data):
             raise ValueError("Work Item no longer exists.")
         return path, int(index), data
@@ -130,8 +145,9 @@ def handle(request):
 
     if op == "list":
         receipts = []
-        for path in sorted((storage / "executions").glob("*/receipt.json"))[-100:]:
+        for path in sorted((storage / "executions").glob("*/receipt.json"), key=lambda path: path.stat().st_mtime)[-100:]:
             receipts.append(json.loads(path.read_text()))
+        receipts.sort(key=lambda receipt: receipt.get("created_at", ""))
         replays = [json.loads(path.read_text()) for path in sorted((storage / "replays").glob("*.json"))[-100:]]
         if adapter:
             items = adapter.list_items(queue_name=queue) + adapter.list_items(queue_name=queue + ".outputs")
@@ -145,7 +161,7 @@ def handle(request):
             for path in sorted(parent.glob("*/work-items.json")):
                 path = child(root, str(path.relative_to(root)))
                 try:
-                    data = json.loads(path.read_text())
+                    data = strict_json(path.read_text())
                     if not isinstance(data, list):
                         raise ValueError("Expected an array of Work Items.")
                     for index, value in enumerate(data):
@@ -259,9 +275,11 @@ def handle(request):
         path = child(storage, "executions/" + component(request["id"]) + "/receipt.json")
         value = json.loads(path.read_text())
         state = request["state"]
-        if state not in {"STARTED", "EXITED", "STOPPED", "CANCELLED", "LAUNCH_REJECTED"}:
+        if state not in {"STARTED", "EXITED", "STOPPED", "TERMINATED", "CANCELLED", "LAUNCH_REJECTED"}:
             raise ValueError("Invalid execution receipt event.")
-        if state != "STOPPED" or value["state"] not in {"EXITED", "CANCELLED"}:
+        if not (value["state"] == "CANCELLED" and state == "EXITED") and (
+            state not in {"STOPPED", "TERMINATED"} or value["state"] not in {"EXITED", "CANCELLED"}
+        ):
             value["state"] = state
         value["updated_at"] = datetime.now(timezone.utc).isoformat()
         for name in ("session", "exit_code"):
@@ -277,7 +295,7 @@ def main():
         raw = sys.stdin.buffer.read(MAX_BYTES * 4 + 1)
         if len(raw) > MAX_BYTES * 4:
             raise ValueError("Request exceeds local editor limit.")
-        result = handle(json.loads(raw))
+        result = handle(strict_json(raw))
         print(json.dumps({"success": True, "result": result}, allow_nan=False))
     except Exception as error:
         print(json.dumps({"success": False, "message": str(error)}))
