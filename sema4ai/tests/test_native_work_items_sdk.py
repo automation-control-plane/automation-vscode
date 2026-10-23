@@ -69,7 +69,7 @@ a.release_input(key,State.DONE)
     def test_sqlite_fifo_scope_and_no_unsafe_edit(self):
         first = self.call("create", "sqlite", payload={"value": 1})["id"]
         second = self.call("create", "sqlite", payload={"value": 2})["id"]
-        with self.assertRaisesRegex(ValueError, "FIFO"):
+        with self.assertRaisesRegex(ValueError, "oldest waiting"):
             self.call("prepare", "sqlite", id=second)
         with self.assertRaisesRegex(ValueError, "different queue"):
             self.call("prepare", "sqlite", queue="unrelated", id=first)

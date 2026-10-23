@@ -13,7 +13,7 @@
         "url": "https://github.com/automation-control-plane/automation-vscode.git"
     },
     "license": "Apache-2.0",
-    "version": "2.20.7",
+    "version": "2.20.8",
     "icon": "images/automation-icon.png",
     "engines": {
         "vscode": "^1.101.0"

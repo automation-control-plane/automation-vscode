@@ -152,7 +152,7 @@ def handle(request):
         if adapter:
             items = adapter.list_items(queue_name=queue) + adapter.list_items(queue_name=queue + ".outputs")
             return {"items": items, "receipts": receipts, "replays": replays, "contract": contract, "contract_revision": digest(contract_path) if contract_path.exists() else None,
-                    "stats": adapter.get_queue_stats(queue), "authority": "actions-work-items SQLiteAdapter"}
+                    "stats": adapter.get_queue_stats(queue), "authority": "Stored in this package’s local queue. Task code updates item status and linked outputs."}
         items = []
         for role, folder in (("input", "work-items-in"), ("output", "work-items-out")):
             parent = child(root, "devdata/" + folder)
@@ -173,7 +173,7 @@ def handle(request):
                     items.append({"id": str(path.relative_to(root)) + "#0", "name": path.parent.name,
                                   "state": "INVALID", "error_message": str(error), "role": role})
         return {"items": items, "receipts": receipts, "replays": replays, "contract": contract, "contract_revision": digest(contract_path) if contract_path.exists() else None,
-                "authority": "Local test fixtures; execution receipts are not Runtime Runs"}
+                "authority": "Local inputs and outputs for this package."}
     if op in {"create", "replay"}:
         value, files = checked_payload(request.get("payload", {})) if op == "create" else {}, files_from_request()
         parent_id = None
@@ -247,7 +247,7 @@ def handle(request):
             checked_payload(item["payload"])
             pending = [v for v in adapter.list_items(queue_name=queue) if v["state"] == "PENDING"]
             if len(pending) >= 100 or not pending or pending[-1]["id"] != key:
-                raise ValueError("SDK SQLite reserves FIFO. Choose the oldest pending input; queues of 100+ items require a worker.")
+                raise ValueError("This queue runs its oldest waiting input. Select that input, or use a separate test queue. This view supports fewer than 100 waiting inputs per queue.")
             env = {"RC_WORKITEM_ADAPTER": "SQLiteAdapter", "RC_WORKITEM_DB_PATH": str(storage / "queue.db"),
                    "RC_WORKITEM_FILES_DIR": str(storage / "files"), "RC_WORKITEM_QUEUE_NAME": queue,
                    "RC_WORKITEM_OUTPUT_QUEUE_NAME": queue + ".outputs"}

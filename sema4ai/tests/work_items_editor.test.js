@@ -35,7 +35,7 @@ test('Empty input -> field/value form -> create -> save/debug -> output without 
     e.get('files').children[0].onclick();assert.equal(e.messages.at(-1).op,'download');
     e.receive({type:'state',mode:'file',package:'/workspace/action/package.yaml',items:[{id:'input#0',name:'invoice',role:'input',payload:{value:8},files:[],revision:'new',state:'LOCAL_FIXTURE'},
         {id:'devdata/work-items-out/native-run1/work-items.json#0',role:'output',payload:{observed:8},files:[],state:'LOCAL_FIXTURE'}],receipts:[{id:'run1',mode:'file',input:'input#0',state:'EXITED',exit_code:0}]});
-    const card=e.get('receipts').children[0];assert.equal(card.children[0].textContent,'file · EXITED · exit 0');card.children[2].onclick();
+    const card=e.get('receipts').children[0];assert.equal(card.children[0].textContent,'Local input · Finished · exit 0');card.children[2].onclick();
     assert.equal(e.get('save').disabled,true);assert.equal(e.get('payload-apply-json').disabled,true);
 });
 

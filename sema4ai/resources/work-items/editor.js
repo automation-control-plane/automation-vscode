@@ -103,12 +103,12 @@ window.addEventListener('message', ({data}) => {
     byId('mode').value = mode;
     byId('queue').value = data.queue || 'input';
     byId('recover').disabled = mode !== 'sqlite';
-    byId('run').textContent = mode === 'sqlite' ? 'Run next queue input (FIFO)' : 'Save & Run selected input';
-    byId('debug').textContent = mode === 'sqlite' ? 'Debug next queue input (FIFO)' : 'Save & Debug selected input';
+    byId('run').textContent = mode === 'sqlite' ? 'Run next input' : 'Save & Run selected input';
+    byId('debug').textContent = mode === 'sqlite' ? 'Debug next input' : 'Save & Debug selected input';
     contractRevision = data.contract_revision; contract = data.contract || {};
     byId('validation-hints').textContent = Object.keys(contract).length ? 'Declared required fields: ' + Object.entries(contract).map(([name,type]) => name + ' (' + type + ')').join(', ') : 'Add fields and choose their value types. No schema is required.';
     byId('package').textContent = data.package; byId('authority').textContent = data.authority;
-    byId('status').textContent = items.length ? items.length + ' items. SQLite consumption is FIFO; refresh shows SDK-owned state.' : 'No items yet. Create an input with its payload, then add attachments and Run or Debug.';
+    byId('status').textContent = items.length ? items.length + ' inputs and outputs. Select an input to work with it.' : 'No items yet. Create an input with its payload, then add attachments and Run or Debug.';
     byId('items').replaceChildren();
     for (const item of items) {
         const replay = (data.replays || []).find(entry => entry.copy === item.id && entry.mode === mode);
@@ -127,14 +127,14 @@ window.addEventListener('message', ({data}) => {
     }
     for (const receipt of data.receipts || []) {
         const card = document.createElement('section');
-        const title = document.createElement('h3'); title.textContent = receipt.mode + ' · ' + receipt.state + (receipt.exit_code !== undefined ? ' · exit ' + receipt.exit_code : ''); card.append(title);
+        const title = document.createElement('h3'); title.textContent = (receipt.mode === 'sqlite' ? 'Local queue' : 'Local input') + ' · ' + ({STARTED:'Running',PREPARED:'Ready to run',CANCELLED:'Cancelled by you',LAUNCH_REJECTED:'Could not start',TERMINATED:'Finished; exit code unavailable',STOPPED:'Session ended',EXITED:'Finished'}[receipt.state] || receipt.state) + (receipt.exit_code !== undefined ? ' · exit ' + receipt.exit_code : ''); card.append(title);
         const input = document.createElement('button'); input.textContent = 'Input: ' + (items.find(item=>item.id===receipt.input)?.name || receipt.input);
         input.onclick = () => select(items.find(item => item.id === receipt.input)); card.append(input);
         const outputs = items.filter(item => item.parent_id === receipt.input || item.id.replaceAll('\\', '/').includes('/native-' + receipt.id + '/'));
-        for (const output of outputs) {const button = document.createElement('button'); button.textContent = (receipt.mode === 'sqlite' ? 'SDK-related output: ' : 'Output: ') + output.id; button.onclick = () => select(output); card.append(button);}
+        for (const output of outputs) {const button = document.createElement('button'); button.textContent = (receipt.mode === 'sqlite' ? 'Linked output: ' : 'Output: ') + output.id; button.onclick = () => select(output); card.append(button);}
         const detail = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = 'Execution identity and provenance'; detail.append(summary);
         const raw = document.createElement('pre'); raw.textContent = JSON.stringify(receipt, null, 2); detail.append(raw); card.append(detail); byId('receipts').append(card);
-        if (receipt.state === 'STARTED' && !receipt.session_active) {const note = document.createElement('p'); note.textContent = 'Previous session is not tracked by this Extension Host. Refresh SDK queue state; no process will be adopted or stopped.'; byId('receipts').append(note);}
+        if (receipt.state === 'STARTED' && !receipt.session_active) {const note = document.createElement('p'); note.textContent = 'This execution belongs to a previous editor session. Refresh item status to see its saved results.'; byId('receipts').append(note);}
         if (receipt.session_active) {const button = document.createElement('button'); button.textContent = 'Stop ' + receipt.id; button.onclick = () => send('cancel', {id: receipt.id}); byId('receipts').append(button);}
     }
     select(items.find(item => item.id === (data.selectId || selected?.id)));

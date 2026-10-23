@@ -2,19 +2,31 @@
 
 Open **Automation → Package Resources → Work Items**, or run **Automation: Open Native Work Items** after selecting an Action Package or Robot Task. Existing command/configuration identifiers and legacy Robot fixture tooling remain compatible. The owned SDK path opens the dedicated editor from New Work Item and item clicks; legacy Robots without the owned SDK keep the earlier fixture creation flow.
 
-## Local test files
+## Create and edit with forms
 
-1. Select **Local test files**, enter a payload object and choose **Create input**. The editor creates a unique new fixture, selects it and preserves all existing files.
-2. Add attachments with **Add attachment**; filenames and sizes are validated, and an existing attachment is never overwritten. A file button saves a copy to a new destination.
-3. Optionally expand **Required payload field types** and declare a map such as `{"value":"integer"}`. These are required top-level types; extra fields are allowed. This deliberately bounded contract is not full JSON Schema. It is package-local and separate from Action parameter types. Invalid types block create/save/launch.
-4. Set Action parameters in the separate section, select **Run** or **Debug**, then choose the Action or Robot task. There is no first-run parameter-file generation/relaunch step. The extension uses its existing interpreter resolution and debugger.
-5. Refresh to inspect outputs and linked execution receipts. File launches use an immutable private snapshot of the selected input and its attachments; the authored input remains unchanged. Outputs are read-only; **Replay as new input** creates a distinct copy and records its source.
+1. Select **Local inputs**, then **New input**. The default payload is an empty field form.
+2. Click **Add field**, name it `value`, select **number**, and enter `7`. Choose **Create input**. No JSON or schema authoring is required.
+3. Choose **Add attachment** and select a synthetic file. Existing files are never overwritten. Attachment buttons save a copy to a new destination.
+4. Choose **Save & Run** or **Save & Debug**, then select the Action or Robot task. The supplied demos need no Action parameters. Other Action parameters have their own field form, separate from the Work Item payload.
+5. Inspect the output through its field form and linked execution history. File launches use a private snapshot of the selected payload and attachments. Outputs are read-only; replay creates a distinct input and retains its source identity.
 
-The editor edits payloads rather than exposing the fixture envelope and attachment-path schema. Its backend runs with the selected package interpreter and requires **actions-work-items==0.4.4** for both new Action and Robot flows. Action dependency checks specifically require the owned library; a vendor or legacy library cannot satisfy them. Legacy Robot commands remain available separately.
+Each field supports string, number, boolean, null, object or array. Objects have **Add field / Remove field** controls; arrays have **Add item / Remove item** controls. Existing values provide their actual types. Existing package constraints provide field hints when available; there is no schema-creation prerequisite. A Work Item payload contract is never inferred from an Action argument schema.
+
+**Advanced JSON** is an optional, collapsed view. Applying it roundtrips supported JSON values through the same form. Malformed JSON, duplicate names (including escaped-equivalent names), non-finite numbers and integers outside JavaScript's exact range are rejected. Use strings for very large identifiers. Own keys such as `__proto__` and `constructor` remain data in containers without a prototype; they never become executable HTML or prototype assignments. Backend parsing also rejects duplicate/non-finite JSON.
+
+Unsaved form drafts survive refresh and metadata updates. A draft keeps its original saved revision so external changes cannot be overwritten silently. **Reload saved values** explicitly discards that draft and reads current data. Invalid edits remain visible for correction.
+
+The editor's bridge runs with the selected package interpreter and requires **actions-work-items==0.4.4** for new Action and Robot flows. Action dependency checks specifically require the owned library. Legacy Robot commands remain compatible separately.
+
+## Optional field proposals
+
+Expand **Propose fields with an existing VS Code model**, describe the desired names/values in ordinary text and choose **Generate field proposal**. The extension uses only models already exposed through VS Code's supported language-model API, with explicit model selection/consent. It does not configure a new service, credentials or billing. Only the entered description is sent; package files, existing payloads and attachments are not automatically included.
+
+Review and edit the proposed fields, then explicitly **Apply reviewed proposal to draft**. This changes only the in-memory draft. Saving, running, claiming, enqueueing and approving remain separate actions. A proposal cannot apply to another mode/item after navigation. No tools are supplied to the model. Missing providers, denied consent, cancellation, timeout and malformed proposals leave the existing draft intact. Actual provider invocation requires an already available authorized provider; coding tests use a model fixture and make no paid/model-service calls.
 
 ## SDK SQLite development queue
 
-Select **SDK SQLite queue** and name a queue (default `input`). Storage is private to the package under `devdata/automation-work-items`: `queue.db`, attachment files, payload contract, local execution receipts and replay provenance. All queue operations use public published `SQLiteAdapter` APIs; the extension contains no SQL, queue scheduler or worker authority.
+Select **Persistent local queue** and name a queue (default `input`). Storage is private to the package under `devdata/automation-work-items`: `queue.db`, attachment files, payload contract, local execution receipts and replay provenance. All queue operations use public published `SQLiteAdapter` APIs; the extension contains no SQL, queue scheduler or worker authority.
 
 Create seeds an input; a workload reserves it and reports completion/failure through the SDK. Outputs retain actual SDK `parent_id`, item IDs, queue and state. Refresh/reopening reads persistent SDK state. Replay makes a new input rather than resetting a terminal item. Published SQLite has no conditional payload edit, so the editor refuses in-place queue edits and offers replay. It does not pretend a read-before-write check is a fenced mutation.
 
@@ -22,13 +34,21 @@ Create seeds an input; a workload reserves it and reports completion/failure thr
 
 **Recover expired claims** explicitly invokes the SDK's public orphan recovery using its configured timeout (default 30 minutes), with confirmation. It applies across this package database. Stopping a local execution does not mark its business item completed or pretend to perform a managed cancellation. No unknown process is adopted or stopped. Existing operator Work Items environment overrides cause a clear launch conflict instead of being overwritten.
 
-## Authenticated published Runtime
+## Published Runtime storage versus canonical managed mode
 
-Select **Managed Runtime**, then **Connect / reconnect Runtime**. Use an explicit HTTPS origin, or loopback HTTP, and an API token. The host verifies `/config` version **1.0.4**, authentication enabled and an authorized Work Items read before enabling mutations. Tokens are stored in VS Code SecretStorage scoped to package plus origin, never in workspace files, webview messages or logs. Empty token input can reuse that package's stored token; Escape cancels.
+**Runtime storage (1.0.4)** explicitly exposes the published `/api/work-items` item/attachment API. Connect with an explicit HTTPS origin (or loopback HTTP) and a token. The client verifies version/authentication and an authorized read before mutations. Tokens remain in VS Code SecretStorage, scoped to package plus origin, never in workspace data, webview messages or logs. Enqueue/upload require explicit confirmation; reads/downloads preserve exact bytes, including JSON attachments. Errors never trigger local fallback.
 
-Published support: list a named queue, seed an input with explicit confirmation, inspect server-owned identity/state/payload/files, upload with confirmation and download attachments. Reads are bounded; redirects are not followed. Authentication denial, unavailable capability, invalid payload, version mismatch and connection failures remain explicit; the client never falls back to a local queue.
+**Managed queues** is a separate client for `actions.managed-work-items/v1`, pinned to Actions contract1520f348 (identical at verifiedd2825109). It negotiates the exact generated schema, Runtime1.1.0a13 / fencedSDK0.5.0a1 floor, installed operations, permissions, workspace and database time. These are unreleased candidates, not published1.0.4 or SDK0.4.4. Local modes do not depend on them.
 
-**Not implemented/available as a canonical managed contract:** item-specific Run dispatch, Run/Attempt linkage, fenced lease/heartbeat, retry/dead-letter, cancellation, review/approval, resource-scoped workspace authorization and linked logs/results/artifacts. Published Runtime 1.0.4's Work Items router does not expose them. Candidate APIs are rejected until their exact authenticated capability/schema contract is integrated and tested. The Actions #132/#327 sole integrator owns these server contracts; the extension owns the client. No proprietary Control Room/Studio substitution or direct server-database access is used.
+The native client projects discovered queues, separate queue/business states, exact review proposals, admitted snapshots, actual Runs/Attempts, logs and verified artifacts. Only advertised/granted operations are enabled, and the server rechecks live scoped authority. Explicit mutations retain the exact idempotency key/body before submission. Uncertain results remain retained across reconnect for explicit reconciliation with the same key; there is no automatic retry, new key, local lease loop, queue scheduler or SQL access. Review approval uses the exact server proposal/binding; direct enqueue cannot create an approval. Artifact copies check identity, offsets, size and digest and never overwrite an existing destination.
+
+**Managed acceptance remains incomplete.** The integrator's last verified source still describes a router factory that is not mounted on ordinary startup; real SQL/auth bootstrap and installed-server/VSIX acceptance remain required. The contract also lacks an authoritative terminal item epoch for retry/cancel after a claim is released; no epoch is guessed. An empty direct-enqueue queue needs an admitted snapshot source. These are explicit Actions #132/#327 dependencies. Client transport/controller/renderer fixtures do not establish real server execution, scoped grants, leases, retry/review semantics or artifacts.
+
+## Robot Run completion
+
+Robot **Run** retains the original RCC task command. The existing terminal PID wrapper already waits for that exact RCC child; it now records its actual child PID/exit code in a task-owned exclusive receipt and removes the private control variable before launching the task. DAP waits briefly for that receipt and sends `exited` before `terminated`. Direct Popen mode reports its actual wait status. No terminal text is parsed and no success is inferred from output existence.
+
+Native receipt tracking preserves `EXITED/<actual code>` through the later session termination event. If a platform fails to provide completion evidence, it shows `TERMINATED` with unknown exit code; it does not claim the user clicked Stop. Actual user cancellation stays distinct. Action/Robot **Debug** retains the existing debugpy path. Windows/macOS lifecycle execution remains untested.
 
 ## Qualification and desktop handoff
 
@@ -36,8 +56,8 @@ Source regressions distinguish the real SDK/process tests from simulated editor/
 
 Desktop QA must install the exact replacement VSIX and repeat both fixture packages from `sema4ai/tests/fixtures/native_work_items/` in a task-owned workspace:
 
-- Action **and** Robot: create payload 7, attach a synthetic file, select, Run, Debug with breakpoint at `value = item.payload`, continue and observe output 7. Repeat File and SQLite modes; verify interpreter/home paths and actual input/output IDs.
-- Save a declared integer contract and reject a string payload; preserve invalid edits until corrected. Reject stale fixture revisions, traversal names, attachment conflicts and cross-package paths.
+- Action **and** Robot: start with an empty item, use Add field / number / value7 without touching JSON or a schema, create, attach a synthetic file, select, Run, Debug with breakpoint at `value = item.payload`, continue and observe output 7. Repeat File and SQLite modes; verify interpreter/home paths and actual input/output IDs.
+- Exercise nested objects/arrays and basic types, duplicate names, optional advanced JSON roundtrip and an already-declared integer constraint; preserve invalid and unsaved drafts through refresh/metadata updates. Reject stale fixture revisions, traversal names, attachment conflicts and cross-package paths.
 - Observe execution/session/exit provenance and input-to-output navigation; close/reopen the editor while running, refresh after stop and retain SDK state. Stop only the extension-owned session. After an Extension Host restart, old sessions are explicitly untracked and are never adopted.
 - SQLite: fail a synthetic item, replay with new identity, restart and recover only expired claims under explicit confirmation; demonstrate FIFO limitation and package/queue isolation.
 - Authenticated Runtime: synthetic token connect, enqueue/list/files, invalid payload, bad token/revocation, offline/reconnect, and unknown candidate version. Managed lifecycle/scoped-denial/artifact workflows remain blocked until canonical server contracts exist; do not substitute the published subset for full acceptance.
