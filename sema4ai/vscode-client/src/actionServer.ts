@@ -14,6 +14,7 @@ import { convertDataServerInfoToEnvVar } from "./robo/actionPackage";
 import { createHash } from "crypto";
 import { withStudioEnvironment } from "./runtimePaths";
 import { assertRuntimePortAvailable, runtimeServerPort } from "./runtimeServerConfig";
+import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 
 const ACTION_SERVER_DEFAULT_PORT = 8082;
 const ACTION_SERVER_TERMINAL_NAME = "Automation: Action Server";
@@ -169,11 +170,11 @@ const startActionServerInternal = async (directory: Uri) => {
     let credentialApi: string | undefined;
     let dataServerInfo: string | undefined;
     try {
-        if (!env.SEMA4AI_CREDENTIAL_API) {
+        if (legacyVendorIntegrationsEnabled() && !env.SEMA4AI_CREDENTIAL_API) {
             credentialApi = await langServer.sendRequest("getExternalApiUrl");
         }
         if (
-            !env.SEMA4AI_DATA_SERVER_INFO &&
+            legacyVendorIntegrationsEnabled() && !env.SEMA4AI_DATA_SERVER_INFO &&
             (await commands.getCommands(true)).includes(DATA_SERVER_STATUS_COMMAND_ID)
         ) {
             const status = await fetchDataServerStatus();

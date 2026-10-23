@@ -1,5 +1,6 @@
 import enum
 from typing import Optional, Union
+from commands import LEGACY_VENDOR_COMMANDS, LEGACY_VENDOR_WHEN
 
 
 class TreeView:
@@ -11,6 +12,7 @@ class TreeView:
         menus,
         add_to_package_json=True,
         visibility=None,
+        when=None,
     ):
         self.id = id
         self.name = name
@@ -18,6 +20,7 @@ class TreeView:
         self.menus = menus
         self.add_to_package_json = add_to_package_json
         self.visibility = visibility
+        self.when = when
 
 
 class TreeViewContainer:
@@ -338,6 +341,7 @@ TREE_VIEW_CONTAINERS = [
             TreeView(
                 id="sema4ai-cloud-tree",
                 name="Control Room (legacy integration)",
+                when=LEGACY_VENDOR_WHEN,
                 contextual_title="Automation",
                 visibility="collapsed",
                 menus={
@@ -414,6 +418,8 @@ def create_tree_in_package_json(tree):
     }
     if tree.visibility is not None:
         ret["visibility"] = tree.visibility
+    if tree.when is not None:
+        ret["when"] = tree.when
     return ret
 
 
@@ -463,7 +469,9 @@ def get_menus():
                 for menu in menu_lst:
                     when = f"view == {tree_viewer.id}"
                     if menu.when:
-                        when += f" && {menu.when}"
+                        when += f" && ({menu.when})"
+                    if menu.command_id in LEGACY_VENDOR_COMMANDS:
+                        when += f" && {LEGACY_VENDOR_WHEN}"
                     item = {"command": menu.command_id, "when": when}
                     if menu.group:
                         if isinstance(menu.group, str):

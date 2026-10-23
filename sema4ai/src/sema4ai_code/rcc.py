@@ -1165,6 +1165,12 @@ class Rcc:
 
     @implements(IRcc.feedack_metric)
     def feedack_metric(self, name, value="+1") -> ActionResult[str]:
+        provider = self._config_provider()
+        config = provider.config if provider is not None else None
+        if config is None or not config.get_setting(
+            "sema4ai.legacyVendorIntegrations.enabled", bool, False
+        ):
+            return ActionResult(True)
         key = f"{name}.{value}"
         if key in self._feedback_metrics_reported:
             return ActionResult(True)

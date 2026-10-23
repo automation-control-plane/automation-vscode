@@ -39,6 +39,37 @@ interface MicrosoftPythonApi {
     settings?: { getExecutionDetails(resource?: Uri): { execCommand?: string[] | string } };
 }
 
+// Opaque environment item returned by Microsoft's public Environments API; never synthesize one.
+interface PythonEnvironmentSelection {
+    readonly envId: { id: string; managerId: string };
+    readonly execInfo: { run: { executable: string } };
+}
+
+interface PythonEnvironmentsApi {
+    resolveEnvironment?(python: Uri): Promise<PythonEnvironmentSelection | undefined>;
+    setEnvironment?(resource: Uri, environment: PythonEnvironmentSelection): Promise<void>;
+    getEnvironment?(resource: Uri): Promise<PythonEnvironmentSelection | undefined>;
+}
+
+async function getPythonEnvironmentsApi(resource: Uri): Promise<PythonEnvironmentsApi | undefined> {
+    const extension = extensions.getExtension<PythonEnvironmentsApi | undefined>("ms-python.vscode-python-envs");
+    if (!extension) {
+        return undefined;
+    }
+    // The companion ignores the legacy default=false; only explicit operator settings disable it.
+    const scopes = [resource, ...(workspace.workspaceFolders || []).map(folder => folder.uri)];
+    for (const scope of scopes) {
+        const setting = workspace.getConfiguration("python", scope).inspect<boolean>("useEnvironmentsExtension");
+        if (setting?.globalValue === false || setting?.workspaceValue === false || setting?.workspaceFolderValue === false) {
+            return undefined;
+        }
+    }
+    if (!extension.isActive) {
+        await extension.activate();
+    }
+    return extension.exports;
+}
+
 export function isEnvironmentFile(fsPath: string): boolean {
     return (
         fsPath.endsWith("conda.yaml") ||
@@ -267,6 +298,16 @@ export async function setPythonInterpreterForPythonExtension(pythonExe: string, 
             }
         }
     }
+    // Python 2026.10's public path API updates legacy storage. Environments owns a separate selection.
+    const environments = await getPythonEnvironmentsApi(uri);
+    if (environments?.resolveEnvironment && environments.setEnvironment) {
+        const selected = await environments.resolveEnvironment(Uri.file(pythonExe));
+        if (!selected) {
+            OUTPUT_CHANNEL.appendLine(`Python Environments could not resolve ${pythonExe}; its selection was not changed.`);
+            return;
+        }
+        await environments.setEnvironment(uri, selected);
+    }
 }
 
 export async function getPythonExecutable(
@@ -302,6 +343,15 @@ export async function getPythonExecutable(
                 }
             }
             await extension.exports.ready;
+            const environmentsApi = await getPythonEnvironmentsApi(resource);
+            if (environmentsApi?.getEnvironment) {
+                const selected = await environmentsApi.getEnvironment(resource);
+                const executable = selected?.execInfo.run.executable;
+                if (showInOutput) {
+                    OUTPUT_CHANNEL.appendLine(`Python Environments selected executable: ${executable || "unresolved"}`);
+                }
+                return executable;
+            }
             const environments = extension.exports.environments;
             if (environments?.getActiveEnvironmentPath && environments.resolveEnvironment) {
                 const selected = environments.getActiveEnvironmentPath(resource);

@@ -3,6 +3,7 @@ import * as path from "path";
 import * as pathModule from "path";
 import * as os from "os";
 import { runtimeHomes, runtimeEnvironment } from "./runtimePaths";
+import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 import { publishedTool, extensionIdentity } from "./publishedTools";
 import { createHash } from "crypto";
 import { configure as configureXHR } from "./requestLight";
@@ -159,6 +160,9 @@ async function downloadBaseAsZip(
     token: CancellationToken,
     zipDownloadLocation: string
 ) {
+    if (!legacyVendorIntegrationsEnabled()) {
+        throw new Error("Vendor prebuilt environments are disabled. Build the local environment with the verified published RCC.");
+    }
     let timing = new Timing();
     let httpSettings = workspace.getConfiguration("http");
     configureXHR(httpSettings.get<string>("proxy"), httpSettings.get<boolean>("proxyStrictSSL"));
@@ -543,6 +547,9 @@ interface IEnvInfo {
 }
 
 export async function feedback(name: string, value: string = "+1") {
+    if (!legacyVendorIntegrationsEnabled()) {
+        return;
+    }
     const rccLocation = await getRccLocation();
     let args: string[] = ["feedback", "metric", "--bundled", "--robocorp", "-t", "vscode", "-n", name, "-v", value];
 
@@ -565,6 +572,9 @@ const reportedErrorCodes = new Set();
  * @param errorCode The error code to be shown.
  */
 export async function feedbackAnyError(errorType: string, errorCode: string) {
+    if (!legacyVendorIntegrationsEnabled()) {
+        return;
+    }
     if (!errorCode) {
         return;
     }

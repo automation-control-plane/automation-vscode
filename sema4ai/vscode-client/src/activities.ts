@@ -1,4 +1,5 @@
 import { publishedWorkItemEnvironment } from "./runtimePaths";
+import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 import {
     commands,
     window,
@@ -900,8 +901,8 @@ export async function updateLaunchEnvironmentCommonTasksAndActions(
 ): Promise<Record<string, string>> {
     const newEnv = applyOutViewIntegrationEnvVars(environment);
 
-    const externalApiUrl: any = await langServer.sendRequest("getExternalApiUrl");
-    if (externalApiUrl) {
+    const externalApiUrl: unknown = legacyVendorIntegrationsEnabled() ? await langServer.sendRequest("getExternalApiUrl") : undefined;
+    if (typeof externalApiUrl === "string" && externalApiUrl) {
         newEnv["SEMA4AI_CREDENTIAL_API"] = externalApiUrl;
     }
 
@@ -1020,9 +1021,9 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
 
     const newEnv: { [key: string]: string } = await updateLaunchEnvironmentCommonTasksAndActions(environment);
 
-    let vaultInfoActionResult: ActionResult<IVaultInfo> = await commands.executeCommand(
+    let vaultInfoActionResult: ActionResult<IVaultInfo> = legacyVendorIntegrationsEnabled() ? await commands.executeCommand(
         roboCommands.SEMA4AI_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
-    );
+    ) : undefined;
     if (vaultInfoActionResult?.success) {
         const vaultInfo: IVaultInfo = vaultInfoActionResult.result;
         if (vaultInfo?.workspaceId) {

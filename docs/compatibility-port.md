@@ -4,7 +4,11 @@ This branch is an incomplete port of the full extension feature set. An installa
 VSIX is a checkpoint, not feature acceptance. No extension or release assets are
 published by this work. Apache-2.0 and upstream attribution remain in place.
 
-## Current checkpoint (2026-10-23)
+## Owned default workflow update: 2.20.4
+
+The next private candidate hides vendor Studio publishing, Control Room, vendor gallery and vendor support destinations by default. Local Action ZIP build/metadata, Runtime, run/debug and Work Items remain. Retained third party compatibility requires explicit `sema4ai.legacyVendorIntegrations.enabled`; it is not an owned cloud implementation. See the [supported operations, exact gaps and desktop follow-up](evidence/owned-ui-20261023/README.md). The Python Environments storage synchronization and Action resource-tree visibility are also adapted. New-candidate GUI and executable qualification are recorded separately; full feature scope remains open.
+
+## Earlier qualified checkpoint (2026-10-23)
 
 The privately installable candidate is **Automation Control Plane 2.20.3**, source
 `0c5bb00dc4b8aac9ef95efe48e4222a26d298399`. SHA256:

@@ -9,6 +9,7 @@ export function get<T>(key: string): T | undefined {
     return workspace.getConfiguration(section).get(name);
 }
 
+export const SEMA4AI_LEGACY_VENDOR_INTEGRATIONS_ENABLED = "sema4ai.legacyVendorIntegrations.enabled";
 export const SEMA4AI_ACTION_SERVER_PORT = "sema4ai.actionServer.port";
 export const SEMA4AI_LANGUAGE_SERVER_TCP_PORT = "sema4ai.language-server.tcp-port";
 export const SEMA4AI_LANGUAGE_SERVER_ARGS = "sema4ai.language-server.args";
@@ -27,6 +28,21 @@ export const SEMA4AI_VAULT_TOKEN_TIMEOUT_IN_MINUTES = "sema4ai.vaultTokenTimeout
 export const SEMA4AI_CODE_LENS_ROBO_LAUNCH = "sema4ai.codeLens.roboLaunch";
 export const SEMA4AI_CODE_LENS_ACTIONS_LAUNCH = "sema4ai.codeLens.actionsLaunch";
 export const SEMA4AI_CODE_LENS_DEV_TASK = "sema4ai.codeLens.devTask";
+
+export function getLegacyvendorintegrationsEnabled(): boolean {
+    let key = SEMA4AI_LEGACY_VENDOR_INTEGRATIONS_ENABLED;
+    return get<boolean>(key);
+}
+
+
+export async function setLegacyvendorintegrationsEnabled(value): Promise<void> {
+    let key = SEMA4AI_LEGACY_VENDOR_INTEGRATIONS_ENABLED;
+    let i = key.lastIndexOf('.');
+
+    let config = workspace.getConfiguration(key.slice(0, i));
+    await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
+}
+
 
 export function getActionserverPort(): number {
     let key = SEMA4AI_ACTION_SERVER_PORT;

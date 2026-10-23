@@ -45,12 +45,13 @@ test("Runtime launch propagates configured port/address and never adopts or shut
     };
     const load = Module._load;
     Module._load = function(name, parent, main) {
+        if (name === "vscode" && parent?.filename.endsWith("/legacyIntegrations.js")) return vscode;
         if (parent?.filename.endsWith("/actionServer.js")) {
             if (name === "vscode") return vscode;
-            if (name === "./runtimePaths" || name === "./runtimeServerConfig") return load.call(this, name, parent, main);
+            if (name === "./runtimePaths" || name === "./runtimeServerConfig" || name === "./legacyIntegrations") return load.call(this, name, parent, main);
             if (name === "./rcc") return {getRobocorpHome: async () => "/isolated", createEnvWithRobocorpHome: () => ({ACTIONS_HOME: "/isolated/actions", ROBOTS_HOME: "/isolated/robots"})};
             if (name === "./channel") return {OUTPUT_CHANNEL: {appendLine() {}}};
-            if (name === "./extension") return {langServer: {sendRequest: async () => undefined}};
+            if (name === "./extension") return {langServer: {sendRequest: assert.fail}};
             if (name.startsWith("./")) return {};
         }
         return load.call(this, name, parent, main);

@@ -44,6 +44,17 @@ class Provider:
         self.config.update(settings)
 
 
+def test_vendor_metrics_are_not_sent_by_default(monkeypatch):
+    from sema4ai_code.rcc import Rcc
+
+    provider = Provider({})
+    rcc = Rcc(provider)
+    calls = []
+    monkeypatch.setattr(rcc, "_run_rcc", lambda *args, **kwargs: calls.append(args))
+    assert rcc.feedack_metric("synthetic").success
+    assert calls == []
+
+
 def test_rcc_process_routes_homes_and_supported_flags(monkeypatch, tmp_path):
     import subprocess
     from sema4ai_code.rcc import Rcc

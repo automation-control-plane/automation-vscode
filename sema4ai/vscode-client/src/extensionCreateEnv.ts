@@ -239,19 +239,19 @@ async function verifyLongPathSupportOnWindows(
                     } else {
                         let result = await window.showErrorMessage(
                             "It was not possible to automatically enable windows long path support. " +
-                                "Please follow the instructions from https://robocorp.com/docs/troubleshooting/windows-long-path (press Ok to open in browser).",
+                                "Please follow Microsoft's Windows long path documentation (press Ok to open in browser).",
                             { "modal": true },
                             "Ok"
                             // Auto-cancel in modal
                         );
                         if (result == "Ok") {
                             await env.openExternal(
-                                Uri.parse("https://robocorp.com/docs/troubleshooting/windows-long-path")
+                                Uri.parse("https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation")
                             );
                         }
                     }
                 } else if (result == MANUALLY) {
-                    await env.openExternal(Uri.parse("https://robocorp.com/docs/troubleshooting/windows-long-path"));
+                    await env.openExternal(Uri.parse("https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation"));
                 } else if (result == NO) {
                     await setProceedwithlongpathsdisabled(true);
                     return true;

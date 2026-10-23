@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { TREE_VIEW_SEMA4AI_PACKAGE_RESOURCES_TREE } from "./robocorpViews";
-import { LocatorEntry, NO_PACKAGE_FOUND_MSG, RobotEntry, RobotEntryType } from "./viewsCommon";
+import { LocatorEntry, NO_PACKAGE_FOUND_MSG, RobotEntry } from "./viewsCommon";
 import { getSelectedRobot, getSingleTreeSelection, SingleTreeSelectionOpts } from "./viewsSelection";
 import { LocatorsTreeDataProvider } from "./viewsLocators";
 import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelectionTreeBase";
@@ -50,21 +50,12 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
                     tooltip:
                         "Inspectors which output code and locators (which identify how to locate a specific element in a given library).",
                 },
-            ];
-            if (
-                robotEntry.type !== RobotEntryType.Action &&
-                robotEntry.type !== RobotEntryType.ActionPackage &&
-                robotEntry.type !== RobotEntryType.ActionsInActionPackage &&
-                robotEntry.type !== RobotEntryType.ActionsInRobot
-            ) {
-                // No work items unless it's a task package (i.e.: Robot)
-                // Using reverse logic because we need to keep showing the Work Items in cases like RobotEntryType == Error
-                ret.push({
+                {
                     name: "Work Items",
                     resourcesTreeType: ROOT_TYPE,
                     subTree: SUBTREE_WORK_ITEMS,
-                });
-            }
+                },
+            ];
             return ret;
         }
 

@@ -1,5 +1,6 @@
 import { commands, extensions, window, ProgressLocation } from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
+import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 
 const DATA_EXTENSION_ID = "sema4ai.sema4ai-data-access";
 export const DATA_SERVER_STATUS_COMMAND_ID = "sema4ai-data.dataserver.status";
@@ -27,6 +28,10 @@ function isDataExtensionInstalled() {
 export async function verifyDataExtensionIsInstalled(
     msg: string = "It seems that the Sema4AI data extension is not installed. Do you wish to install it?"
 ) {
+    if (!legacyVendorIntegrationsEnabled()) {
+        window.showErrorMessage("Data Server compatibility is unavailable with the requested published tooling. No owned Data Server backend has been configured.");
+        return false;
+    }
     if (isDataExtensionInstalled()) {
         try {
             let extension = extensions.getExtension(DATA_EXTENSION_ID);

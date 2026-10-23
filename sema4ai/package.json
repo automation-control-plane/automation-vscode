@@ -13,7 +13,7 @@
         "url": "https://github.com/automation-control-plane/automation-vscode.git"
     },
     "license": "Apache-2.0",
-    "version": "2.20.3",
+    "version": "2.20.4",
     "icon": "images/automation-icon.png",
     "engines": {
         "vscode": "^1.101.0"
@@ -27,7 +27,7 @@
         "compile": "cd vscode-client && tsc -p ./ && cd ..",
         "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
         "pretest": "cd vscode-client && tsc -p ./ && cd ..",
-        "test": "node --test tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js",
+        "test": "node --test tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js tests/resources_tree.test.js tests/owned_workflow.test.js",
         "test:host": "node ./vscode-client/out/tests/runTests.js",
         "prettier": "npx prettier -c vscode-client/**/*.ts",
         "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
@@ -239,6 +239,11 @@
             "title": "Automation Language Server Configuration",
             "type": "object",
             "properties": {
+                "sema4ai.legacyVendorIntegrations.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Expose retained Sema4.ai Studio and Control Room compatibility integrations. These external services are not owned or provided by Automation Control Plane. Disabled by default; local package build, export and Runtime do not require them."
+                },
                 "sema4ai.actionServer.port": {
                     "type": "number",
                     "default": 8082,
@@ -369,7 +374,8 @@
                     "id": "sema4ai-cloud-tree",
                     "name": "Control Room (legacy integration)",
                     "contextualTitle": "Automation",
-                    "visibility": "collapsed"
+                    "visibility": "collapsed",
+                    "when": "config.sema4ai.legacyVendorIntegrations.enabled"
                 }
             ],
             "sema4ai-python-view-output": [
@@ -449,13 +455,15 @@
             {
                 "command": "sema4ai.uploadRobotToCloud",
                 "title": "Upload Task Package to Control Room",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.cloudLogin",
                 "title": "Link to Control Room",
                 "category": "Automation",
-                "icon": "$(link)"
+                "icon": "$(link)",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.runRobotRcc",
@@ -557,7 +565,8 @@
                 "command": "sema4ai.cloudLogout",
                 "title": "Unlink and remove credentials from Control Room",
                 "category": "Automation",
-                "icon": "$(debug-disconnect)"
+                "icon": "$(debug-disconnect)",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.refreshRobotsView",
@@ -608,7 +617,8 @@
                 "icon": {
                     "light": "images/light/refresh.svg",
                     "dark": "images/dark/refresh.svg"
-                }
+                },
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.removeLocatorFromJson",
@@ -626,7 +636,8 @@
                 "command": "sema4ai.openCloudHome",
                 "title": "Open cloud home",
                 "category": "Automation",
-                "icon": "$(cloud)"
+                "icon": "$(cloud)",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.newRobocorpInspectorBrowser",
@@ -728,7 +739,8 @@
                 "command": "sema4ai.cloudUploadRobotTreeSelection",
                 "title": "Upload Task Package to Control Room",
                 "category": "Automation",
-                "icon": "$(cloud-upload)"
+                "icon": "$(cloud-upload)",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.rccTerminalCreateRobotTreeSelection",
@@ -739,7 +751,8 @@
             {
                 "command": "sema4ai.submitIssue.internal",
                 "title": "Submit issue (internal)",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.submitIssue",
@@ -800,7 +813,8 @@
             {
                 "command": "sema4ai.updateLaunchEnv.getVaultEnv.internal",
                 "title": "Provides the environment variables related to the vault.",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.newWorkItemInWorkItemsView",
@@ -830,28 +844,33 @@
                 "command": "sema4ai.connectWorkspace",
                 "title": "Connect to Control Room Workspace (vault, storage, ...)",
                 "category": "Automation",
-                "icon": "$(lock)"
+                "icon": "$(lock)",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.disconnectWorkspace",
                 "title": "Disconnect from Control Room Workspace",
                 "category": "Automation",
-                "icon": "$(unlock)"
+                "icon": "$(unlock)",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.getConnectedVaultWorkspace.internal",
                 "title": "Gets workspace id currently connected",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.setConnectedVaultWorkspace.internal",
                 "title": "Sets the currently connected Control Room Workspace",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.openVaultHelp",
                 "title": "Open vault help",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.clearEnvAndRestart",
@@ -938,27 +957,32 @@
             {
                 "command": "sema4ai.actionPackagePublishToSema4AIStudioApp",
                 "title": "Publish Action Package to Sema4.ai Studio",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.actionServerCloudLogin",
                 "title": "Authenticate the Action Server to Control Room",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.actionServerCloudLogin.internal",
                 "title": "Authenticate the Action Server to Control Room (internal)",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.actionServerCloudVerifyLogin.internal",
                 "title": "Verify that the action server Control Room credentials are saved (internal)",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.actionServerCloudListOrganizations.internal",
                 "title": "List Action Server authenticated organizations (internal)",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.actionServerPackageBuild",
@@ -973,22 +997,26 @@
             {
                 "command": "sema4ai.actionServerPackageUpload.internal",
                 "title": "Upload action package to the Control Room (internal)",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.actionServerPackageStatus.internal",
                 "title": "Get action package upload status from the Control Room (internal)",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.actionServerPackageSetChangelog.internal",
                 "title": "Set action package changelog entry in the Control Room (internal)",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.actionServerPackagePublish",
                 "title": "Publish Action Package to Control Room",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.actionServerPackageMetadata",
@@ -1030,7 +1058,8 @@
             {
                 "command": "sema4ai.agentPackagePublishToSema4AIStudioApp",
                 "title": "Publish Agent Package to Sema4.ai Studio",
-                "category": "Automation"
+                "category": "Automation",
+                "enablement": "config.sema4ai.legacyVendorIntegrations.enabled"
             },
             {
                 "command": "sema4ai.agentPackageImport",
@@ -1133,12 +1162,12 @@
                 },
                 {
                     "command": "sema4ai.newFileInRobotContentView",
-                    "when": "view == sema4ai-package-content-tree && sema4ai:single-robot-selected && viewItem == directoryItem",
+                    "when": "view == sema4ai-package-content-tree && (sema4ai:single-robot-selected && viewItem == directoryItem)",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.newFolderInRobotContentView",
-                    "when": "view == sema4ai-package-content-tree && sema4ai:single-robot-selected && viewItem == directoryItem",
+                    "when": "view == sema4ai-package-content-tree && (sema4ai:single-robot-selected && viewItem == directoryItem)",
                     "group": "navigation"
                 },
                 {
@@ -1150,257 +1179,257 @@
             "view/item/context": [
                 {
                     "command": "sema4ai.robotsViewTaskRun",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == taskItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == taskItem)",
                     "group": "inline@1"
                 },
                 {
                     "command": "sema4ai.robotsViewTaskDebug",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == taskItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == taskItem)",
                     "group": "inline@2"
                 },
                 {
                     "command": "sema4ai.robotsViewActionOpen",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionItem)",
                     "group": "inline@1"
                 },
                 {
                     "command": "sema4ai.robotsViewActionEditInput",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionItem)",
                     "group": "inline@2"
                 },
                 {
                     "command": "sema4ai.robotsViewActionRun",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionItem)",
                     "group": "inline@3"
                 },
                 {
                     "command": "sema4ai.robotsViewActionDebug",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionItem)",
                     "group": "inline@4"
                 },
                 {
                     "command": "sema4ai.openRobotTreeSelection",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionsInRobotItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionsInRobotItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.openRobotCondaTreeSelection",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionsInRobotItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionsInRobotItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.rccTerminalCreateRobotTreeSelection",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionsInRobotItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionsInRobotItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.cloudUploadRobotTreeSelection",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionsInRobotItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionsInRobotItem) && config.sema4ai.legacyVendorIntegrations.enabled",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.robotsViewTaskRun",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == taskItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == taskItem)",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.robotsViewTaskDebug",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == taskItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == taskItem)",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.robotsViewActionRun",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionItem)",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.robotsViewActionDebug",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionItem)",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.robotsViewActionEditInput",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionItem)",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.robotsViewActionOpen",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == actionItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == actionItem)",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.openDataSourceDefinition",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == datasourceItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == datasourceItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.setupDataSource",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == datasourceItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == datasourceItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.dropDataSource",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == datasourceItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == datasourceItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.setupAllDataSources",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == datasourcesInActionPackageItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == datasourcesInActionPackageItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.dropAllDataSources",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == datasourcesInActionPackageItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == datasourcesInActionPackageItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.revealRobotInExplorer",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == robotItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == robotItem)",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.openRobotTreeSelection",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == robotItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == robotItem)",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.rccTerminalCreateRobotTreeSelection",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == robotItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == robotItem)",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.cloudUploadRobotTreeSelection",
-                    "when": "view == sema4ai-task-packages-tree && viewItem == robotItem",
+                    "when": "view == sema4ai-task-packages-tree && (viewItem == robotItem) && config.sema4ai.legacyVendorIntegrations.enabled",
                     "group": "navigation"
                 },
                 {
                     "command": "sema4ai.newFileInRobotContentView",
-                    "when": "view == sema4ai-package-content-tree && sema4ai:single-robot-selected && viewItem == directoryItem",
+                    "when": "view == sema4ai-package-content-tree && (sema4ai:single-robot-selected && viewItem == directoryItem)",
                     "group": "0_new"
                 },
                 {
                     "command": "sema4ai.newFolderInRobotContentView",
-                    "when": "view == sema4ai-package-content-tree && sema4ai:single-robot-selected && viewItem == directoryItem",
+                    "when": "view == sema4ai-package-content-tree && (sema4ai:single-robot-selected && viewItem == directoryItem)",
                     "group": "0_new"
                 },
                 {
                     "command": "sema4ai.openExternally",
-                    "when": "view == sema4ai-package-content-tree && sema4ai:single-robot-selected && viewItem == fileItem",
+                    "when": "view == sema4ai-package-content-tree && (sema4ai:single-robot-selected && viewItem == fileItem)",
                     "group": "1_open"
                 },
                 {
                     "command": "sema4ai.openInVSCode",
-                    "when": "view == sema4ai-package-content-tree && sema4ai:single-robot-selected && viewItem == fileItem",
+                    "when": "view == sema4ai-package-content-tree && (sema4ai:single-robot-selected && viewItem == fileItem)",
                     "group": "1_open"
                 },
                 {
                     "command": "sema4ai.revealInExplorer",
-                    "when": "view == sema4ai-package-content-tree && sema4ai:single-robot-selected",
+                    "when": "view == sema4ai-package-content-tree && (sema4ai:single-robot-selected)",
                     "group": "1_open"
                 },
                 {
                     "command": "sema4ai.renameResourceInRobotContentView",
-                    "when": "view == sema4ai-package-content-tree && sema4ai:single-robot-selected",
+                    "when": "view == sema4ai-package-content-tree && (sema4ai:single-robot-selected)",
                     "group": "2_change"
                 },
                 {
                     "command": "sema4ai.deleteResourceInRobotContentView",
-                    "when": "view == sema4ai-package-content-tree && sema4ai:single-robot-selected",
+                    "when": "view == sema4ai-package-content-tree && (sema4ai:single-robot-selected)",
                     "group": "2_change"
                 },
                 {
                     "command": "sema4ai.newRobocorpInspectorBrowser",
-                    "when": "view == sema4ai-package-resources-tree && sema4ai:single-robot-selected && viewItem == newBrowserLocator",
+                    "when": "view == sema4ai-package-resources-tree && (sema4ai:single-robot-selected && viewItem == newBrowserLocator)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.newRobocorpInspectorWindows",
-                    "when": "view == sema4ai-package-resources-tree && sema4ai:single-robot-selected && viewItem == newWindowsLocator",
+                    "when": "view == sema4ai-package-resources-tree && (sema4ai:single-robot-selected && viewItem == newWindowsLocator)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.newRobocorpInspectorImage",
-                    "when": "view == sema4ai-package-resources-tree && sema4ai:single-robot-selected && viewItem == newImageLocator",
+                    "when": "view == sema4ai-package-resources-tree && (sema4ai:single-robot-selected && viewItem == newImageLocator)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.newRobocorpInspectorJava",
-                    "when": "view == sema4ai-package-resources-tree && sema4ai:single-robot-selected && viewItem == newJavaLocator",
+                    "when": "view == sema4ai-package-resources-tree && (sema4ai:single-robot-selected && viewItem == newJavaLocator)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.openLocatorsJson",
-                    "when": "view == sema4ai-package-resources-tree && viewItem == locatorsRoot",
+                    "when": "view == sema4ai-package-resources-tree && (viewItem == locatorsRoot)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.editRobocorpInspectorLocator",
-                    "when": "view == sema4ai-package-resources-tree && sema4ai:single-robot-selected && viewItem == locatorEntry",
+                    "when": "view == sema4ai-package-resources-tree && (sema4ai:single-robot-selected && viewItem == locatorEntry)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.copyLocatorToClipboard.internal",
-                    "when": "view == sema4ai-package-resources-tree && sema4ai:single-robot-selected && viewItem == locatorEntry",
+                    "when": "view == sema4ai-package-resources-tree && (sema4ai:single-robot-selected && viewItem == locatorEntry)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.removeLocatorFromJson",
-                    "when": "view == sema4ai-package-resources-tree && sema4ai:single-robot-selected && viewItem == locatorEntry",
+                    "when": "view == sema4ai-package-resources-tree && (sema4ai:single-robot-selected && viewItem == locatorEntry)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.helpWorkItems",
-                    "when": "view == sema4ai-package-resources-tree && sema4ai:single-robot-selected && viewItem == workItemsRoot",
+                    "when": "view == sema4ai-package-resources-tree && (sema4ai:single-robot-selected && viewItem == workItemsRoot)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.newWorkItemInWorkItemsView",
-                    "when": "view == sema4ai-package-resources-tree && sema4ai:single-robot-selected && viewItem == inputWorkItemDir",
+                    "when": "view == sema4ai-package-resources-tree && (sema4ai:single-robot-selected && viewItem == inputWorkItemDir)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.deleteWorkItemInWorkItemsView",
-                    "when": "view == sema4ai-package-resources-tree && viewItem == outputWorkItem || viewItem == inputWorkItem",
+                    "when": "view == sema4ai-package-resources-tree && (viewItem == outputWorkItem || viewItem == inputWorkItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.convertOutputWorkItemToInput",
-                    "when": "view == sema4ai-package-resources-tree && viewItem == outputWorkItem",
+                    "when": "view == sema4ai-package-resources-tree && (viewItem == outputWorkItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.cloudLogin",
-                    "when": "view == sema4ai-cloud-tree && viewItem == cloudLoginItem",
+                    "when": "view == sema4ai-cloud-tree && (viewItem == cloudLoginItem) && config.sema4ai.legacyVendorIntegrations.enabled",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.cloudLogout",
-                    "when": "view == sema4ai-cloud-tree && viewItem == cloudLogoutItem",
+                    "when": "view == sema4ai-cloud-tree && (viewItem == cloudLogoutItem) && config.sema4ai.legacyVendorIntegrations.enabled",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.openCloudHome",
-                    "when": "view == sema4ai-cloud-tree && viewItem == cloudLogoutItem",
+                    "when": "view == sema4ai-cloud-tree && (viewItem == cloudLogoutItem) && config.sema4ai.legacyVendorIntegrations.enabled",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.connectWorkspace",
-                    "when": "view == sema4ai-cloud-tree && viewItem == workspaceDisconnected",
+                    "when": "view == sema4ai-cloud-tree && (viewItem == workspaceDisconnected) && config.sema4ai.legacyVendorIntegrations.enabled",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.disconnectWorkspace",
-                    "when": "view == sema4ai-cloud-tree && viewItem == workspaceConnected",
+                    "when": "view == sema4ai-cloud-tree && (viewItem == workspaceConnected) && config.sema4ai.legacyVendorIntegrations.enabled",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.profileImport",
-                    "when": "view == sema4ai-cloud-tree && viewItem == profileItem",
+                    "when": "view == sema4ai-cloud-tree && (viewItem == profileItem)",
                     "group": "inline"
                 },
                 {
                     "command": "sema4ai.profileSwitch",
-                    "when": "view == sema4ai-cloud-tree && viewItem == profileItem",
+                    "when": "view == sema4ai-cloud-tree && (viewItem == profileItem)",
                     "group": "inline"
                 }
             ],
@@ -1408,6 +1437,14 @@
                 {
                     "command": "sema4ai.createTaskOrActionOrAgentPackage",
                     "when": "false"
+                },
+                {
+                    "command": "sema4ai.uploadRobotToCloud",
+                    "when": "config.sema4ai.legacyVendorIntegrations.enabled"
+                },
+                {
+                    "command": "sema4ai.cloudLogin",
+                    "when": "config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.robotsViewTaskRun",
@@ -1446,6 +1483,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "sema4ai.cloudLogout",
+                    "when": "config.sema4ai.legacyVendorIntegrations.enabled"
+                },
+                {
                     "command": "sema4ai.refreshRobotContentView",
                     "when": "false"
                 },
@@ -1466,6 +1507,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "sema4ai.refreshCloudView",
+                    "when": "config.sema4ai.legacyVendorIntegrations.enabled"
+                },
+                {
                     "command": "sema4ai.removeLocatorFromJson",
                     "when": "false"
                 },
@@ -1475,7 +1520,7 @@
                 },
                 {
                     "command": "sema4ai.openCloudHome",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.openPlaywrightRecorder.internal",
@@ -1519,11 +1564,11 @@
                 },
                 {
                     "command": "sema4ai.cloudUploadRobotTreeSelection",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.submitIssue.internal",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.inspector.internal",
@@ -1551,7 +1596,7 @@
                 },
                 {
                     "command": "sema4ai.updateLaunchEnv.getVaultEnv.internal",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.deleteWorkItemInWorkItemsView",
@@ -1566,16 +1611,24 @@
                     "when": "false"
                 },
                 {
+                    "command": "sema4ai.connectWorkspace",
+                    "when": "config.sema4ai.legacyVendorIntegrations.enabled"
+                },
+                {
+                    "command": "sema4ai.disconnectWorkspace",
+                    "when": "config.sema4ai.legacyVendorIntegrations.enabled"
+                },
+                {
                     "command": "sema4ai.getConnectedVaultWorkspace.internal",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.setConnectedVaultWorkspace.internal",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.openVaultHelp",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.showInterpreterEnvError",
@@ -1614,20 +1667,24 @@
                     "when": "false"
                 },
                 {
+                    "command": "sema4ai.actionPackagePublishToSema4AIStudioApp",
+                    "when": "config.sema4ai.legacyVendorIntegrations.enabled"
+                },
+                {
                     "command": "sema4ai.actionServerCloudLogin",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.actionServerCloudLogin.internal",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.actionServerCloudVerifyLogin.internal",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.actionServerCloudListOrganizations.internal",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.actionServerPackageBuild.internal",
@@ -1635,19 +1692,19 @@
                 },
                 {
                     "command": "sema4ai.actionServerPackageUpload.internal",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.actionServerPackageStatus.internal",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.actionServerPackageSetChangelog.internal",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.actionServerPackagePublish",
-                    "when": "false"
+                    "when": "(false) && config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.actionServerPackageMetadata.internal",
@@ -1656,6 +1713,10 @@
                 {
                     "command": "sema4ai.openRunbookTreeSelection",
                     "when": "false"
+                },
+                {
+                    "command": "sema4ai.agentPackagePublishToSema4AIStudioApp",
+                    "when": "config.sema4ai.legacyVendorIntegrations.enabled"
                 },
                 {
                     "command": "sema4ai.getActionsMetadata",

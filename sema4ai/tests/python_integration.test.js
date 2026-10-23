@@ -1,13 +1,17 @@
 const {test} = require("node:test");
 const assert = require("node:assert/strict");
 const Module = require("node:module");
-let extension, resolvedInterpreter, resourceConfig;
+let extension, environmentsExtension, resolvedInterpreter, resourceConfig, environmentsEnabled;
 const output = [];
 const resource = {fsPath: "/work/action-package/package.yaml", toString: () => "file:///work/action-package/package.yaml"};
 const vscode = {
-    extensions: {getExtension: () => extension},
+    extensions: {getExtension: id => id === "ms-python.vscode-python-envs" ? environmentsExtension : extension},
+    Uri: {file: fsPath => ({fsPath})},
     workspace: {
-        getConfiguration: (_, uri) => {resourceConfig = uri; return {get: () => "/legacy/python", update: async () => {}};},
+        getConfiguration: (_, uri) => {resourceConfig = uri; return {
+            get: key => key === "useEnvironmentsExtension" ? false : "/legacy/python",
+            inspect: () => ({globalValue: environmentsEnabled}), update: async () => {},
+        };},
         getWorkspaceFolder: () => ({}),
     },
     window: {activeTextEditor: {document: {uri: resource}}},
@@ -80,4 +84,51 @@ test("Legacy execution-details and scoped configuration lookup remain available"
     extension.exports = {};
     assert.equal(await integration.getPythonExecutable(resource, true), "/legacy/python");
     assert.equal(resourceConfig, resource);
+});
+
+test("Python Environments selection synchronizes when the legacy Python API already has the RCC path", async () => {
+    const calls = [];
+    const rcc = {envId: {id: "rcc", managerId: "system"}, execInfo: {run: {executable: "/rcc/bin/python"}}};
+    let active = {execInfo: {run: {executable: "/system/python3.13"}}};
+    environmentsEnabled = undefined; // The legacy default is false; it is not an explicit opt-out.
+    environmentsExtension = {isActive: false, activate: async () => {calls.push("activate-envs"); environmentsExtension.isActive = true;}, exports: {
+        getEnvironment: async uri => {assert.equal(uri, resource); return active;},
+        resolveEnvironment: async uri => {assert.equal(uri.fsPath, "/rcc/bin/python"); return rcc;},
+        setEnvironment: async (uri, env) => {assert.equal(uri, resource); assert.equal(env, rcc); calls.push("select-envs"); active = env;},
+    }};
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python"}};
+    extension = {isActive: true, exports: {environments: {
+        getActiveEnvironmentPath: () => ({path: "/rcc/bin/python"}),
+        resolveEnvironment: async () => ({executable: {uri: {fsPath: "/rcc/bin/python"}}}),
+        updateActiveEnvironmentPath: async (_, uri) => {assert.equal(uri, resource); calls.push("select-python");},
+    }}};
+    try {
+        assert.equal(await integration.autoUpdateInterpreter(resource), true);
+        assert.deepEqual(calls, ["activate-envs", "select-python", "select-envs"]);
+        assert.equal(await integration.getPythonExecutable(resource), "/rcc/bin/python");
+    } finally {environmentsExtension = undefined; environmentsEnabled = undefined;}
+});
+
+test("Unresolved Python Environments metadata never clears a selection or changes global settings", async () => {
+    environmentsEnabled = true;
+    environmentsExtension = {isActive: true, exports: {
+        resolveEnvironment: async () => undefined,
+        setEnvironment: assert.fail,
+    }};
+    extension = {isActive: true, exports: {environments: {updateActiveEnvironmentPath: async (_, uri) => assert.equal(uri, resource)}}};
+    try {
+        await integration.setPythonInterpreterForPythonExtension("/rcc/bin/python", resource);
+        assert.ok(output.some(line => line.includes("Python Environments could not resolve /rcc/bin/python")));
+    } finally {environmentsExtension = undefined; environmentsEnabled = undefined;}
+});
+
+test("Explicitly disabled Python Environments keeps the scoped legacy API without activating the companion", async () => {
+    environmentsEnabled = false;
+    environmentsExtension = {isActive: false, activate: assert.fail};
+    const calls = [];
+    extension = {isActive: true, exports: {environments: {updateActiveEnvironmentPath: async (...args) => calls.push(args)}}};
+    try {
+        await integration.setPythonInterpreterForPythonExtension("/rcc/bin/python", resource);
+        assert.deepEqual(calls, [["/rcc/bin/python", resource]]);
+    } finally {environmentsExtension = undefined; environmentsEnabled = undefined;}
 });

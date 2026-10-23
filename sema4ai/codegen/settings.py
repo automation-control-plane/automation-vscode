@@ -32,6 +32,12 @@ class Setting:
 
 SETTINGS = [
     Setting(
+        "sema4ai.legacyVendorIntegrations.enabled",
+        False,
+        "Expose retained Sema4.ai Studio and Control Room compatibility integrations. These external services are not owned or provided by Automation Control Plane. Disabled by default; local package build, export and Runtime do not require them.",
+        setting_type="boolean",
+    ),
+    Setting(
         "sema4ai.actionServer.port",
         8082,
         "Loopback port for Actions Runtime. Choose an unused integer from 1 to 65535. Existing listeners are never stopped or adopted automatically.",

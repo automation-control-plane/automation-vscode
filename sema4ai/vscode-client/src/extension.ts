@@ -1,3 +1,4 @@
+import { isLegacyVendorCommand, legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 import { vendorStudioHome } from "./runtimePaths";
 /*
 Original work Copyright (c) Microsoft Corporation (MIT)
@@ -353,7 +354,13 @@ class CommandRegistry {
     }
 
     public registerWithoutStub(command: string, callback: (...args: any[]) => any, thisArg?: any): void {
-        this.context.subscriptions.push(commands.registerCommand(command, callback));
+        this.context.subscriptions.push(commands.registerCommand(command, (...args: any[]) => {
+            if (isLegacyVendorCommand(command) && !legacyVendorIntegrationsEnabled()) {
+                window.showWarningMessage("This vendor compatibility integration is disabled. No owned published backend is available; use local package build/export or Actions Runtime.");
+                return;
+            }
+            return callback.apply(thisArg, args);
+        }));
     }
 
     /**
@@ -362,6 +369,10 @@ class CommandRegistry {
     public register(command: string, callback: (...args: any[]) => any, thisArg?: any): void {
         const that = this;
         async function redirect() {
+            if (isLegacyVendorCommand(command) && !legacyVendorIntegrationsEnabled()) {
+                window.showWarningMessage("This vendor compatibility integration is disabled. No owned published backend is available; use local package build/export or Actions Runtime.");
+                return;
+            }
             if (that.useErrorStubs) {
                 notifyOfInitializationErrorShowOutputTab(that.errorMessage);
             } else {

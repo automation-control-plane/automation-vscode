@@ -9,6 +9,7 @@ import { isActionPackage, isAgentPackage } from "./common";
 import path = require("path");
 import { getDataSourceCaption, getDataSourceTooltip, listAllActionPackages } from "./robo/actionPackage";
 import { langServer } from "./extension";
+import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 
 let _globalSentMetric: boolean = false;
 
@@ -86,6 +87,9 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
     }
 
     async updateDatasourceStatuses(): Promise<void> {
+        if (!legacyVendorIntegrationsEnabled()) {
+            return;
+        }
         let actionResult: ActionResult<LocalPackageMetadataInfo[]> = await listAllActionPackages();
         if (!actionResult.success) {
             return;
@@ -164,6 +168,11 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
      */
     async getChildren(element?: RobotEntry): Promise<RobotEntry[]> {
         let ret = await this.computeChildren(element);
+        if (!legacyVendorIntegrationsEnabled()) {
+            ret = ret.filter(entry => entry.type !== RobotEntryType.UploadRobot &&
+                entry.type !== RobotEntryType.PackagePublishToSema4AIStudioApp &&
+                entry.type !== RobotEntryType.PublishAgentToSema4AIStudioApp);
+        }
         if (element === undefined) {
             // i.e.: this is the root entry, so, we've
             // collected the actual robots here.

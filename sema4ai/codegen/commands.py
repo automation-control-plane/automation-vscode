@@ -1,4 +1,9 @@
 from convert import convert_case_to_constant
+import json
+from pathlib import Path
+
+LEGACY_VENDOR_WHEN = "config.sema4ai.legacyVendorIntegrations.enabled"
+LEGACY_VENDOR_COMMANDS = frozenset(json.loads((Path(__file__).parent.parent / "legacy-integrations.json").read_text()))
 
 
 class Command:
@@ -1067,6 +1072,12 @@ COMMANDS = [
         hide_from_command_palette=False,
     ),
 ]
+
+
+for _command in COMMANDS:
+    if _command.name in LEGACY_VENDOR_COMMANDS:
+        _command.when_clause = f"({_command.when_clause}) && {LEGACY_VENDOR_WHEN}" if _command.when_clause else LEGACY_VENDOR_WHEN
+        _command.enablement = f"({_command.enablement}) && {LEGACY_VENDOR_WHEN}" if _command.enablement else LEGACY_VENDOR_WHEN
 
 
 def get_keybindings_for_json():

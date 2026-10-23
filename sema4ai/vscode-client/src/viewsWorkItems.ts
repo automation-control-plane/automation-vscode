@@ -212,7 +212,7 @@ export async function deleteWorkItemInWorkItemsTree(item: WorkItemFSEntry): Prom
 export function openWorkItemHelp() {
     vscode.env.openExternal(
         vscode.Uri.parse(
-            "https://robocorp.com/docs/developer-tools/visual-studio-code/extension-features#using-work-items"
+            "https://github.com/automation-control-plane/automation-vscode/blob/port/published-rcc-actions-20261022/docs/compatibility-port.md"
         )
     );
 }
