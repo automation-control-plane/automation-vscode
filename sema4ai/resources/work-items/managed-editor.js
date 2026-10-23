@@ -3,7 +3,7 @@ let managedState = {}, managedLogCursor;
 const managedPayloadEditor=new WorkItemForms.Editor(byId('managed-payload-fields'),{onChange:editor=>{showPayloadValue(editor,'managed-payload','managed-payload-validation');persistEditorState();}});
 byId('managed-payload-apply-json').onclick=()=>{try{managedPayloadEditor.setJSON(byId('managed-payload').value);}catch(error){byId('managed-payload-validation').textContent=error.message;}};
 function managedSend(op, extra = {}) {api.postMessage({op: 'managed.' + op, ...extra});}
-function managedButton(parent, label, callback) {const button = document.createElement('button'); button.textContent = label; button.onclick = callback; parent.append(button);}
+function managedButton(parent, label, callback, metadata) {const button = document.createElement('button'); button.className='list-item'; if(metadata) button.append(textElement('span',label,'item-title'),textElement('span',metadata,'item-meta')); else button.textContent=label; button.onclick = callback; parent.append(button); return button;}
 function managedAllowed(operation) {
     const permission = {
         'queues.list':'work_items.read','items.list':'work_items.read','items.get':'work_items.read','items.enqueue':'work_items.enqueue',
@@ -31,17 +31,29 @@ byId('managed-complete').onclick = () => managedSend('complete', {outcome:byId('
 window.addEventListener('message', ({data}) => {
     if (data.type !== 'managed-state') return;
     managedState = data; mode = 'managed'; byId('mode').value = mode; showMode();
-    byId('status').textContent = ''; byId('managed-status').textContent = data.message || (data.capabilities ? 'Connected. Runtime authority and live permissions govern every operation.' : 'Not connected.');
+    byId('status').textContent = '';
+    byId('managed-title').textContent = data.item ? 'Item ' + data.item.id : data.review ? 'Review ' + data.review.proposal.review_id : data.queue?.label || 'Managed Work Items';
+    byId('managed-snapshot').disabled = !data.queue || !data.capabilities;
+    byId('managed-snapshot').title = byId('managed-snapshot').disabled ? 'Connect and select an authorized queue first.' : 'Load an admitted snapshot; this does not execute it.'; byId('managed-status').textContent = data.message || (data.capabilities ? 'Connected. Runtime authority and live permissions govern every operation.' : 'Not connected.');
     byId('managed-identity').textContent = data.capabilities ? `${data.endpoint} · Workspace ${data.workspace} · Runtime ${data.capabilities.runtime_version} · SDK ${data.capabilities.sdk_version} · ${data.capabilities.backend} · database time\nModes: ${data.capabilities.modes.join(', ')}\nGrants: ${data.capabilities.permissions.join(', ')}` : '';
     byId('managed-queues').replaceChildren();
-    for (const queue of data.queues || []) managedButton(byId('managed-queues'), `${queue.label} · ${queue.mode} · ${JSON.stringify(queue.counts)}`,
-        () => managedSend('queue', {queue:JSON.stringify(queue.queue)}));
+    for (const queue of data.queues || []) {
+        const button=managedButton(byId('managed-queues'), queue.label, () => {navigateRunbook('inspect','result');managedSend('queue', {queue:JSON.stringify(queue.queue)});}, queue.mode + ' · ' + Object.entries(queue.counts).map(([name,count])=>name + ' ' + count).join(' · '));
+        button.ariaCurrent=String(JSON.stringify(queue.queue)===JSON.stringify(data.queue?.queue));
+    }
+    byId('managed-queues-empty').hidden=!!data.queues?.length;
     byId('managed-items').replaceChildren();
-    for (const item of data.items || []) managedButton(byId('managed-items'), `${item.id} · queue ${item.queue_state} · business ${item.business_state} · delivery ${item.delivery_count}`,
-        () => managedSend('item', {id:item.id}));
+    for (const item of data.items || []) {
+        const button=managedButton(byId('managed-items'), item.id, () => {navigateRunbook('inspect','result');managedSend('item', {id:item.id});}, item.queue_state + ' · ' + item.business_state + ' · delivery ' + item.delivery_count);
+        button.ariaCurrent=String(item.id===data.item?.id);button.title=item.id;
+    }
+    byId('managed-items-empty').hidden=!!data.items?.length;
     byId('managed-reviews').replaceChildren();
-    for (const review of data.reviews || []) managedButton(byId('managed-reviews'), `${review.proposal.review_id} · ${review.state} · Run ${review.proposal.binding.run_id}`,
-        () => managedSend('review', {id:review.proposal.review_id}));
+    for (const review of data.reviews || []) {
+        const button=managedButton(byId('managed-reviews'), review.proposal.review_id, () => {navigateRunbook('inspect','result');managedSend('review', {id:review.proposal.review_id});}, review.state + ' · Run ' + review.proposal.binding.run_id);
+        button.ariaCurrent=String(review.proposal.review_id===data.review?.proposal.review_id);
+    }
+    byId('managed-reviews-empty').hidden=!!data.reviews?.length;
     byId('managed-details').textContent = JSON.stringify(data.item || data.review || data.queue || {}, null, 2);
     byId('managed-summary').replaceChildren();
     const summary = data.item ? {Item:data.item.id,'Business state':data.item.business_state,'Queue state':data.item.queue_state,
@@ -50,8 +62,12 @@ window.addEventListener('message', ({data}) => {
         data.review ? {Review:data.review.proposal.review_id,State:data.review.state,'Existing Run':data.review.proposal.binding.run_id,
             'Exact result digest':data.review.proposal.binding.result_digest,'Source version':data.review.proposal.binding.source_version,'Approved Work Item':data.review.work_item_id} : {};
     for (const [label,value] of Object.entries(summary)) if (value !== undefined && value !== null) {const row=document.createElement('p');row.textContent=label+': '+value;byId('managed-summary').append(row);}
+    byId('managed-selection-empty').hidden=!!data.item || !!data.review;
+    byId('managed-selected-payload').replaceChildren();
+    if(data.item?.payload) renderDataTable(data.item.payload,byId('managed-selected-payload'));
     byId('managed-snapshot-view').textContent = JSON.stringify(data.snapshot || {}, null, 2);
     byId('managed-enqueue').disabled = !managedAllowed('items.enqueue') || !data.snapshot || data.queue?.mode === 'reviewed';
+    byId('managed-enqueue').title=byId('managed-enqueue').disabled ? data.queue?.mode==='reviewed' ? 'Reviewed queues require an exact review decision.' : !data.snapshot ? 'Load an admitted execution snapshot first.' : 'The selected queue has not granted enqueue.' : 'Enqueue this input with the admitted snapshot.';
     byId('managed-claim').disabled = !data.queue || !managedAllowed('items.claim');
     byId('managed-renew').disabled = !data.item?.claim || !managedAllowed('items.renew');
     byId('managed-complete').disabled = !data.item?.claim || !managedAllowed('items.complete');
@@ -60,7 +76,7 @@ window.addEventListener('message', ({data}) => {
         button.disabled = !data.item?.claim || !managedAllowed('items.' + operation);
         button.title = data.item && !data.item.claim ? 'This contract lacks the terminal item epoch. No epoch is guessed.' : 'Requires an actual item epoch and live Runtime grant.';
     }
-    for (const operation of ['approve','reject']) byId('managed-' + operation).disabled = !data.review || data.review.state !== 'pending' || !managedAllowed('reviews.decide');
+    for (const operation of ['approve','reject']) {byId('managed-' + operation).disabled = !data.review || data.review.state !== 'pending' || !managedAllowed('reviews.decide');byId('managed-' + operation).title=byId('managed-' + operation).disabled ? 'Select a pending review with a live review grant.' : 'Decide only the exact selected review binding.';}
     byId('managed-runs').replaceChildren();
     const runs = [...(data.item?.run_ids || []), ...(data.review ? [data.review.proposal.binding.run_id] : [])];
     for (const id of [...new Set(runs)]) {

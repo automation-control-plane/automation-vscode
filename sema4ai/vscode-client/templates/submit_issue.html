@@ -151,21 +151,18 @@
     </script>
 
     <body>
-        <div>
-            <div>Report an Automation Control Plane issue<br /><br /></div>
-            <div>
-                Note: it may be worth checking out:<br />
-                <br />
-                &#8226; <a href="https://github.com/automation-control-plane/automation-vscode/blob/port/published-rcc-actions-20261022/docs/compatibility-port.md">Compatibility findings and troubleshooting</a><br />
-                <br />
-                -- maybe someone else already stumbled through the same issue you have.<br /><br />
-            </div>
-            <div>Open a draft in the private repository, review it, then submit it in your browser. Logs stay local and are not attached automatically.</div>
+        <div class="support-form">
+            <header class="support-header">
+                <div class="eyebrow">AUTOMATION CONTROL PLANE · SUPPORT</div>
+                <h1>Report an issue</h1>
+                <p>Describe what happened, review the local evidence, then open a private draft.</p>
+            </header>
+            <div class="support-note">Logs stay local and are not attached automatically. Review your draft in the browser before submitting it. <a href="https://github.com/automation-control-plane/automation-vscode/blob/port/published-rcc-actions-20261022/docs/compatibility-port.md">Compatibility and troubleshooting</a></div>
             <div class="settings">
-                <label>Summary (brief introduction on the issue you're experiencing):</label>
+                <label for="summary">Summary</label>
                 <input type="text" id="summary" />
 
-                <label>Details (step-by-step instructions and details on how to reproduce the issue):</label>
+                <label for="details">What happened and how to reproduce it</label>
                 <textarea rows="20" cols="60" id="details">
 *** What did you try to do? ***
 Briefly describe your intended action.

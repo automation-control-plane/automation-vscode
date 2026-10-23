@@ -5,10 +5,11 @@ const fs=require('node:fs');
 
 function editor(initialState) {
     const nodes=new Map(),messages=[],receivers=[];
+    const ids=new Set([...fs.readFileSync('resources/work-items/panel.html','utf8').matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
     function element(tag){return {tag,value:'',textContent:'',children:[],disabled:false,hidden:false,
         append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;},
         set innerHTML(_){assert.fail('Business fields must not become HTML');}};}
-    const document={getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},createElement:element};
+    const document={getElementById(id){assert.ok(ids.has(id),'Panel must contain '+id);if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},createElement:element};
     const scope={document,acquireVsCodeApi:()=>({postMessage:message=>{messages.push(JSON.parse(JSON.stringify(message)));if(message.op==='restoreEditorDraft')receivers.forEach(callback=>callback({data:{type:'editorDraftRestore',state:initialState}}));}}),window:{addEventListener:(_,callback)=>receivers.push(callback)}};
     vm.runInNewContext(fs.readFileSync('resources/work-items/form.js','utf8')+'\n'+fs.readFileSync('resources/work-items/editor.js','utf8')+'\n'+fs.readFileSync('resources/work-items/managed-editor.js','utf8'),scope);
     return {get:document.getElementById,messages,receive:data=>receivers.forEach(callback=>callback({data}))};
@@ -145,4 +146,59 @@ test('New draft survives navigation and queue switches; discard requires host co
     e.get('mode').value='sqlite';e.get('mode').onchange();add(e,'value','number',1);
     e.get('queue').value='second';e.get('apply-queue').onclick();e.get('create').onclick();assert.deepEqual(e.messages.at(-1).payload,{});
     e.get('queue').value='input';e.get('apply-queue').onclick();e.get('create').onclick();assert.equal(e.messages.at(-1).payload.value,1);
+});
+
+test('Runbook stage navigation never executes a workload and keeps the selected output immutable',()=>{
+    const e=editor();
+    const output={id:'out#0',role:'output',payload:{observed:7,description:'<script>not markup</script>'},files:['result.txt'],state:'COMPLETED'};
+    e.receive({type:'state',mode:'file',package:'/workspace/action/package.yaml',selectId:output.id,items:[output],receipts:[]});
+    assert.equal(e.get('stage-inspect').ariaCurrent,'step');
+    assert.equal(e.get('result-view').hidden,false);
+    const before=e.messages.filter(message=>message.op!=='editorDraftState').length;
+    e.get('stage-prepare').onclick();e.get('tab-files').onclick();e.get('stage-run').onclick();
+    assert.equal(e.messages.filter(message=>message.op!=='editorDraftState').length,before);
+    assert.equal(e.get('run').hidden,true);
+    assert.equal(e.get('payload-apply-json').disabled,true);
+    const all=node=>[node,...node.children.flatMap(all)];
+    assert.ok(all(e.get('result-data')).some(node=>node.textContent==='<script>not markup</script>'));
+});
+
+test('Runbook result and context follow selected receipt, never another input success',()=>{
+    const e=editor();
+    const first={id:'input-a',role:'input',payload:{value:7},files:[],state:'LOCAL_FIXTURE'};
+    const second={id:'input-b',role:'input',payload:{value:9},files:[],state:'LOCAL_FIXTURE'};
+    const output={id:'devdata/work-items-out/native-r1/work-items.json#0',role:'output',payload:{observed:7},files:[],state:'LOCAL_FIXTURE'};
+    e.receive({type:'state',mode:'file',selectId:first.id,items:[first,second,output],receipts:[{id:'r1',input:first.id,state:'EXITED',exit_code:0,created_at:'2026-10-23T10:00:00Z',updated_at:'2026-10-23T10:00:12Z'}]});
+    assert.match(e.get('context-receipt').textContent,/r1/);
+    assert.equal(e.get('result-outcome').textContent,'Completed successfully');
+    e.get('items').children[1].onclick();
+    assert.equal(e.get('context-receipt').textContent,'No execution receipt');
+    assert.equal(e.get('result-outcome').textContent,'Ready to run');
+    assert.equal(e.get('result-data').children.length,0);
+});
+
+test('Reserved local queue items name the actual reserved identity and cannot be launched again',()=>{
+    const e=editor();
+    e.receive({type:'state',mode:'sqlite',selectId:'reserved-123',items:[{id:'reserved-123',queue_name:'input',state:'RESERVED',payload:{value:7},files:[]}],receipts:[]});
+    assert.equal(e.get('run').disabled,true);assert.equal(e.get('debug').disabled,true);
+    assert.match(e.get('selection-note').textContent,/reserved-123/);
+    assert.match(e.get('selection-note').textContent,/SDK/);
+});
+
+test('Runbook presentation state is restored without losing dirty input fields',()=>{
+    const e=editor();add(e,'value','number',7);e.get('tab-files').onclick();
+    const state=e.messages.filter(message=>message.op==='editorDraftState').at(-1).state;
+    assert.equal(state.runbookView.tab,'files');
+    const reopened=editor(state);reopened.receive({type:'state',mode:'file',items:[],receipts:[]});
+    assert.equal(reopened.get('files-view').hidden,false);
+    reopened.get('create').onclick();assert.deepEqual(reopened.messages.at(-1).payload,{value:7});
+});
+
+test('Output record arrays are readable tables derived only from actual payload columns',()=>{
+    const e=editor();const output={id:'out#0',role:'output',payload:{records:[{reference:'A-1',expected:7,actual:7},{reference:'B-2',expected:8,actual:9}]},files:[],state:'COMPLETED'};
+    e.receive({type:'state',mode:'file',selectId:output.id,items:[output],receipts:[]});
+    const all=node=>[node,...node.children.flatMap(all)];const rows=all(e.get('result-data'));
+    assert.ok(rows.some(node=>node.tag==='th' && node.textContent==='reference'));
+    assert.ok(rows.some(node=>node.tag==='td' && node.textContent==='B-2'));
+    assert.ok(rows.every(node=>!['invoice','Matched','Needs review'].includes(node.textContent)));
 });

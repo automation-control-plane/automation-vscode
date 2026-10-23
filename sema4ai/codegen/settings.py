@@ -34,7 +34,7 @@ SETTINGS = [
     Setting(
         "sema4ai.legacyVendorIntegrations.enabled",
         False,
-        "Expose retained Sema4.ai Studio and Control Room compatibility integrations. These external services are not owned or provided by Automation Control Plane. Disabled by default; local package build, export and Runtime do not require them.",
+        "Expose retained third-party Studio and Control Room compatibility integrations. These external services are not owned or provided by Automation Control Plane. Disabled by default; local package build, export and Runtime do not require them.",
         setting_type="boolean",
     ),
     Setting(
@@ -125,7 +125,7 @@ SETTINGS = [
     Setting(
         "sema4ai.vaultTokenTimeoutInMinutes",
         30,
-        "Specifies the timeout in minutes for the token generated to access the vault when a launch is made. Note: max 60, min 5, additional timeout may be added internally to reuse the token in future runs (please use Sema4.ai Control Room for longer runs).",
+        "Specifies the timeout in minutes for the token generated to access the vault when a launch is made. Note: max 60, min 5, additional timeout may be added internally to reuse the token in future runs (use the separately managed legacy Control Room for longer runs).",
         setting_type="number",
     ),
     Setting(

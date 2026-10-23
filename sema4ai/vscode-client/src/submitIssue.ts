@@ -1,3 +1,4 @@
+import { renderRunbookForm } from "./runbookForms";
 /**
  * Interesting docs related to webviews:
  * https://code.visualstudio.com/api/extension-guides/webview
@@ -80,7 +81,7 @@ interface ISubmitIssueInput {
 }
 
 function getWebviewContent(jsonData: ISubmitIssueInput): string {
-    const jsonDataStr = JSON.stringify(jsonData, null, 4);
+    const jsonDataStr = JSON.stringify(jsonData, null, 4).replace(/</g, "\\u003c");
     const templateFile = getExtensionRelativeFile("../../vscode-client/templates/submit_issue.html", true);
     const data = readFileSync(templateFile, "utf8");
 
@@ -90,5 +91,5 @@ function getWebviewContent(jsonData: ISubmitIssueInput): string {
     const endI = data.indexOf(end, startI);
 
     const ret: string = data.substring(0, startI) + jsonDataStr + data.substring(endI);
-    return ret;
+    return renderRunbookForm(ret);
 }

@@ -220,22 +220,16 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 // giving more instructions to the user.
                 let added: boolean = false;
                 for (const label of [
-                    "No Task nor Action Package found.",
-                    "A few ways to get started:",
-                    "➔ Run the “Automation: Create Agent Package”",
-                    "➔ Run the “Automation: Create Action Package”",
-                    "➔ Run the “Automation: Create Task Package”",
-                    "➔ Open an Agent Package folder (with a “agent-spec.yaml” file)",
-                    "➔ Open an Action Package folder (with a “package.yaml” file)",
-                    "➔ Open a Task Package folder (with a “robot.yaml” file)",
-                    "➔ Open a parent folder (with multiple Agent/Action/Task Packages)",
+                    "No packages in this workspace",
+                    "Open Packages to create an Action or Robot.",
+                    "Or open a folder containing package.yaml or robot.yaml.",
                 ]) {
                     ret.push({
                         "label": label,
                         "uri": undefined,
                         "robot": undefined,
                         "taskName": undefined,
-                        "iconPath": added ? "" : "error",
+                        "iconPath": added ? "" : "info",
                         "type": RobotEntryType.Error,
                         "parent": element,
                     });
@@ -696,7 +690,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             "label": getRobotLabel(robotInfo),
             "uri": vscode.Uri.file(robotInfo.filePath),
             "robot": robotInfo,
-            "iconPath": isAgent ? "person" : isAction ? "symbol-event" : "package",
+            "iconPath": isAgent ? "person" : "package",
             "type": isAgent
                 ? RobotEntryType.AgentPackage
                 : isAction
@@ -901,6 +895,11 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 "arguments": [element.robot.directory],
             };
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        }
+        if ([RobotEntryType.ActionPackage, RobotEntryType.Robot, RobotEntryType.AgentPackage].includes(element.type) && element.robot) {
+            const kind = element.type === RobotEntryType.ActionPackage ? "Action" : element.type === RobotEntryType.Robot ? "Robot" : "Agent";
+            treeItem.description = kind + " · " + vscode.workspace.asRelativePath(element.robot.directory);
+            treeItem.tooltip = element.label + "\n" + kind + " Package\n" + element.robot.directory;
         }
         if (element.tooltip) {
             treeItem.tooltip = element.tooltip;

@@ -1,3 +1,4 @@
+import { renderRunbookForm } from "./runbookForms";
 import * as vscode from "vscode";
 import { readFileSync } from "fs";
 import * as path from "path";
@@ -105,7 +106,7 @@ export const addMCPServer = async (agentDir?: string) => {
 function getWebviewContent(): string {
     const templateFile = getExtensionRelativeFile("../../vscode-client/templates/mcp_server_form.html", true);
     const data = readFileSync(templateFile, "utf8");
-    return data;
+    return renderRunbookForm(data);
 }
 
 export const addDockerMCPGateway = async (agentDir?: string) => {

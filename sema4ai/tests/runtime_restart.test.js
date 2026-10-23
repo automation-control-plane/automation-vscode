@@ -37,7 +37,7 @@ test("Start -> Restart waits beyond terminal close for the owned listener to rel
     Module._load = function(name, parent, main) {
         if (parent?.filename.endsWith("/actionServer.js")) {
             if (name === "vscode") return vscode;
-            if (["./runtimePaths", "./runtimeServerConfig"].includes(name)) return load.call(this, name, parent, main);
+            if (["./runtimePaths", "./runtimeServerConfig", "./runtimeOwnership"].includes(name)) return load.call(this, name, parent, main);
             if (name === "./legacyIntegrations") return {legacyVendorIntegrationsEnabled: () => false};
             if (name === "./rcc") return {getRobocorpHome: async () => "/task", createEnvWithRobocorpHome: () => ({ACTIONS_HOME: "/task/actions", ROBOTS_HOME: "/task/robots"})};
             if (name === "./channel") return {OUTPUT_CHANNEL: {appendLine() {}}};

@@ -52,6 +52,7 @@ class Command:
 
 
 COMMANDS = [
+    Command("automation.runbook.open", "Open Automation Workspace", server_handled=False, icon="$(notebook)"),
     Command(
         "automation.workItems.open",
         "Open Native Work Items",

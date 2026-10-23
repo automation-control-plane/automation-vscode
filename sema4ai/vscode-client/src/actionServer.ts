@@ -1,4 +1,4 @@
-import { CancellationToken, Progress, ProgressLocation, Terminal, Uri, window, commands, workspace } from "vscode";
+import { CancellationToken, Progress, ProgressLocation, Terminal, Uri, window, commands, workspace, Memento } from "vscode";
 import * as roboCommands from "./robocorpCommands";
 import { createEnvWithRobocorpHome, getRobocorpHome } from "./rcc";
 import path = require("path");
@@ -15,10 +15,107 @@ import { createHash } from "crypto";
 import { withStudioEnvironment } from "./runtimePaths";
 import { assertRuntimePortAvailable, runtimeServerPort, waitForOwnedRuntimeStop } from "./runtimeServerConfig";
 import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
+import { RuntimeOwnership, captureRuntimeOwnership, inspectRuntimeOwnership, parseRuntimeOwnership } from "./runtimeOwnership";
 
 const ACTION_SERVER_DEFAULT_PORT = 8082;
 const ACTION_SERVER_TERMINAL_NAME = "Automation: Action Server";
 let ownedServer: { terminal: Terminal; port: number; directory: Uri } | undefined;
+const RUNTIME_OWNERSHIP_KEY = "automation.runtimeOwnership.v1";
+let ownershipState: Pick<Memento, "get" | "update"> | undefined;
+let launchOwnership: RuntimeOwnership | undefined;
+
+type RuntimeStatusBase = {message: string; port?: number; packageDirectory?: string};
+export type RuntimeStatus = RuntimeStatusBase & (
+    | {kind: "owned-running"; endpoint: string; canReconnect: boolean; terminalAvailable: boolean}
+    | {kind: "not-started" | "unknown-listener" | "stale-owner" | "unavailable"}
+);
+
+/** Storage initialization is passive: activation does not reconnect, contact, or start any service. */
+export function initializeRuntimeOwnership(state: Pick<Memento, "get" | "update">): void {
+    ownershipState = state;
+}
+
+function savedRuntimeOwnership(): RuntimeOwnership | undefined {
+    return launchOwnership || parseRuntimeOwnership(ownershipState?.get<unknown>(RUNTIME_OWNERSHIP_KEY));
+}
+
+async function saveRuntimeOwnership(record: RuntimeOwnership | undefined): Promise<void> {
+    launchOwnership = record;
+    try {await ownershipState?.update(RUNTIME_OWNERSHIP_KEY, record);}
+    catch {OUTPUT_CHANNEL.appendLine("Runtime launch ownership could not be saved. Recovery after window reload is unavailable.");}
+}
+
+async function terminalProcessId(terminal: Terminal): Promise<number | undefined> {
+    let timer: NodeJS.Timeout | undefined;
+    try {
+        return await Promise.race([Promise.resolve(terminal.processId), new Promise<undefined>(resolve => {
+            timer = setTimeout(() => resolve(undefined), 1000);
+        })]);
+    } catch {return undefined;}
+    finally {if (timer) clearTimeout(timer);}
+}
+
+async function retainedRuntimeTerminal(record: RuntimeOwnership): Promise<Terminal | undefined> {
+    const matches = await Promise.all(window.terminals.map(async terminal =>
+        terminal.exitStatus === undefined && await terminalProcessId(terminal) === record.processId ? terminal : undefined));
+    const found = matches.filter(terminal => terminal !== undefined);
+    return found.length === 1 ? found[0] : undefined;
+}
+
+/** Read-only status; PID, process birth, package and actual socket ownership must all agree. */
+export async function getRuntimeStatus(directory?: Uri): Promise<RuntimeStatus> {
+    const candidate = savedRuntimeOwnership();
+    const record = candidate && (!directory || path.resolve(directory.fsPath) === candidate.directory) ? candidate : undefined;
+    const packageDirectory = directory?.fsPath || record?.directory;
+    let port: number;
+    try {port = record?.port ?? getActionServerPort(directory);}
+    catch (error) {return {kind: "unavailable", packageDirectory, message: String(error)};}
+    const base = {port, packageDirectory};
+    if (record) {
+        const inspection = await inspectRuntimeOwnership(record);
+        if (inspection.kind === "verified") {
+            const terminal = await retainedRuntimeTerminal(record);
+            return {...base, kind: "owned-running", endpoint: `http://127.0.0.1:${port}`,
+                canReconnect: !!terminal && terminal !== getActionServerTerminal(), terminalAvailable: !!terminal,
+                message: terminal && terminal === ownedServer?.terminal ? "Owned Runtime is running for this package." :
+                    terminal ? "Your Runtime survived the window reload. Reconnect to its existing terminal." :
+                        "The recorded Runtime is verified, but its terminal was not restored. Open it without starting a replacement."};
+        }
+        if (inspection.kind === "unverified-listener") return {...base, kind: "unknown-listener",
+            message: "This port is held by a listener outside the recorded Runtime process tree. It will not be adopted, contacted or stopped."};
+        if (inspection.kind === "unavailable") return {...base, kind: "unavailable",
+            message: "Runtime process ownership cannot be verified on this host. Existing listeners are left running; no automatic reconnect is allowed."};
+        if (inspection.kind === "not-listening") return {...base, kind: "unavailable",
+            message: "The owned launch process is present but no verified Runtime listener is ready. Check its terminal, then refresh."};
+        return {...base, kind: "stale-owner",
+            message: "The saved Runtime launch is no longer the same live process. It cannot be reconnected or stopped from this record."};
+    }
+    try {
+        await assertRuntimePortAvailable(port);
+        return {...base, kind: "not-started", message: "No owned Runtime is running for this package. Start it explicitly when needed."};
+    } catch (error) {
+        return {...base, kind: String(error).includes("EADDRINUSE") ? "unknown-listener" : "unavailable",
+            message: "This port is unavailable and there is no verified launch record for this package. Existing listeners are left running."};
+    }
+}
+
+/** Explicit recovery only; this never sends a signal, shutdown request, or replacement launch. */
+export async function reconnectActionServer(directory: Uri): Promise<boolean> {
+    const status = await getRuntimeStatus(directory);
+    const record = savedRuntimeOwnership();
+    if (status.kind !== "owned-running" || !record || record.directory !== path.resolve(directory.fsPath)) {
+        window.showErrorMessage(status.message);
+        return false;
+    }
+    const terminal = await retainedRuntimeTerminal(record);
+    if (!terminal || (await inspectRuntimeOwnership(record)).kind !== "verified") {
+        window.showErrorMessage("The Runtime terminal or process identity changed. Nothing was reconnected or stopped.");
+        return false;
+    }
+    ownedServer = {terminal, port: record.port, directory: Uri.file(record.directory)};
+    terminal.show();
+    return true;
+}
 
 export const getActionServerPort = (resource?: Uri): number =>
     runtimeServerPort(workspace.getConfiguration("sema4ai", resource).get<number>("actionServer.port", ACTION_SERVER_DEFAULT_PORT));
@@ -148,6 +245,7 @@ const stopActionServer = async (): Promise<boolean> => {
         });
         OUTPUT_CHANNEL.appendLine(`Waiting for owned Actions Runtime to exit and release 127.0.0.1:${server.port}.`);
         await waitForOwnedRuntimeStop({port: server.port, processId});
+        await saveRuntimeOwnership(undefined);
         return true;
     } catch (error) {
         OUTPUT_CHANNEL.appendLine(String(error));
@@ -201,8 +299,10 @@ const startActionServerInternal = async (directory: Uri) => {
     env["RC_ADD_SHUTDOWN_API"] = "1";
     env["ACTIONS_SKIP_UPDATE_CHECK"] = "1";
 
+    const dataDirectory = path.join(env.ACTIONS_HOME, "action-server",
+        "vscode-" + createHash("sha256").update(directory.fsPath).digest("hex").slice(0, 12));
     actionServerTerminal = window.createTerminal({
-        name: "Automation: Action Server",
+        name: ACTION_SERVER_TERMINAL_NAME,
         env: env,
         cwd: directory,
         shellPath: location,
@@ -210,18 +310,27 @@ const startActionServerInternal = async (directory: Uri) => {
             "start",
             "--address=127.0.0.1",
             `--port=${port}`,
-            "--datadir=" +
-                path.join(
-                    env.ACTIONS_HOME,
-                    "action-server",
-                    "vscode-" + createHash("sha256").update(directory.fsPath).digest("hex").slice(0, 12)
-                ),
+            "--datadir=" + dataDirectory,
         ],
     });
     ownedServer = {terminal: actionServerTerminal, port, directory};
 
     actionServerTerminal.show();
     OUTPUT_CHANNEL.appendLine(`Starting Actions Runtime (in terminal): ${location}; URL: http://127.0.0.1:${port}`);
+    await saveRuntimeOwnership(undefined);
+    const processId = await terminalProcessId(actionServerTerminal);
+    if (processId !== undefined) {
+        const deadline = Date.now() + 2000;
+        let record: RuntimeOwnership | undefined;
+        do {
+            record = await captureRuntimeOwnership({processId, directory: directory.fsPath,
+                executable: location, dataDirectory, port});
+            if (record || process.platform !== "linux" || Date.now() >= deadline) break;
+            await new Promise(resolve => setTimeout(resolve, 100));
+        } while (window.terminals.includes(actionServerTerminal) && actionServerTerminal.exitStatus === undefined);
+        if (record) await saveRuntimeOwnership(record);
+        else OUTPUT_CHANNEL.appendLine("Runtime started, but a stable process identity is unavailable. Recovery after reload will remain blocked.");
+    }
 };
 
 export const findActionPackagePath = async ({ includeSemaOrg = true } = {}): Promise<Uri | undefined> => {
@@ -242,8 +351,18 @@ export const startActionServer = async (directory: Uri) => {
     if (!directory) {
         directory = await findActionPackagePath();
     }
+    if (!directory) return;
 
     let actionServerTerminal: Terminal = getActionServerTerminal();
+    if (!actionServerTerminal && savedRuntimeOwnership()) {
+        const status = await getRuntimeStatus(directory);
+        if (status.kind === "owned-running") {
+            if (status.canReconnect && await window.showWarningMessage(status.message, "Reconnect to Runtime", "Cancel") === "Reconnect to Runtime") {
+                await reconnectActionServer(directory);
+            } else if (!status.canReconnect) window.showWarningMessage(status.message);
+            return;
+        }
+    }
     if (actionServerTerminal !== undefined) {
         if (await isActionServerAlive()) {
             const RESTART = "Restart action server";

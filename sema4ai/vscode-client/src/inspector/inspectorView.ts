@@ -29,6 +29,7 @@ import { langServer } from "../extension";
 import { ActionResult, LocalPackageMetadataInfo } from "../protocols";
 import { SEMA4AI_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
 import { generateID } from "./utils";
+import { renderLegacySurface, replaceJSONSlot } from "../legacySurface";
 
 // singleton objects
 let ROBOCORP_INSPECTOR_PANEL: vscode.WebviewPanel | undefined = undefined;
@@ -37,6 +38,30 @@ let ROBOT_DIRECTORY: string | undefined = undefined;
 
 // showInspectorUI - registered function for opening the Inspector while calling VSCode commands
 export async function showInspectorUI(context: vscode.ExtensionContext, route?: IAppRoutes) {
+    const robot = getSelectedRobot();
+    let directory: string | undefined;
+    let packageName: string | undefined;
+    let packageType: string | undefined;
+    if (robot) {
+        directory = robot.robot.directory;
+        packageName = robot.robot.name;
+        packageType = robot.robot.filePath.endsWith("package.yaml") ? "action" : robot.robot.filePath.endsWith("robot.yaml") ? "robot" : "agent";
+    } else {
+        const discovered: ActionResult<LocalPackageMetadataInfo[]> = await vscode.commands.executeCommand(SEMA4AI_LOCAL_LIST_ROBOTS_INTERNAL);
+        if (discovered?.success && discovered.result?.length === 1) {
+            const selected = discovered.result[0];
+            directory = selected.directory;
+            packageName = selected.name;
+            packageType = selected.filePath.endsWith("package.yaml") ? "action" : selected.filePath.endsWith("robot.yaml") ? "robot" : "agent";
+        }
+    }
+    if (!directory) {
+        await vscode.window.showInformationMessage("Select an Action Package or Robot Task in Packages before opening Inspectors.");
+        return;
+    }
+    // A singleton must not keep editing another package's locators after a
+    // deliberate package switch. Closing the old panel disposes its inspectors.
+    if (ROBOCORP_INSPECTOR_PANEL && ROBOT_DIRECTORY !== directory) ROBOCORP_INSPECTOR_PANEL.dispose();
     if (ROBOCORP_INSPECTOR_PANEL !== undefined) {
         OUTPUT_CHANNEL.appendLine("# Automation Inspector is already opened! Thank you!");
         OUTPUT_CHANNEL.appendLine(`# Switching to the commanded Route: ${route}`);
@@ -46,7 +71,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
             event: {
                 type: "gotoInspectorApp",
                 status: "success",
-                data: route,
+                data: route || IAppRoutes.LOCATORS_MANAGER,
             },
         };
         // this is an event - postMessage will update the useLocator hook
@@ -67,25 +92,8 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     );
     ROBOCORP_INSPECTOR_PANEL = panel;
 
-    const robot = getSelectedRobot();
-    let directory = undefined;
-    let locatorJson = undefined;
-    if (robot) {
-        directory = robot.robot.directory;
-    } else {
-        let actionResult: ActionResult<LocalPackageMetadataInfo[]> = await vscode.commands.executeCommand(
-            SEMA4AI_LOCAL_LIST_ROBOTS_INTERNAL
-        );
-        if (actionResult.success) {
-            if (actionResult.result.length === 1) {
-                directory = actionResult.result[0].directory;
-            }
-        }
-    }
-    if (directory) {
-        locatorJson = path.join(directory, "locators.json");
-        ROBOT_DIRECTORY = directory;
-    }
+    const locatorJson = path.join(directory, "locators.json");
+    ROBOT_DIRECTORY = directory;
 
     let locatorsMap = {};
     if (locatorJson) {
@@ -97,7 +105,9 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     const onDiskPath = vscode.Uri.file(directory);
     const directoryURI = panel.webview.asWebviewUri(onDiskPath);
     OUTPUT_CHANNEL.appendLine(`> ON DISK PATH ROBOT DIRECTORY: ${directoryURI.toString()}`);
-    panel.webview.html = getWebviewContent(directory, directoryURI.toString(), locatorsMap, route);
+    panel.webview.html = getWebviewContent(directory, directoryURI.toString(), locatorsMap, route, {
+        packageName: packageName || path.basename(directory), packageType, cspSource: panel.webview.cspSource,
+    });
 
     // Web Inspector - Create listeners for BE (Python) messages
     context.subscriptions.push(
@@ -577,40 +587,22 @@ function getWebviewContent(
     directory: string,
     directoryURI: string,
     jsonData: LocatorsMap,
-    startRoute?: IAppRoutes
+    startRoute: IAppRoutes | undefined,
+    presentation: { packageName: string; packageType: string; cspSource: string }
 ): string {
     // get the template that's created via the inspector-ext
     const templateFile = getExtensionRelativeFile("../../vscode-client/templates/inspector.html", true);
-    const data = readFileSync(templateFile, "utf8");
-
-    // inject the locators.json contents
-    const startLocators = '<script id="locatorsJSON" type="application/json">';
-    const startIndexLocators = data.indexOf(startLocators) + startLocators.length;
-    const endLocators = "</script>";
-    const endIndexLocators = data.indexOf(endLocators, startIndexLocators);
-
-    const contentLocators = JSON.stringify(
-        {
-            location: directory,
-            locationURI: directoryURI,
-            locatorsLocation: path.join(directory, "locators.json"),
-            data: jsonData,
-        },
-        null,
-        4
-    );
-    const retLocators: string =
-        data.substring(0, startIndexLocators) + contentLocators + data.substring(endIndexLocators);
-
-    // inject the controls json
-    const startControl = '<script id="controlJSON" type="application/json">';
-    const startIndexControl = retLocators.indexOf(startControl) + startControl.length;
-    const endControl = "</script>";
-    const endIndexControl = retLocators.indexOf(endControl, startIndexControl);
-
-    const controlContent = JSON.stringify({ startRoute: startRoute || IAppRoutes.LOCATORS_MANAGER }, null, 4);
-    const retControl: string =
-        retLocators.substring(0, startIndexControl) + controlContent + retLocators.substring(endIndexControl);
-
-    return retControl;
+    let template = readFileSync(templateFile, "utf8");
+    template = replaceJSONSlot(template, "locatorsJSON", {
+        location: directory, locationURI: directoryURI, locatorsLocation: path.join(directory, "locators.json"), data: jsonData,
+    });
+    template = replaceJSONSlot(template, "controlJSON", { startRoute: startRoute || IAppRoutes.LOCATORS_MANAGER });
+    const resource = (name: string) => readFileSync(getExtensionRelativeFile("../../resources/runbook/" + name, true), "utf8");
+    return renderLegacySurface({
+        surface: "inspector", template,
+        theme: resource("theme.css") + resource("codicon.css"),
+        styles: resource("legacy-surfaces.css"), script: resource("legacy-shell.js"), markup: resource("inspector-shell.html"),
+        context: { directory, packageName: presentation.packageName, packageType: presentation.packageType, startRoute: startRoute || IAppRoutes.LOCATORS_MANAGER },
+        cspSource: presentation.cspSource,
+    });
 }

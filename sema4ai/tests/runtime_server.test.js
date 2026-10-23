@@ -52,7 +52,7 @@ test("Runtime launch propagates configured port/address and never adopts or shut
                 const actual = load.call(this, name, parent, main);
                 return {...actual, waitForOwnedRuntimeStop: options => actual.waitForOwnedRuntimeStop({...options, timeoutMs: 100, pollMs: 10})};
             }
-            if (name === "./runtimePaths" || name === "./legacyIntegrations") return load.call(this, name, parent, main);
+            if (name === "./runtimePaths" || name === "./legacyIntegrations" || name === "./runtimeOwnership") return load.call(this, name, parent, main);
             if (name === "./rcc") return {getRobocorpHome: async () => "/isolated", createEnvWithRobocorpHome: () => ({ACTIONS_HOME: "/isolated/actions", ROBOTS_HOME: "/isolated/robots"})};
             if (name === "./channel") return {OUTPUT_CHANNEL: {appendLine() {}}};
             if (name === "./extension") return {langServer: {sendRequest: assert.fail}};

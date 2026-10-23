@@ -5,6 +5,9 @@ let selected, items = [], receipts = [], mode = 'file', contract = {};
 let activeDraftKey, activeRevision, payloadDirty = false, proposalTarget, editorReady = false, restoredSelection;
 let replaySource, listKind = 'input', packagePath = '', loading = false, activeQueue = 'input';
 const drafts = new Map();
+let runbookView = {stage:'prepare', tab:'inputs'}, viewSelectionId, lastReceiptKey, restoredRunbookView = false;
+const compactContext = window.matchMedia?.('(max-width:650px)');
+if (compactContext) {byId('context-extra').open = !compactContext.matches; compactContext.addEventListener('change', event => {byId('context-extra').open = !event.matches;});}
 const copyNode = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 const isOutput = item => !!(item?.role === 'output' || item?.queue_name?.endsWith('.outputs'));
 const draftKey = id => mode + ':' + activeQueue + ':' + (id || 'new');
@@ -37,7 +40,7 @@ function persistEditorState() {
         const state = {version:1, mode, queue:activeQueue, name:byId('name').value || 'input',
             activeKey:activeDraftKey, selectedId:selected?.id || restoredSelection, revision:activeRevision, dirty:payloadDirty,
             ...payloadEditor.getState(), parameters:parametersEditor.getState(), managedRoot:managedPayloadEditor.getState(),
-            replaySource:copyNode(replaySource), drafts:[...drafts].filter(([key]) => key !== activeDraftKey)};
+            replaySource:copyNode(replaySource), runbookView:{...runbookView}, drafts:[...drafts].filter(([key]) => key !== activeDraftKey)};
         api.setState?.(state); api.postMessage({op:'editorDraftState', state});
     } catch (error) {
         byId('validation').textContent = 'Unable to preserve this draft: ' + error.message + '. Keep this tab open and save the input.';
@@ -49,6 +52,9 @@ function restoreEditorState(state) {
         drafts.clear(); for (const [key, value] of state.drafts || []) drafts.set(key, value);
         activeDraftKey = state.activeKey; activeRevision = state.revision; restoredSelection = state.selectedId;
         payloadDirty = !!state.dirty; replaySource = state.replaySource;
+        if (state.runbookView && ['prepare','run','inspect'].includes(state.runbookView.stage) && ['inputs','files','result'].includes(state.runbookView.tab)) {
+            runbookView = {...state.runbookView}; viewSelectionId = state.selectedId; restoredRunbookView = true;
+        }
         payloadEditor.setState(state); parametersEditor.setState(state.parameters); managedPayloadEditor.setState(state.managedRoot);
         showPayloadValue(payloadEditor, 'payload', 'validation'); showPayloadValue(parametersEditor, 'parameters', 'parameters-validation');
         showPayloadValue(managedPayloadEditor, 'managed-payload', 'managed-payload-validation');
@@ -74,6 +80,85 @@ function status(item) {
 }
 function actionButton(label, fn, className = 'quiet') {
     const button = document.createElement('button'); button.textContent = label; button.className = className; button.onclick = fn; return button;
+}
+function showRunbookView() {
+    byId('local-root').className = 'layout stage-' + runbookView.stage;
+    for (const stage of ['prepare','run','inspect']) byId('stage-' + stage).ariaCurrent = stage === runbookView.stage ? 'step' : 'false';
+    for (const tab of ['inputs','files','result']) {
+        byId('tab-' + tab).ariaPressed = String(tab === runbookView.tab);
+        byId(tab + '-view').hidden = tab !== runbookView.tab;
+    }
+    for (const stage of ['prepare','run','inspect']) byId('managed-' + stage + '-view').hidden = stage !== runbookView.stage;
+}
+function navigateRunbook(stage, tab) {
+    runbookView = {stage, tab}; showRunbookView(); persistEditorState();
+}
+for (const stage of ['prepare','run','inspect']) byId('stage-' + stage).onclick = () => navigateRunbook(stage, stage === 'prepare' ? 'inputs' : 'result');
+byId('tab-inputs').onclick = () => navigateRunbook('prepare','inputs');
+byId('tab-result').onclick = () => navigateRunbook('inspect','result');
+byId('tab-files').onclick = () => navigateRunbook(runbookView.stage,'files');
+byId('open-logs').onclick = () => send('openLogs');
+function textElement(tag, value, className) {
+    const element = document.createElement(tag); element.textContent = String(value); if (className) element.className = className; return element;
+}
+function readableValue(value) {
+    if (value === null) return 'null';
+    if (typeof value === 'object') return JSON.stringify(value, null, 2);
+    return String(value);
+}
+function renderRecordTable(records, container) {
+    const columns = [...new Set(records.flatMap(record => Object.keys(record)))].slice(0,20);
+    const wrap=document.createElement('div'), table=document.createElement('table'), head=document.createElement('thead'), heading=document.createElement('tr'), body=document.createElement('tbody');
+    wrap.className='result-table-wrap';table.className='result-table';
+    for(const name of columns) heading.append(textElement('th',name));head.append(heading);table.append(head);
+    for(const record of records.slice(0,200)) {const row=document.createElement('tr');for(const name of columns)row.append(textElement('td',Object.hasOwn(record,name) ? readableValue(record[name]) : '—'));body.append(row);}
+    table.append(body);wrap.append(table);container.append(wrap);
+    if(records.length>200 || records.some(record=>Object.keys(record).some(name=>!columns.includes(name)))) container.append(textElement('p','Showing up to 200 records and 20 columns. The complete read-only payload is available under Prepare inputs → Advanced payload JSON.','hint'));
+}
+function renderDataTable(payload, container) {
+    const allEntries = payload && typeof payload === 'object' ? Object.entries(payload) : [['Value',payload]];
+    const entries=[];
+    for(const [name,value] of allEntries) {
+        if(Array.isArray(value) && value.length && value.every(record=>record && typeof record==='object' && !Array.isArray(record))) {
+            container.append(textElement('h3',name,'output-label'));renderRecordTable(value,container);
+        } else entries.push([name,value]);
+    }
+    if(!entries.length && allEntries.length) return;
+    if (!entries.length) {container.append(textElement('p','This output contains no fields.','hint')); return;}
+    const wrap = document.createElement('div'), table = document.createElement('table'); wrap.className = 'result-table-wrap'; table.className = 'result-table';
+    const head = document.createElement('thead'), headings = document.createElement('tr');
+    headings.append(textElement('th','Field'),textElement('th','Value')); head.append(headings); table.append(head);
+    const body = document.createElement('tbody');
+    for (const [name,value] of entries) {
+        const row = document.createElement('tr'), cell = document.createElement('td');
+        if (value && typeof value === 'object') {
+            const detail = document.createElement('details'); detail.append(textElement('summary', Array.isArray(value) ? value.length + ' items' : Object.keys(value).length + ' fields'), textElement('pre',readableValue(value))); cell.append(detail);
+        } else cell.textContent = readableValue(value);
+        row.append(textElement('td',name),cell); body.append(row);
+    }
+    table.append(body); wrap.append(table); container.append(wrap);
+}
+function renderContext(latest) {
+    byId('context-item-label').textContent = isOutput(selected) ? 'Output' : replaySource ? 'Replay source' : 'Input';
+    byId('context-item').textContent = selected ? title(selected) : replaySource?.id || 'New input';
+    byId('context-storage').textContent = ({file:'Local FileAdapter',sqlite:'Local SDK queue · ' + activeQueue,published:'Runtime storage',managed:'Managed Runtime'})[mode];
+    byId('context-receipt').textContent = latest?.id || 'No execution receipt';
+    byId('context-started').textContent = latest?.created_at ? new Date(latest.created_at).toLocaleString() : 'Not run';
+    const elapsed = latest?.updated_at && latest?.created_at ? (new Date(latest.updated_at) - new Date(latest.created_at)) / 1000 : undefined;
+    byId('context-duration').textContent = Number.isFinite(elapsed) && elapsed >= 0 ? elapsed.toFixed(1) + 's · receipt interval' : 'Not available';
+    byId('context-exit').textContent = latest?.exit_code !== undefined ? String(latest.exit_code) : 'Not available';
+    const names = selected?.files || replaySource?.files || [];
+    byId('context-files').replaceChildren();
+    if (!names.length) byId('context-files').textContent = 'No attachments';
+    else for (const name of names) byId('context-files').append(actionButton(name, () => navigateRunbook(runbookView.stage,'files')));
+    byId('context-lineage').replaceChildren();
+    const sourceId = selected?.parent_id || selected?.local_replay_source || replaySource?.id || (isOutput(selected) ? latest?.input : undefined);
+    if (sourceId) {
+        const source = items.find(item => item.id === sourceId);
+        const link = actionButton('Source · ' + (source ? title(source) : sourceId), () => {if (source) select(source);}); link.disabled = !source; link.title = sourceId; byId('context-lineage').append(link);
+    }
+    if (latest) for (const output of outputsFor(latest)) byId('context-lineage').append(actionButton('Output · ' + title(output), () => select(output)));
+    if (!byId('context-lineage').children.length) byId('context-lineage').append(textElement('p','No linked input or output yet.'));
 }
 function renderItems() {
     byId('show-inputs').ariaPressed = String(listKind === 'input'); byId('show-outputs').ariaPressed = String(listKind === 'output');
@@ -102,6 +187,23 @@ function renderResult() {
     // A global latest receipt must never imply that a new/unrun input succeeded.
     const relevant = selected ? receipts.filter(receipt => receipt.input === selected.id || outputsFor(receipt).some(item => item.id === selected.id)) : [];
     const latest = relevant.at(-1);
+    const receiptKey = selected?.id + ':' + latest?.id + ':' + latest?.state;
+    if (receiptKey !== lastReceiptKey && latest && !restoredRunbookView) runbookView = {stage:['STARTED','PREPARED'].includes(latest.state) ? 'run' : 'inspect',tab:'result'};
+    lastReceiptKey = receiptKey; restoredRunbookView = false;
+    const outputItems = isOutput(selected) ? [selected] : latest ? outputsFor(latest) : [];
+    const outcome = latest ? (latest.state === 'EXITED' ? latest.exit_code === 0 ? 'Completed successfully' : 'Execution failed' :
+        {STARTED:'Execution in progress',PREPARED:'Ready to launch',CANCELLED:'Execution cancelled',LAUNCH_REJECTED:'Unable to launch',TERMINATED:'Session ended',STOPPED:'Session ended'}[latest.state] || latest.state) : isOutput(selected) ? 'Saved output' : 'Ready to run';
+    byId('result-outcome').textContent = outcome;
+    byId('result-icon').className = 'codicon codicon-' + (latest?.state === 'EXITED' ? latest.exit_code === 0 ? 'pass-filled' : 'error' : latest?.state === 'STARTED' ? 'sync' : isOutput(selected) ? 'file-text' : 'play-circle');
+    byId('result-banner').className = 'result-banner ' + (latest?.state === 'EXITED' ? latest.exit_code === 0 ? 'success' : 'failure' : latest && ['STARTED','PREPARED'].includes(latest.state) ? 'running' : '');
+    byId('result-explanation').textContent = outputItems.length ? 'Output values from the selected item’s linked records. Outputs stay read-only.' : isOutput(selected) ? 'This output has no readable payload.' : latest ? 'No linked outputs were produced. Open run logs for execution details.' : 'Prepare an input, then explicitly Run or Debug it. No workload starts when you open this view.';
+    byId('result-count').textContent = outputItems.length ? outputItems.length + (outputItems.length === 1 ? ' output' : ' outputs') : '';
+    byId('result-data').replaceChildren();
+    for (const output of outputItems) {
+        if (outputItems.length > 1) byId('result-data').append(textElement('h3',title(output),'output-label'));
+        renderDataTable(output.payload,byId('result-data'));
+    }
+    renderContext(latest); showRunbookView();
     byId('result-heading').textContent = isOutput(selected) ? 'Source execution' : 'Result';
     byId('last-execution').textContent = latest ? executionLabel(latest) : isOutput(selected) ? 'No local execution receipt for this output.' : 'Not run';
     byId('result-time').textContent = latest?.created_at ? new Date(latest.created_at).toLocaleString() : '';
@@ -130,7 +232,7 @@ function updateControls() {
     byId('create').hidden = stored; byId('create').disabled = loading;
     byId('create').textContent = mode === 'sqlite' ? 'Add to queue' : mode === 'published' ? 'Create in Runtime…' : 'Create input';
     const runnable = stored && !output && ['file','sqlite'].includes(mode) && selected.state !== 'INVALID';
-    for (const id of ['run','debug']) {byId(id).hidden = !runnable; byId(id).disabled = loading || !runnable;}
+    for (const id of ['run','debug']) {byId(id).hidden = !runnable; byId(id).disabled = loading || !runnable || (mode === 'sqlite' && selected.state !== 'PENDING');}
     byId('run').textContent = mode === 'sqlite' ? 'Run next input' : 'Run'; byId('debug').textContent = 'Debug';
     byId('run').title = mode === 'file' ? 'Save changes and run this input' : 'Run the oldest waiting input in this queue';
     byId('debug').title = mode === 'file' ? 'Save changes and debug this input' : 'Debug the oldest waiting input in this queue';
@@ -143,7 +245,7 @@ function updateControls() {
     if (stored && selected.state === 'COMPLETED' && mode === 'sqlite') for (const id of ['run','debug']) byId(id).hidden = true;
     byId('name-label').hidden = stored || mode === 'published';
     byId('selection-state').textContent = output ? 'Read-only output' : stored ? status(selected) : replaySource ? 'Replay draft' : 'Draft';
-    byId('selection-note').textContent = output ? 'Replay to create an editable input. This output stays unchanged.' :
+    byId('selection-note').textContent = mode === 'sqlite' && selected?.state === 'RESERVED' ? 'Item ' + selected.id + ' is reserved by the SDK. Do not run it again. Refresh to check its claim; interrupted claims can be recovered only after the SDK orphan timeout (default 30 minutes).' : output ? 'Replay to create an editable input. This output stays unchanged.' :
         stored && mode === 'sqlite' ? 'Saved in the queue. Replay to change fields; execution uses the oldest waiting input.' :
         replaySource ? 'Edit this copy, then create it. Attachments are copied when you save.' : '';
     byId('selection-note').hidden = !byId('selection-note').textContent;
@@ -158,6 +260,11 @@ function updateControls() {
 }
 function select(item, fresh = false) {
     stashDraft(); selected = item ? {...item} : undefined; activeDraftKey = draftKey(item?.id);
+    if (viewSelectionId !== item?.id) {
+        runbookView = {stage:isOutput(item) ? 'inspect' : 'prepare',tab:isOutput(item) ? 'result' : 'inputs'};
+        lastReceiptKey = undefined;
+    }
+    viewSelectionId = item?.id;
     if (fresh) drafts.delete(activeDraftKey);
     const saved = drafts.get(activeDraftKey);
     let unchanged = false;
@@ -224,7 +331,7 @@ byId('show-outputs').onclick = () => {listKind='output';renderItems();};
 byId('connect').onclick = () => send(mode === 'managed' ? 'managed.connect' : 'connect');
 byId('recover').onclick = () => send('recover');
 function showMode() {
-    byId('local-root').hidden = mode === 'managed'; byId('managed-root').hidden = mode !== 'managed';
+    byId('local-root').hidden = mode === 'managed'; byId('managed-root').hidden = mode !== 'managed'; showRunbookView();
     byId('local-queue-label').hidden = !['sqlite','published'].includes(mode); byId('apply-queue').hidden = byId('local-queue-label').hidden;
     byId('recover').hidden = mode !== 'sqlite'; byId('connect').hidden = !['published','managed'].includes(mode);
     byId(mode === 'managed' ? 'managed-proposal-slot' : 'local-proposal-slot').append(byId('proposal-tools'));
@@ -238,7 +345,7 @@ byId('apply-queue').onclick = () => {
 };
 byId('mode').onchange = () => {
     stashDraft(); mode=byId('mode').value; selected=undefined; activeDraftKey=undefined; payloadDirty=false; replaySource=undefined;
-    items=[]; receipts=[]; showMode(); select(undefined); send('mode', {mode,queue:byId('queue').value});
+    items=[]; receipts=[]; runbookView={stage:mode === 'managed' ? 'inspect' : 'prepare',tab:mode === 'managed' ? 'result' : 'inputs'}; showMode(); select(undefined); send('mode', {mode,queue:byId('queue').value});
 };
 window.addEventListener('message', ({data}) => {
     if (data.type === 'editorDraftRestore') {restoreEditorState(data.state); return;}
@@ -258,6 +365,8 @@ window.addEventListener('message', ({data}) => {
     mode=data.mode; items=data.items || []; receipts=data.receipts || []; packagePath=data.package || packagePath; contract=data.contract || {};
     byId('mode').value=mode; activeQueue=data.queue || 'input'; byId('queue').value=activeQueue; showMode();
     byId('package').textContent=packagePath.replaceAll('\\','/').split('/').at(-2) || 'Selected package'; byId('package').title=packagePath;
+    byId('runbook-title').textContent=packagePath.replaceAll('\\','/').split('/').at(-2) || 'Work Items';
+    byId('package').textContent=(/robot\.yaml$/.test(packagePath) ? 'Robot Task' : 'Python Action') + ' · Work Items';
     byId('package-path').textContent=packagePath; byId('authority').textContent=data.authority || '';
     byId('status').textContent='';
     for (const item of items) {const replay=(data.replays || []).find(entry => entry.copy === item.id && entry.mode === mode);if(replay)item.local_replay_source=replay.source;}

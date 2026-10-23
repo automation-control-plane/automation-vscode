@@ -519,3 +519,12 @@ From: https://github.com/d-biehl/robotcode
 26) All third party javascript packages in node_modules folders are licensed under the licenses specified in those packages.
    
 27) All third party python packages in sema4ai-python-ls-core/src/robocorp_ls_core/libs folders are licensed under the licenses specified in those packages.
+
+
+---------------------------------------------------------
+Runbook UI icons: Microsoft Codicons
+Copyright (c) Microsoft Corporation. All rights reserved.
+https://github.com/microsoft/vscode-codicons
+Font and icon artwork: Creative Commons Attribution 4.0 International, https://creativecommons.org/licenses/by/4.0/.
+CSS/code: MIT. Copied without modification from Microsoft Code 1.143.0 simple-browser media/codicon.css.
+Full notices and font license: sema4ai/resources/runbook/CODICONS-NOTICE.txt and CODICONS-LICENSE.txt.

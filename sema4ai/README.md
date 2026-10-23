@@ -33,3 +33,37 @@ See [development guidance](https://github.com/automation-control-plane/automatio
 ## Attribution
 
 This fork derives from the Sema4.ai / Robocorp VS Code extension. Original copyright, Apache-2.0 license and third party notices are retained in the package. Legacy backend names identify compatibility targets; they do not identify this extension's publisher.
+
+## Private Runbook checkpoint (2.20.10)
+
+Open **Automation: Open Automation Workspace** for Packages, Environments, Work Items,
+Runs, Inspectors and Settings. The existing native package/files/resources trees and
+command IDs remain available. Package rows show their type and path to distinguish
+identically named packages.
+
+- **Prepare:** review actual package configuration, explicitly check Python, edit
+  nested Action argument cases or Work Item fields, and manage attachments.
+- **Run:** use the existing Action/Robot Run and Debug launchers. Navigation never
+  starts a workload, browser capture or service.
+- **Inspect:** select the actual Work Item receipt/output, replay as a new input,
+  inspect files and lineage, or open an explicitly selected retained run log.
+  Work Item identities and streamed log-session IDs are not interchangeable.
+
+The five existing Inspector modes and rich Output engine retain their upstream
+implementation; editable Runbook theme/shell source lives in `resources/runbook`.
+Native VS Code editors, dialogs, terminals and debugger chrome are not replaced.
+Advanced JSON and stable `sema4ai.*` compatibility settings remain supported.
+
+### Runtime reload recovery
+
+Only a Runtime launched by this version can have a persisted, nonsecret ownership
+record. On Linux, status checks verify the original process birth, executable,
+package and listener ancestry before allowing **Reconnect**. Old/unrelated listeners
+are never adopted or stopped. A verified service without a restored terminal can be
+opened but is not silently replaced. Unsupported process verification is reported
+honestly; no cross-platform recovery acceptance is implied.
+
+This is an unpublished qualification checkpoint, not a visual or all-features pass.
+See the repository `design-qa.md` and `docs/runbook-view-checklist.md` for exact installed
+capture gates. Canonical managed Work Items lifecycle and non-Linux native inspectors
+retain their separately tracked integration/platform requirements.

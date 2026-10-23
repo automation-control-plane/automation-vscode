@@ -40,7 +40,7 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
             if (item?.filePath) existing.select(path.relative(path.dirname(key), item.filePath) + "#0");
             return;
         }
-        const panel = vscode.window.createWebviewPanel("automation.workItems", "Work Items: " + path.basename(path.dirname(key)),
+        const panel = vscode.window.createWebviewPanel("automation.workItems", "Runbook: " + path.basename(path.dirname(key)),
             vscode.ViewColumn.Active, { enableScripts: true, localResourceRoots: [] });
         panels.set(key, {panel, refresh, select: id => {mode = "file"; selectId = id; void refresh().catch(() => undefined);}});
         const managed = new ManagedWorkItemsView(context, key, message => panel.webview.postMessage(message));
@@ -124,6 +124,10 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
                 // UI drafts use VS Code's existing memento, independently of
                 // task/model/network operations. Closing a panel must not drop
                 // edits queued behind an interpreter or model request.
+                if (message?.op === "openLogs") {
+                    void vscode.commands.executeCommand("sema4ai.python.view.output.focus");
+                    return;
+                }
                 if (message?.op === "restoreEditorDraft") {
                     const state = editorDrafts.get(key) || context.workspaceState.get(editorStateKey);
                     void panel.webview.postMessage({type: "editorDraftRestore", state});
@@ -135,7 +139,8 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
                         if (!state || state.version !== 1 || !["file", "sqlite", "published", "managed"].includes(state.mode) ||
                             typeof state.name !== "string" || typeof state.queue !== "string" || state.name.length > 80 || state.queue.length > 80 ||
                             !Array.isArray(state.drafts) || state.drafts.length > 100 || Buffer.byteLength(JSON.stringify(state)) > 4 * 1024 * 1024) throw Error("Editor draft state exceeds the supported bounds. Keep this tab open and save the input.");
-                        const allowed = ["version", "mode", "queue", "name", "activeKey", "selectedId", "revision", "dirty", "root", "error", "parameters", "managedRoot", "replaySource", "drafts"];
+                        const allowed = ["version", "mode", "queue", "name", "activeKey", "selectedId", "revision", "dirty", "root", "error", "parameters", "managedRoot", "replaySource", "runbookView", "drafts"];
+                        if (state.runbookView && (!["prepare", "run", "inspect"].includes(state.runbookView.stage) || !["inputs", "files", "result"].includes(state.runbookView.tab) || Object.keys(state.runbookView).some(name => !["stage", "tab"].includes(name)))) throw Error("Invalid Runbook presentation state.");
                         if (Object.keys(state).some(name => !allowed.includes(name))) throw Error("Invalid editor draft state.");
                         editorDrafts.set(key, state);
                         void Promise.resolve(context.workspaceState.update(editorStateKey, state)).catch(() => panel.webview.postMessage({type: "error", message: "Unable to preserve this draft in editor state. Keep the tab open and save the input."}));
@@ -277,7 +282,7 @@ function editorHtml(nonce: string): string {
     const resource = (name: string) => fs.readFileSync(path.join(__dirname, "../../resources/work-items", name), "utf8");
     const values = {
         nonce,
-        style: resource("panel.css"),
+        style: ["theme.css", "codicon.css"].map(name => fs.readFileSync(path.join(__dirname, "../../resources/runbook", name), "utf8")).join("\n") + "\n" + resource("panel.css"),
         script: ["form.js", "editor.js", "managed-editor.js"].map(resource).join("\n"),
     };
     return resource("panel.html").replace(/\{\{(nonce|style|script)\}\}/g, (_, key: string) => values[key]);

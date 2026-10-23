@@ -55,10 +55,11 @@ TREE_VIEW_CONTAINERS = [
         title="Automation",
         icon="images/automation-outline.svg",
         tree_views=[
+            TreeView(id="automation-navigation", name="Workspace", contextual_title="Automation", menus={}),
             TreeView(
                 id="sema4ai-task-packages-tree",
-                name="Agent/Action/Task Packages",
-                contextual_title="Agent/Action/Task Packages",
+                name="Packages",
+                contextual_title="Packages",
                 menus={
                     # See: https://code.visualstudio.com/api/references/contribution-points#contributes.menus
                     # for targets
@@ -208,6 +209,7 @@ TREE_VIEW_CONTAINERS = [
             TreeView(
                 id="sema4ai-package-content-tree",
                 name="Package Content",
+                visibility="collapsed",
                 contextual_title="Package Content",
                 menus={
                     "view/title": [

@@ -1,3 +1,5 @@
+import { registerRunbookWorkspace } from "./runbookView";
+import { initializeRuntimeOwnership } from "./actionServer";
 import { isLegacyVendorCommand, legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 import { vendorStudioHome } from "./runtimePaths";
 /*
@@ -705,6 +707,7 @@ function checkDeprecatedRobocorpCoreExtension() {
 }
 
 export async function activate(context: ExtensionContext) {
+    initializeRuntimeOwnership(context.workspaceState);
     GLOBAL_STATE = context.globalState;
     let timing = new Timing();
     OUTPUT_CHANNEL.appendLine("Activating Automation extension.");
@@ -1011,6 +1014,7 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
         })
     );
     views.registerViews(context);
+    registerRunbookWorkspace(context);
     registerDebugger();
 
     try {

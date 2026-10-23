@@ -1,0 +1,3 @@
+................................                                         [100%]
+32 passed in 2.23s
+Robocorp Log (html): /workspace/scratch/5e55918bc8f8/automation-vscode-runbook/sema4ai/output/log.html
