@@ -4,6 +4,22 @@ This branch is an incomplete port of the full extension feature set. An installa
 VSIX is a checkpoint, not feature acceptance. No extension or release assets are
 published by this work. Apache-2.0 and upstream attribution remain in place.
 
+## Current checkpoint (2026-10-23)
+
+The privately installable candidate is **Automation Control Plane 2.20.3**, source
+`0c5bb00dc4b8aac9ef95efe48e4222a26d298399`. SHA256:
+`172d88fb297686cd62ca99a402a23a3e547de33bfa242a47e8f03491f4f36adb`.
+See [final installed qualification](evidence/published-branding-20261023/README.md)
+for 16 Node / 55 Python passes (one skip), 11 actual installed executable/DAP/HTTP
+stages and real installed LSP Work Items input/output. These remain distinct from
+GUI acceptance. Runtime's bundled RCC 18.19.3 contract remains unresolved.
+
+The owner-selected dot cloud desktop now has a working official Code installation.
+Parent-reported prior-candidate GUI activation and Action execution supersede the
+historical coding-container GUI blocker below. Actual desktop retests of 2.20.3
+branding, interpreter display, Action Work Items and configured Runtime port remain
+pending. No sandbox/security settings were changed. Windows/macOS remain untested.
+
 ## Reproduce the prepared baseline
 
 The repository is `/workspace/automation-vscode`. A fresh `git fetch --prune origin`
@@ -68,7 +84,7 @@ to published Core 1.0.3 and Work Items 0.4.4 where those dependencies occur.
 
 All existing feature areas remain in scope. A blocked row is not waived or accepted.
 The private candidate identifies as `automation-control-plane.automation-vscode`
-2.20.1, while the existing command/settings namespace and upstream attribution stay
+2.20.3, while the existing command/settings namespace and upstream attribution stay
 intact. Windows/macOS were not executed; path policy checks are static coverage.
 
 | Feature area | Executed evidence | Remaining work or exact gate |
