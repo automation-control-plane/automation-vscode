@@ -1,63 +1,32 @@
-## Sema4.ai VS Code extension
+# Automation Control Plane
 
-> Note: The `Sema4.ai` extension from VS Code replaces the [Robocorp Code](https://marketplace.visualstudio.com/items?itemName=robocorp.robocorp-code) -extension. The same features exist in this extension, so you can just switch to using `Sema4.ai`. Future development will be focused here.
+Create, run and debug Action Packages and Robot Tasks in Visual Studio Code using published [RCC](https://github.com/joshyorko/rcc) and [Actions](https://github.com/joshyorko/actions) tooling.
 
-The Sema4.ai extension makes it easy to create Python based automation projects and AI Actions.
+This private compatibility fork is under qualification. The [feature acceptance ledger](https://github.com/automation-control-plane/automation-vscode/blob/port/published-rcc-actions-20261022/docs/compatibility-port.md) records actual executions, pending checks and backend limitations. Installing a candidate does not imply that every feature or platform has passed acceptance.
 
-It can be used to scale up from simple image fetching or API calling all the way to complex process enterprise automation workflows.
+## Install the private candidate
 
-Main features include:
+1. Obtain the private VSIX and its SHA256 from the repository owner.
+2. In VS Code, run **Extensions: Install from VSIX…**, select the file, then reload when prompted. The extension ID is `automation-control-plane.automation-vscode`.
+3. Open your project and select the **Automation** activity bar. Run **Automation: Create Action Package** or **Automation: Create Task Package** from the command palette.
+4. Use the package tree to select, run and debug actions and tasks. Configure action inputs before running an action.
 
--   **Create, run and debug AI Actions** - Sema4.ai AI Actions provides end-to-end stack supporting every type of connection between AI and your apps and data. You are in control where to run the code and everything is built for easiness, security, and scalability.
+## Features and configuration
 
--   **Automatic configuration of dependencies** - Every Python oriented project uses its own lightweight virtual environment and runs in isolation.
+- Action, Task and Agent package creation and discovery; local run/debug and environment terminals.
+- Python language server integration, Work Items, and web/desktop inspectors. Windows and Java inspectors require their platform prerequisites.
+- Published tooling: RCC **18.19.7**, Actions Runtime **1.0.4**, Core **1.0.3** and Work Items **0.4.4**. Explicit executable settings take precedence over downloads. Managed downloads verify release digests and executable identity.
+- Separate `ACTIONS_HOME` (default `~/.actions`) and `ROBOTS_HOME` (default `~/.robots`); Action Server state is under `ACTIONS_HOME/action-server`. Existing operator overrides are preserved. Existing data is never migrated automatically.
+- Stable `sema4ai.*` setting, command and debugger IDs remain for configuration compatibility.
 
--   **Inspector for Web, Windows Application Elements & more** - Pick elements from different mediums and create locators for automation
+**Compatibility limits:** published Runtime 1.0.4 bundles RCC 18.19.3 and its artifact adapter rejects the requested RCC 18.19.7. This remains an open compatibility gate; version checks are not bypassed. Control Room, Sema4.ai Studio, Data Server, authentication, Agent CLI and publishing integrations remain available as explicitly labeled legacy integrations, subject to their backend and operator prerequisites. No vendor executable is downloaded as a fallback.
 
--   **Create, run and debug projects** - Do these with ease while developing Tasks to automate applications
+The candidate targets Linux x64, Windows x64 and macOS Apple Silicon. Linux workload checks have executed; platform and GUI acceptance status is recorded in the ledger. VS Code 1.101 or newer is required. Activation may acquire verified tooling and Python environment dependencies; configure executable paths and network access as appropriate for your installation.
 
--   **Deploy projects to Control Room** - Run unattended automation in a safe, reliable and easy to use Cloud Platform.
+## Development and issues
 
-> Note: the use of cloud-based orchestration in [Control Room](https://sema4.ai/docs/manage-agents/meet-control-room) requires an account.
+See [development guidance](https://github.com/automation-control-plane/automation-vscode/blob/port/published-rcc-actions-20261022/docs/develop.md) and [compatibility findings](https://github.com/automation-control-plane/automation-vscode/blob/port/published-rcc-actions-20261022/docs/compatibility-port.md). Report problems in the [private repository](https://github.com/automation-control-plane/automation-vscode/issues). The issue command opens a draft in your browser for review; diagnostic logs stay local until you choose to share them.
 
-![Example of a Robot running with the extension](images/gif_run.gif)
+## Attribution
 
-### Get Started
-
-1. Download [Sema4.ai extension for VS Code](https://marketplace.visualstudio.com/items?itemName=sema4ai.sema4ai), and open it in VS Code.
-
-2. Open the command palette - (Windows, Linux): `CTRL-SHIFT-P` (macOS): `CMD-SHIFT-P`
-
-3. Select the command `Sema4.ai: Create Action Package`
-
-![image of command palette](images/command-palette.png)
-
-4. Open the sidebar and start running you actions. You can also start the Action Server from the sidebar.
-
-Full instructions are available at our [documentation site](https://sema4.ai/docs/build-agents/develop-actions) for the VS Code Extension.
-
-This is under active development, so please [contact us](https://sema4.ai/contact-us/) for issues and feature requests.
-
-### Requirements
-
-Supported operating systems: Windows (x64), Linux (x64) or macOS on Apple Silicon (arm64). macOS on Intel (x64) is not supported.
-
-### Configuration
-
-During the first activation, the extension will download additional dependencies that are required for it to run.
-
-### Developing
-
-See: [Developing](https://github.com/Sema4AI/vscode-extension/docs/develop.md) for details on how to develop the `Sema4.ai` -extension.
-
-### Changelog
-
-See: [Changelog](https://github.com/Sema4AI/vscode-extension/docs/changelog.md) for details on how to develop the `Sema4.ai` -extension.
-
-### Reporting Issues
-
-Issues may be reported in the [GitHub Issues](https://github.com/Sema4AI/vscode-extension/issues/new/choose).
-
-Contact us via Slack: [sema4ai-users.slack.com](https://sema4ai-users.slack.com/ssb/redirect)
-
-## License: Apache 2.0
+This fork derives from the Sema4.ai / Robocorp VS Code extension. Original copyright, Apache-2.0 license and third party notices are retained in the package. Legacy backend names identify compatibility targets; they do not identify this extension's publisher.

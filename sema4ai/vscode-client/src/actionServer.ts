@@ -15,7 +15,7 @@ import { createHash } from "crypto";
 import { withStudioEnvironment } from "./runtimePaths";
 
 const ACTION_SERVER_DEFAULT_PORT = 8082;
-const ACTION_SERVER_TERMINAL_NAME = "Sema4.ai: Action Server";
+const ACTION_SERVER_TERMINAL_NAME = "Automation: Action Server";
 
 function downloadActionServer(): Thenable<string> {
     return downloadTool(Tool.ActionServer);
@@ -160,7 +160,7 @@ const startActionServerInternal = async (directory: Uri) => {
     env["ACTIONS_SKIP_UPDATE_CHECK"] = "1";
 
     actionServerTerminal = window.createTerminal({
-        name: "Sema4.ai: Action Server",
+        name: "Automation: Action Server",
         env: env,
         cwd: directory,
         shellPath: location,

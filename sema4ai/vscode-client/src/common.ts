@@ -350,10 +350,10 @@ export function compareVersions(version1: string, version2: string): number {
 
 export async function showErrorMessageWithShowOutputButton(message: string) {
     const result = await window.showErrorMessage(
-        message + " (see `OUTPUT > Sema4.ai` for more details).",
-        "Open OUTPUT > Sema4.ai"
+        message + " (see `OUTPUT > Automation` for more details).",
+        "Open OUTPUT > Automation"
     );
-    if (result === "Open OUTPUT > Sema4.ai") {
+    if (result === "Open OUTPUT > Automation") {
         OUTPUT_CHANNEL.show();
     }
 }

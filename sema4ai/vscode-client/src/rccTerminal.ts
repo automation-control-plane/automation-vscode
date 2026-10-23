@@ -104,7 +104,7 @@ export async function createTerminalForFile(filePath: string, terminalName: stri
             name: terminalName,
             env: env,
             cwd: pathModule.dirname(filePath),
-            message: "Sema4.ai Package Activated Interpreter (Python Environment)",
+            message: "Automation Package Activated Interpreter (Python Environment)",
             shellPath: "C:\\Windows\\System32\\cmd.exe",
         });
 
@@ -123,7 +123,7 @@ export async function createTerminalForFile(filePath: string, terminalName: stri
             name: terminalName,
             env: env,
             cwd: pathModule.dirname(filePath),
-            message: "Sema4.ai Package Activated Interpreter (Python Environment)",
+            message: "Automation Package Activated Interpreter (Python Environment)",
         });
         const envVarsContent = Object.keys(env)
             .reduce((acc, key) => {

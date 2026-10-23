@@ -242,7 +242,7 @@ COMMANDS = [
     ),
     Command(
         "sema4ai.runRobocorpsPythonTask",
-        "Run Sema4.ai's Python Task",
+        "Run Python Task",
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=True,
@@ -250,7 +250,7 @@ COMMANDS = [
     ),
     Command(
         "sema4ai.debugRobocorpsPythonTask",
-        "Debug Sema4.ai's Python Task",
+        "Debug Python Task",
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=True,
@@ -270,7 +270,7 @@ COMMANDS = [
     ),
     Command(
         "sema4ai.computeRobotLaunchFromRobocorpCodeLaunch",
-        "Computes a Task Package launch debug configuration based on the Sema4.ai launch debug configuration",
+        "Computes a Task Package launch debug configuration based on the Automation launch debug configuration",
         add_to_package_json=False,
         server_handled=True,
     ),
@@ -348,7 +348,7 @@ COMMANDS = [
     ),
     Command(
         "sema4ai.refreshCloudView",
-        "Refresh Sema4.ai view",
+        "Refresh Automation view",
         add_to_package_json=True,
         server_handled=False,
         icon={"light": "images/light/refresh.svg", "dark": "images/dark/refresh.svg"},
@@ -534,7 +534,7 @@ COMMANDS = [
         server_handled=False,
         hide_from_command_palette=True,
     ),
-    Command("sema4ai.submitIssue", "Submit issue to Sema4.ai", server_handled=False),
+    Command("sema4ai.submitIssue", "Submit issue to Automation", server_handled=False),
     Command(
         "sema4ai.inspector.internal",
         "Inspector Manager (internal)",
@@ -676,13 +676,13 @@ COMMANDS = [
     ),
     Command(
         "sema4ai.clearEnvAndRestart",
-        "Clear Sema4.ai (RCC) environments and restart Sema4.ai",
+        "Clear Automation (RCC) environments and restart Automation",
         add_to_package_json=True,
         server_handled=False,
     ),
     Command(
         "sema4ai.showOutput",
-        "Show Sema4.ai > Output logs",
+        "Show Automation > Output logs",
         add_to_package_json=True,
         server_handled=False,
     ),
@@ -1092,7 +1092,7 @@ def get_commands_for_json():
     for command in COMMANDS:
         if not command.add_to_package_json:
             continue
-        dct = {"command": command.name, "title": command.title, "category": "Sema4.ai"}
+        dct = {"command": command.name, "title": command.title, "category": "Automation"}
         if command.icon:
             dct["icon"] = command.icon
         if command.enablement:

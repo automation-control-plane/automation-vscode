@@ -1,25 +1,14 @@
-<img src="./sema4ai/images/icon.png" alt="Sema4.ai SDK Icon" width="200">
+<img src="./sema4ai/images/automation-icon.png" alt="Automation Control Plane icon" width="128">
 
-# Sema4.ai VSCode Extension SDK
+# Automation Control Plane for VS Code
 
-Sema4.ai SDK: Visual Studio Code Extension for AI Agent, Actions and Automation Tasks development
+Private compatibility fork for Action Packages, Robot Tasks, Work Items and inspectors using published joshyorko RCC and Actions tooling.
 
-<img src="./sema4ai/images/gif_run.gif" alt="Sema4.ai SDK Icon">
+- [Extension usage and private VSIX installation](./sema4ai/README.md)
+- [Feature acceptance ledger and verified compatibility findings](./docs/compatibility-port.md)
+- [Development](./docs/develop.md)
+- [Private issue tracker](https://github.com/automation-control-plane/automation-vscode/issues)
 
-👉 [Go here for more information!](./sema4ai/README.md)
+The extension ID is `automation-control-plane.automation-vscode`. This candidate remains under qualification; see the ledger for executed checks and open gates.
 
-# Development
-
-👉 [Go here for more information!](./docs/develop.md)
-
-# Release
-
-👉 [Go here for more information!](./docs/release.md)
-
-# Issue Reporting
-
-**⁉️ PLEASE RETEST ISSUES YOU’VE ENCOUNTERED. PLEASE REPORT THEM AGAIN IF NEEDED.**
-
-Please report issues as soon as you see them using the `Submit Issue` behind `Command Palette`.
-
-Follow the message on [#dev-tools-bugs -channel](https://sema4ai.slack.com/archives/C0107FK9JR2) to give more details & get responses to your problem.
+Derived from the Sema4.ai / Robocorp extension under Apache-2.0. See [LICENSE](./LICENSE), [COPYRIGHT](./COPYRIGHT) and [third party notices](./ThirdPartyNotices.txt).

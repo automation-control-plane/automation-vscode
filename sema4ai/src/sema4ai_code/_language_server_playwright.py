@@ -188,7 +188,7 @@ class _Playwright:
 
             if playwright_recorder_returncode != 0:
                 self._lsp_messages.show_message(
-                    "There was some error running the Playwright recorder.\nPlease see `View > OUTPUT > Sema4.ai` for more details.",
+                    "There was some error running the Playwright recorder.\nPlease see `View > OUTPUT > Automation` for more details.",
                     MessageType.Error,
                 )
 

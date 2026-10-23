@@ -1,7 +1,7 @@
 import { window } from "vscode";
 import { feedbackRobocorpCodeError } from "./rcc";
 
-export const OUTPUT_CHANNEL_NAME = "Sema4.ai";
+export const OUTPUT_CHANNEL_NAME = "Automation";
 export const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 
 export function buildErrorStr(err: Error | undefined) {

@@ -218,7 +218,7 @@ async function verifyLongPathSupportOnWindows(
                 const NO = "No (don't warn again)";
 
                 let result = await window.showErrorMessage(
-                    "Windows long paths support is not enabled. Would you like to have Sema4.ai enable it now?",
+                    "Windows long paths support is not enabled. Would you like to have Automation enable it now?",
                     {
                         "modal": true,
                         "detail":
@@ -309,7 +309,7 @@ export async function basicValidations(
     // Check that ROBOCORP_HOME is valid (i.e.: doesn't have any spaces in it).
     let rccDiagnostics: RCCDiagnostics | undefined = await configDiagnosticsPromise;
     if (!rccDiagnostics) {
-        let msg: string = "There was an error getting RCC diagnostics. Sema4.ai will not be started!";
+        let msg: string = "There was an error getting RCC diagnostics. Automation will not be started!";
         if (!failsPreventStartup) {
             msg = "There was an error getting RCC diagnostics.";
         }
@@ -363,7 +363,7 @@ export async function basicValidations(
         robocorpHome = uriResult[0].fsPath;
         rccDiagnostics = await runConfigDiagnostics(rccLocation, robocorpHome);
         if (!rccDiagnostics) {
-            let msg: string = "There was an error getting RCC diagnostics. Sema4.ai will not be started!";
+            let msg: string = "There was an error getting RCC diagnostics. Automation will not be started!";
             if (!failsPreventStartup) {
                 msg = "There was an error getting RCC diagnostics.";
             }
@@ -516,10 +516,10 @@ async function createDefaultEnv(
 
 /**
  * Shows a messages saying that the extension is disabled (as an error message to the user)
- * and logs it to OUTPUT > Sema4.ai.
+ * and logs it to OUTPUT > Automation.
  */
 function disabled(msg: string): undefined {
-    msg = "Sema4.ai extension disabled. Reason: " + msg;
+    msg = "Automation extension disabled. Reason: " + msg;
     OUTPUT_CHANNEL.appendLine(msg);
     window.showErrorMessage(msg);
     OUTPUT_CHANNEL.show();
@@ -672,7 +672,7 @@ export async function getLanguageServerPythonInfoUncached(): Promise<Interpreter
     let result: ExecFileReturn | undefined = await window.withProgress(
         {
             location: ProgressLocation.Notification,
-            title: "Sema4.ai",
+            title: "Automation",
             cancellable: false,
         },
         async (progress: Progress<{ message?: string; increment?: number }>): Promise<ExecFileReturn> | undefined => {

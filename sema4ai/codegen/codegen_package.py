@@ -32,21 +32,20 @@ def get_json_contents():
     base_package_contents = {
         "name": "automation-vscode",
         "publisher": "automation-control-plane",
-        "displayName": "Sema4.ai SDK",
-        "description": "Sema4.ai SDK: Visual Studio Code Extension for AI Agent, Actions and Automation Tasks development",
+        "displayName": "Automation Control Plane",
+        "description": "Create, run and debug Action Packages and Robot Tasks with published RCC and Actions tooling.",
         "author": {
-            "name": "Sema4.ai",
-            "email": "dev@sema4.ai",
-            "url": "https://sema4.ai",
+            "name": "Automation Control Plane",
+            "url": "https://github.com/automation-control-plane/automation-vscode",
         },
-        "homepage": "https://sema4.ai",
+        "homepage": "https://github.com/automation-control-plane/automation-vscode",
         "repository": {
             "type": "git",
             "url": "https://github.com/automation-control-plane/automation-vscode.git",
         },
         "license": "Apache-2.0",
         "version": __version__,
-        "icon": "images/icon.png",
+        "icon": "images/automation-icon.png",
         "engines": {"vscode": f"^1.101.0"},
         "categories": ["Debuggers"],
         "scripts": {
@@ -55,7 +54,7 @@ def get_json_contents():
             "compile": "cd vscode-client && tsc -p ./ && cd ..",
             "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
             "pretest": "cd vscode-client && tsc -p ./ && cd ..",
-            "test": "node tests/runtime_paths.test.js",
+            "test": "node --test tests/runtime_paths.test.js tests/branding.test.js",
             "test:host": "node ./vscode-client/out/tests/runTests.js",
             "prettier": "npx prettier -c vscode-client/**/*.ts",
             "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
@@ -99,7 +98,7 @@ def get_json_contents():
         + ["onLanguage:json", "onLanguage:yaml", "onLanguage:python"],
         "contributes": {
             "configuration": {
-                "title": "Sema4.ai Language Server Configuration",
+                "title": "Automation Language Server Configuration",
                 "type": "object",
                 "properties": get_settings_for_json(),
             },
@@ -110,7 +109,7 @@ def get_json_contents():
             "debuggers": [
                 {
                     "type": "sema4ai",
-                    "label": "Sema4.ai",
+                    "label": "Automation",
                     "languages": [],
                     "configurationAttributes": {
                         "launch": {
@@ -150,11 +149,11 @@ def get_json_contents():
                     },
                     "configurationSnippets": [
                         {
-                            "label": "Sema4.ai: Launch task from robot.yaml",
+                            "label": "Automation: Launch task from robot.yaml",
                             "description": "Add a new configuration for launching tasks from a robot.yaml.",
                             "body": {
                                 "type": "sema4ai",
-                                "name": "Sema4.ai: Launch task from robot.yaml",
+                                "name": "Automation: Launch task from robot.yaml",
                                 "request": "launch",
                                 # "terminal": "integrated",
                                 "robot": '^"\\${file}"',

@@ -95,21 +95,13 @@
             }
         }
         function onClickSubmit() {
-            const email = document.getElementById("email").value;
-            if (!email) {
-                return showError("Issue not sent (please provide e-mail).");
-            }
-            if (email.indexOf("@") == -1) {
-                return showError("Issue not sent (please provide a valid e-mail).");
-            }
-
             const summary = document.getElementById("summary").value;
             if (!summary.trim()) {
                 return showError("Issue not sent (please provide the summary).");
             }
 
             const details = document.getElementById("details").value;
-            if (!summary.trim()) {
+            if (!details.trim()) {
                 return showError("Issue not sent (please provide the details).");
             }
 
@@ -121,7 +113,7 @@
             }
 
             let contents = {
-                "email": email,
+                "email": "",
                 "summary": summary,
                 "details": details,
                 "files": files,
@@ -133,7 +125,7 @@
             if (vscode) {
                 // Disable button while sending.
                 const submitBt = document.getElementById("submit");
-                submitBt.value = "Please wait, sending issue...";
+                submitBt.value = "Opening private issue draft...";
                 submitBt.disabled = true;
                 vscode.postMessage({
                     command: "onClickSubmit",
@@ -152,7 +144,7 @@
                     // Re-enable button after sending.
                     const submitBt = document.getElementById("submit");
                     submitBt.disabled = false;
-                    submitBt.value = "Submit";
+                    submitBt.value = "Open private issue draft";
                     break;
             }
         });
@@ -160,19 +152,16 @@
 
     <body>
         <div>
-            <div>Submit Issue to Sema4.ai<br /><br /></div>
+            <div>Report an Automation Control Plane issue<br /><br /></div>
             <div>
                 Note: it may be worth checking out:<br />
                 <br />
-                &#8226; <a href="https://sema4.ai/docs/automation/troubleshooting">Troubleshooting Docs</a><br />
+                &#8226; <a href="https://github.com/automation-control-plane/automation-vscode/blob/port/published-rcc-actions-20261022/docs/compatibility-port.md">Compatibility findings and troubleshooting</a><br />
                 <br />
                 -- maybe someone else already stumbled through the same issue you have.<br /><br />
             </div>
-            <div>If the above troubleshooting didn't help, please fill the information below and press "Submit".</div>
+            <div>Open a draft in the private repository, review it, then submit it in your browser. Logs stay local and are not attached automatically.</div>
             <div class="settings">
-                <label>E-mail (used to get updates on your issue):</label>
-                <input type="text" id="email" />
-
                 <label>Summary (brief introduction on the issue you're experiencing):</label>
                 <input type="text" id="summary" />
 
@@ -187,11 +176,11 @@ Clear, step-by-step instructions will help resolve the issue faster.
                 >
 
                 <label id="additionalFiles"
-                    >Logs attached (some more information to help us diagnose your issue):</label
+                    >Local logs available for review (not uploaded):</label
                 >
 
                 <div style="display: none; color: var(--vscode-errorForeground)" id="error"></div>
-                <input value="Submit" type="submit" id="submit" onclick="onClickSubmit()" />
+                <input value="Open private issue draft" type="submit" id="submit" onclick="onClickSubmit()" />
             </div>
         </div>
         <br />
@@ -206,10 +195,6 @@ Clear, step-by-step instructions will help resolve the issue faster.
         const data = document.getElementById("data").innerText;
         const inputData = JSON.parse(data);
         const inputFiles = inputData.files;
-        const inputEmail = inputData.email;
-        if (inputEmail) {
-            document.getElementById("email").value = inputEmail;
-        }
         for (const it of inputFiles) {
             var template = document.createElement("template");
             const basename = it.split(/[\\/]/).pop();

@@ -99,7 +99,7 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
             } catch (error) {
                 logError("Error getting children", error, "VIEWS_CLOUD_COMPUTE_ROOTS");
                 ret.push({
-                    "label": "Error initializing. Click to see Output > Sema4.ai.",
+                    "label": "Error initializing. Click to see Output > Automation.",
                     "iconPath": "error",
                     "command": {
                         "title": "See output",
@@ -108,10 +108,10 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                 });
             }
             ret.push({
-                "label": "Submit issue to Sema4.ai",
+                "label": "Submit issue to Automation",
                 "iconPath": "report",
                 "command": {
-                    "title": "Submit issue to Sema4.ai",
+                    "title": "Submit issue to Automation",
                     "command": SEMA4AI_SUBMIT_ISSUE,
                 },
             });

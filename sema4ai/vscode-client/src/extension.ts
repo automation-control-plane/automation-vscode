@@ -250,7 +250,7 @@ const serverOptions: ServerOptions = async function () {
     let executableAndEnv: InterpreterInfo | undefined;
     function onNoPython() {
         OUTPUT_CHANNEL.appendLine(
-            "Unable to activate Sema4.ai extension because python executable from RCC environment was not provided.\n" +
+            "Unable to activate Automation extension because python executable from RCC environment was not provided.\n" +
                 " -- Most common reason is that the environment couldn't be created due to network connectivity issues.\n" +
                 " -- Please fix the error and restart VSCode."
         );
@@ -310,7 +310,7 @@ const serverOptions: ServerOptions = async function () {
             args = args.concat(["-v"]);
         }
 
-        OUTPUT_CHANNEL.appendLine("Starting Sema4.ai with args: " + executableAndEnv.pythonExe + " " + args.join(" "));
+        OUTPUT_CHANNEL.appendLine("Starting Automation with args: " + executableAndEnv.pythonExe + " " + args.join(" "));
 
         let src: string = path.resolve(__dirname, "../../src");
         let executableAndEnvEnviron = {};
@@ -333,10 +333,10 @@ const serverOptions: ServerOptions = async function () {
 async function notifyOfInitializationErrorShowOutputTab(msg?: string) {
     OUTPUT_CHANNEL.show();
     if (!msg) {
-        msg = "Unable to activate Sema4.ai extension. Please see: Output > Sema4.ai for more details.";
+        msg = "Unable to activate Automation extension. Please see: Output > Automation for more details.";
     }
     window.showErrorMessage(msg);
-    const selection = await window.showErrorMessage(msg, "Show Output > Sema4.ai");
+    const selection = await window.showErrorMessage(msg, "Show Output > Automation");
     if (selection) {
         OUTPUT_CHANNEL.show();
     }
@@ -406,7 +406,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
         } catch (error) {
             logError("Error downloading Action Server", error, "ERR_DOWNLOAD_ACTION_SERVER");
             window.showErrorMessage(
-                "There was an error downloading the action server. See `OUTPUT > Sema4.ai` for more information."
+                "There was an error downloading the action server. See `OUTPUT > Automation` for more information."
             );
         }
     });
@@ -551,7 +551,7 @@ async function clearEnvAndRestart() {
     await window.withProgress(
         {
             location: vscode.ProgressLocation.Window,
-            title: "Clearing environments and restarting Sema4.ai.",
+            title: "Clearing environments and restarting Automation.",
             cancellable: false,
         },
         clearEnvsAndRestart
@@ -572,22 +572,22 @@ async function clearEnvsAndRestart(progress: vscode.Progress<{ message?: string;
         });
         const timing = new Timing();
         progress.report({
-            "message": `Waiting for Sema4.ai to be ready.`,
+            "message": `Waiting for Automation to be ready.`,
         });
         await langServer.onReady();
-        let msg = "Restarted Sema4.ai. Took: " + timing.getTotalElapsedAsStr();
+        let msg = "Restarted Automation. Took: " + timing.getTotalElapsedAsStr();
         progress.report({
             "message": msg,
         });
         OUTPUT_CHANNEL.appendLine(msg);
     } catch (err) {
         allOk = false;
-        const msg = "Error restarting Sema4.ai";
+        const msg = "Error restarting Automation";
         notifyOfInitializationErrorShowOutputTab(msg);
         logError(msg, err, "INIT_RESTART_ROBOCORP_CODE");
     } finally {
         if (allOk) {
-            window.showInformationMessage("RCC Environments cleared and Sema4.ai restarted.");
+            window.showInformationMessage("RCC Environments cleared and Automation restarted.");
             C.useErrorStubs = false;
         } else {
             C.useErrorStubs = true;
@@ -621,7 +621,7 @@ async function clearEnvsLocked(progress: vscode.Progress<{ message?: string; inc
     globalCachedPythonInfo = undefined;
 
     C.useErrorStubs = true; // Prevent any calls while restarting...
-    C.errorMessage = "Unable to use Sema4.ai actions while clearing environments.";
+    C.errorMessage = "Unable to use Automation actions while clearing environments.";
     let okToRestartRFLS = false;
     try {
         let timing = new Timing();
@@ -639,10 +639,10 @@ async function clearEnvsLocked(progress: vscode.Progress<{ message?: string; inc
 
         let timingStop = new Timing();
         progress.report({
-            "message": `Stopping Sema4.ai.`,
+            "message": `Stopping Automation.`,
         });
         await langServer.stop();
-        OUTPUT_CHANNEL.appendLine("Stopped Sema4.ai. Took: " + timingStop.getTotalElapsedAsStr());
+        OUTPUT_CHANNEL.appendLine("Stopped Automation. Took: " + timingStop.getTotalElapsedAsStr());
 
         if (envsToLoCollect) {
             await clearRCCEnvironments(rccLocation, robocorpHome, envsToLoCollect, progress);
@@ -650,16 +650,16 @@ async function clearEnvsLocked(progress: vscode.Progress<{ message?: string; inc
 
         try {
             progress.report({
-                "message": `Clearing Sema4.ai caches.`,
+                "message": `Clearing Automation caches.`,
             });
             await clearRobocorpCodeCaches(robocorpHome);
         } catch (error) {
-            let msg = "Error clearing Sema4.ai caches.";
+            let msg = "Error clearing Automation caches.";
             logError(msg, error, "RCC_CLEAR_ENV");
         }
 
         progress.report({
-            "message": `Starting Sema4.ai.`,
+            "message": `Starting Automation.`,
         });
         langServer.start();
     } finally {
@@ -681,7 +681,7 @@ function checkDeprecatedRobocorpCoreExtension() {
         OUTPUT_CHANNEL.appendLine(`Found deprecated ${robocorpExtension.packageJSON.displayName} extension.`);
         vscode.window
             .showWarningMessage(
-                `The deprecated "${robocorpExtension.packageJSON.displayName}" extension found. It may cause conflicts with the rebranded Sema4ai extension.`,
+                `The deprecated "${robocorpExtension.packageJSON.displayName}" extension found. It may cause conflicts with the Automation extension.`,
                 "Open Extensions"
             )
             .then((selection) => {
@@ -695,7 +695,7 @@ function checkDeprecatedRobocorpCoreExtension() {
 export async function activate(context: ExtensionContext) {
     GLOBAL_STATE = context.globalState;
     let timing = new Timing();
-    OUTPUT_CHANNEL.appendLine("Activating Sema4.ai extension.");
+    OUTPUT_CHANNEL.appendLine("Activating Automation extension.");
 
     checkDeprecatedRobocorpCoreExtension();
 
@@ -706,11 +706,11 @@ export async function activate(context: ExtensionContext) {
     try {
         return await langServerMutex.dispatch(async () => {
             let ret = await doActivate(context, C);
-            OUTPUT_CHANNEL.appendLine("Sema4.ai initialization finished. Took: " + timing.getTotalElapsedAsStr());
+            OUTPUT_CHANNEL.appendLine("Automation initialization finished. Took: " + timing.getTotalElapsedAsStr());
             return ret;
         });
     } catch (error) {
-        logError("Error initializing Sema4.ai extension", error, "INIT_ROBOCORP_CODE_ERROR");
+        logError("Error initializing Automation extension", error, "INIT_ROBOCORP_CODE_ERROR");
         C.useErrorStubs = true;
         notifyOfInitializationErrorShowOutputTab();
     }
@@ -855,7 +855,7 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
 
         const sema4aiHome = vendorStudioHome(roboConfig.getHome());
         if (!sema4aiHome) {
-            vscode.window.showErrorMessage(`Unable to publish because no Sema4.ai Home was found.`);
+            vscode.window.showErrorMessage(`Unable to publish because no Automation Home was found.`);
             return;
         }
 
@@ -916,9 +916,9 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
             const micro = parseInt(splitted[2]);
             if (major < 1 || (major == 1 && (minor < 7 || (minor == 7 && micro < 0)))) {
                 const msg =
-                    "Unable to initialize the Sema4.ai extension because the Robot Framework Language Server version (" +
+                    "Unable to initialize the Automation extension because the Robot Framework Language Server version (" +
                     version +
-                    ") is not compatible with this version of Sema4.ai. Robot Framework Language Server 1.7.0 or newer is required. Please update to proceed. ";
+                    ") is not compatible with this version of Automation. Robot Framework Language Server 1.7.0 or newer is required. Please update to proceed. ";
                 OUTPUT_CHANNEL.appendLine(msg);
                 C.useErrorStubs = true;
                 notifyOfInitializationErrorShowOutputTab(msg);
@@ -952,7 +952,7 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     });
 
     let startLsTiming = new Timing();
-    langServer = new LanguageClient("Sema4.ai", serverOptions, clientOptions);
+    langServer = new LanguageClient("Automation", serverOptions, clientOptions);
 
     context.subscriptions.push(
         langServer.onDidChangeState((event) => {
@@ -1005,12 +1005,12 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
         context.subscriptions.push(disposable);
         // i.e.: if we return before it's ready, the language server commands
         // may not be available.
-        OUTPUT_CHANNEL.appendLine("Waiting for Sema4.ai (python) language server to finish activating...");
+        OUTPUT_CHANNEL.appendLine("Waiting for Automation (python) language server to finish activating...");
         await langServer.onReady();
         // If it started properly, mark that it worked.
         GLOBAL_STATE.update(CACHE_KEY_LAST_WORKED, true);
         OUTPUT_CHANNEL.appendLine(
-            "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Sema4.ai Language Server."
+            "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Automation Language Server."
         );
     } catch (error) {
         logError("Error initializing Robocorp code.", error, "ERROR_INITIALIZING_ROBOCORP_CODE_LANG_SERVER");

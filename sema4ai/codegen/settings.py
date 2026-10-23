@@ -40,14 +40,14 @@ SETTINGS = [
     Setting(
         "sema4ai.language-server.args",
         [],
-        'Specifies the arguments to be passed to the Sema4.ai language server (i.e.: ["-vv", "--log-file=~/sema4ai_code.log"]). Requires a VSCode restart to take effect.',
+        'Specifies the arguments to be passed to the Automation language server (i.e.: ["-vv", "--log-file=~/sema4ai_code.log"]). Requires a VSCode restart to take effect.',
         setting_type="array",
         js_type="string[]",
     ),
     Setting(
         "sema4ai.language-server.python",
         "",
-        "Specifies the path to the python executable to be used for the Sema4.ai Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect.",
+        "Specifies the path to the python executable to be used for the Automation Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect.",
         setting_type="string",
     ),
     Setting(
@@ -107,7 +107,7 @@ SETTINGS = [
     Setting(
         "sema4ai.proceedWithLongPathsDisabled",
         False,
-        "Enables Sema4.ai to be started even with long paths disabled.",
+        "Enables Automation to be started even with long paths disabled.",
         setting_type="boolean",
     ),
     Setting(

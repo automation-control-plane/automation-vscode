@@ -6,7 +6,7 @@ import { SEMA4AI_LOCAL_LIST_ROBOTS_INTERNAL } from "../../robocorpCommands";
 
 const testFolderLocation = "/resources/";
 
-suite("Sema4.ai Extension Test Suite", () => {
+suite("Automation Extension Test Suite", () => {
     vscode.window.showInformationMessage("Start all tests.");
 
     test("Test that robots can be listed", async () => {

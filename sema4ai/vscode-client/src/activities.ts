@@ -159,7 +159,7 @@ export async function cloudLogout(): Promise<void> {
  * Note that callers need to check both whether it was successful as well as if the interpreter was resolved.
  */
 export async function resolveInterpreter(targetRobot: string): Promise<ActionResult<InterpreterInfo | undefined>> {
-    // Note: this may also activate `Sema4.ai` if it's still not activated
+    // Note: this may also activate `Automation` if it's still not activated
     // (so, it cannot be used during startup as there'd be a cyclic dependency).
     try {
         let interpreter: ActionResult<InterpreterInfo | undefined> = await commands.executeCommand(
@@ -363,7 +363,7 @@ export async function setPythonInterpreterFromRobotYaml() {
             window.showInformationMessage("Successfully set python executable path for vscode-python.");
         } else if (!pythonExecutableConfigured) {
             window.showInformationMessage(
-                "Unable to verify if vscode-python executable was properly set. See OUTPUT -> Sema4.ai for more info."
+                "Unable to verify if vscode-python executable was properly set. See OUTPUT -> Automation for more info."
             );
         } else {
             if (pythonExecutableConfigured != interpreter.pythonExe) {
@@ -940,7 +940,7 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
         if (error && error.message) {
             msg += ` (${error.message})`;
         }
-        msg += "See OUTPUT > Sema4.ai for more details.";
+        msg += "See OUTPUT > Automation for more details.";
         window.showErrorMessage(msg);
         logError("Error computing launch env.", error, "ERROR_LAUNCH_ENV");
         throw error;
@@ -957,7 +957,7 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
                     await window.withProgress(
                         {
                             location: vscode.ProgressLocation.Notification,
-                            title: "Running preRunScripts (see 'OUTPUT > Sema4.ai' for details).",
+                            title: "Running preRunScripts (see 'OUTPUT > Automation' for details).",
                             cancellable: false,
                         },
                         async (
@@ -975,7 +975,7 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
                                 if (!result["success"]) {
                                     OUTPUT_CHANNEL.show();
                                     window.showErrorMessage(
-                                        "There was a problem running preRunScripts. See `OUTPUT > Sema4.ai` for more details."
+                                        "There was a problem running preRunScripts. See `OUTPUT > Automation` for more details."
                                     );
                                 }
                             }

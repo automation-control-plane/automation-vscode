@@ -139,7 +139,7 @@ the child environment. In Settings configure `sema4ai.rcc.location` and
 The extension otherwise uses digest-verified release downloads. Optionally configure
 `sema4ai.language-server.python` to an existing compatible Python. Install the
 Microsoft Python debugger in this isolated profile for extension UI Python debug.
-The display name remains Sema4.ai SDK; identify the private install by publisher/id.
+Candidate 2.20.2 uses the owned display name Automation Control Plane and Automation command category. Stable legacy setting/command IDs are retained; identify the private install by publisher/id.
 
 ```bash
 source /workspace/.setup/activate.sh
@@ -260,3 +260,7 @@ this ledger and the remaining feature qualification.
 The final evidence-only repository update does not change VSIX runtime payload.
 A focused policy-test cleanup removes an unused import; no installed behavior is
 changed after the qualified implementation commit.
+
+## Automation branding checkpoint (2026-10-23)
+
+Candidate **2.20.2** applies the owner's explicit Automation Control Plane branding correction. See [executed checks and review boundaries](evidence/published-branding-20261023/README.md). This is an intermediate private candidate; the complete feature ledger and Runtime compatibility gate remain in scope. Desktop QA is exercising the actual installed VSIX on its supported Code installation; its earlier 2.20.1 Action run is not relabeled as acceptance of the new candidate.

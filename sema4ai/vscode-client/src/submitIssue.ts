@@ -6,9 +6,9 @@ import { readFileSync } from "fs";
 import * as vscode from "vscode";
 import { logError } from "./channel";
 import { getExtensionRelativeFile } from "./files";
-import { ActionResult, IAccountInfo } from "./protocols";
-import { CollectedLogs, collectIssueLogs, submitIssue } from "./rcc";
-import { SEMA4AI_GET_LINKED_ACCOUNT_INFO_INTERNAL } from "./robocorpCommands";
+import { CollectedLogs, collectIssueLogs } from "./rcc";
+
+export const ISSUE_URL = "https://github.com/automation-control-plane/automation-vscode/issues/new";
 
 export async function showSubmitIssueUI(context: vscode.ExtensionContext) {
     const info = await vscode.window.withProgress(
@@ -19,19 +19,7 @@ export async function showSubmitIssueUI(context: vscode.ExtensionContext) {
         },
         async () => {
             const collectedLogs: CollectedLogs = await collectIssueLogs(context.logUri.fsPath);
-            let email = "";
-            try {
-                let accountInfoResult: ActionResult<IAccountInfo> = await vscode.commands.executeCommand(
-                    SEMA4AI_GET_LINKED_ACCOUNT_INFO_INTERNAL
-                );
-
-                if (accountInfoResult.success) {
-                    email = accountInfoResult.result.email;
-                }
-            } catch (err) {
-                logError("Error getting default e-mail.", err, "SEND_ISSUE_ERROR_GETTING_DEFAULT_EMAIL");
-            }
-            return { collectedLogs, email };
+            return { collectedLogs, email: "" };
         }
     );
 
@@ -40,7 +28,7 @@ export async function showSubmitIssueUI(context: vscode.ExtensionContext) {
 
     const panel = vscode.window.createWebviewPanel(
         "robocorpCodeSubmitIssue",
-        "Submit Issue to Sema4.ai",
+        "Submit Issue to Automation",
         vscode.ViewColumn.One,
         {
             enableScripts: true,
@@ -59,14 +47,15 @@ export async function showSubmitIssueUI(context: vscode.ExtensionContext) {
                 case "onClickSubmit":
                     const contents: IReportContents = message.contents;
                     try {
-                        await submitIssue(
-                            contents.details,
-                            contents.email,
-                            "Sema4.ai",
-                            "Sema4.ai",
-                            contents.summary,
-                            contents.files
-                        );
+                        // Open a reviewable draft. Logs and account details never leave the machine here.
+                        const body = contents.details + "\n\nDiagnostic logs remain local; review them before attaching.";
+                        const query = `title=${encodeURIComponent(contents.summary)}&body=${encodeURIComponent(body)}`;
+                        const opened = await vscode.env.openExternal(vscode.Uri.parse(`${ISSUE_URL}?${query}`));
+                        if (!opened) {
+                            vscode.window.showErrorMessage(`Unable to open the issue draft. Visit ${ISSUE_URL}`);
+                        }
+                    } catch (err) {
+                        logError("Error opening private issue draft.", err, "OPEN_ISSUE_ERROR");
                     } finally {
                         panel.webview.postMessage({ command: "issueSent" });
                     }

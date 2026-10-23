@@ -49,8 +49,8 @@ class Menu:
 TREE_VIEW_CONTAINERS = [
     TreeViewContainer(
         id="sem4ai-packages",
-        title="Sema4.ai",
-        icon="images/sema4ai-outline.svg",
+        title="Automation",
+        icon="images/automation-outline.svg",
         tree_views=[
             TreeView(
                 id="sema4ai-task-packages-tree",
@@ -337,8 +337,8 @@ TREE_VIEW_CONTAINERS = [
             ),
             TreeView(
                 id="sema4ai-cloud-tree",
-                name="Control Room",
-                contextual_title="Sema4.ai",
+                name="Control Room (legacy integration)",
+                contextual_title="Automation",
                 visibility="collapsed",
                 menus={
                     "view/item/context": [
