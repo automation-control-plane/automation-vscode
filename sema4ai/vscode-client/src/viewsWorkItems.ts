@@ -21,9 +21,7 @@ const WORK_ITEM_TEMPLATE = `[
       "payload": {
          "message": "Hello World!"
       },
-      "files": {
-          "orders.xlsx": "orders.xlsx"
-      }
+      "files": {}
   }
 ]`;
 
@@ -334,9 +332,8 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                 {
                     "conda_prefix": condaPrefix,
                     "libs_and_version": [
-                        ["rpaframework", "11.3"],
-                        ["robocorp-workitems", "0.0.1"], // Any version will do
                         ["actions-work-items", "0.4.4"],
+                        ...(basename(robot) === "package.yaml" ? [] : [["rpaframework", "11.3"], ["robocorp-workitems", "0.0.1"]]),
                     ],
                 }
             );

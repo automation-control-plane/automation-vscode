@@ -53,6 +53,12 @@ class Command:
 
 COMMANDS = [
     Command(
+        "automation.workItems.open",
+        "Open Native Work Items",
+        server_handled=False,
+        icon="$(combine)",
+    ),
+    Command(
         "sema4ai.getLanguageServerPython",
         "Get a python executable suitable to start the language server",
         add_to_package_json=False,

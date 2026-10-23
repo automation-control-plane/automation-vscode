@@ -72,6 +72,7 @@ import {
     newWorkItemInWorkItemsTree,
     openWorkItemHelp,
 } from "./viewsWorkItems";
+import { registerNativeWorkItems } from "./workItemsNative";
 import { FSEntry, LocatorEntry, refreshTreeView, RobotEntry } from "./viewsCommon";
 import {
     SEMA4AI_CLOUD_LOGIN,
@@ -733,6 +734,7 @@ interface ExecuteWorkspaceCommandArgs {
 }
 
 export async function doActivate(context: ExtensionContext, C: CommandRegistry) {
+    registerNativeWorkItems(context);
     // Note: register the submit issue actions early on so that we can later actually
     // report startup errors.
     C.registerWithoutStub(SEMA4AI_SUBMIT_ISSUE, async () => {

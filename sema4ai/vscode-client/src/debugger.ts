@@ -136,7 +136,18 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
             env = { ...env, ...baseEnv };
         }
 
-        if (isActionPackageLaunch) {
+        if (debugConfiguration.automationWorkItems) {
+            // Native Work Items prepares a private input snapshot or SDK queue
+            // through the package interpreter. Preserve explicit operator values.
+            const allowed = new Set(["RC_WORKITEM_ADAPTER", "RC_WORKITEM_INPUT_PATH", "RC_WORKITEM_OUTPUT_PATH",
+                "RC_WORKITEM_DB_PATH", "RC_WORKITEM_FILES_DIR", "RC_WORKITEM_QUEUE_NAME", "RC_WORKITEM_OUTPUT_QUEUE_NAME"]);
+            for (const [key, value] of Object.entries(debugConfiguration.automationWorkItems)) {
+                if (!allowed.has(key) || typeof value !== "string") throw Error("Invalid native Work Items launch environment.");
+                if (env[key] && env[key] !== value) throw Error(`Operator override ${key} conflicts with native Work Items selection. Existing configuration was preserved.`);
+                env[key] = value;
+            }
+            env = await updateLaunchEnvironmentCommonTasksAndActions(env, targetYaml);
+        } else if (isActionPackageLaunch) {
             env = await updateLaunchEnvironmentCommonTasksAndActions(env, debugConfiguration.package);
             const workItemEnv = await updateWorkItemEnvironment(env, debugConfiguration.package);
             if (workItemEnv === "cancelled") {

@@ -96,6 +96,8 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
             } else if (element.subTree === SUBTREE_WORK_ITEMS) {
                 item.contextValue = "workItemsRoot";
                 item.iconPath = new vscode.ThemeIcon("combine");
+                item.command = { command: "automation.workItems.open", title: "Open native Work Items editor" };
+                item.tooltip = "Open Work Items payload, attachments, execution and queue editor";
             }
             if (element.tooltip !== undefined) {
                 item.tooltip = element.tooltip;

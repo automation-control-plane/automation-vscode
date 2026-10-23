@@ -71,6 +71,7 @@
         }
     ],
     "activationEvents": [
+        "onCommand:automation.workItems.open",
         "onCommand:sema4ai.getLanguageServerPython",
         "onCommand:sema4ai.getLanguageServerPythonInfo",
         "onCommand:sema4ai.getPluginsDir",
@@ -434,6 +435,12 @@
         ],
         "keybindings": [],
         "commands": [
+            {
+                "command": "automation.workItems.open",
+                "title": "Open Native Work Items",
+                "category": "Automation",
+                "icon": "$(combine)"
+            },
             {
                 "command": "sema4ai.createRobot",
                 "title": "Create Task Package",

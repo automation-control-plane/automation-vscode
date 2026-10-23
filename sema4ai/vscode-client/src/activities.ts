@@ -11,7 +11,7 @@ import {
     DebugSessionOptions,
     env,
 } from "vscode";
-import { dirname } from "path";
+import { basename, dirname } from "path";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import * as roboCommands from "./robocorpCommands";
 import * as vscode from "vscode";
@@ -1082,9 +1082,8 @@ export async function updateWorkItemEnvironment(
             {
                 "conda_prefix": condaPrefix,
                 "libs_and_version": [
-                    ["rpaframework", "11.3"],
-                    ["robocorp-workitems", "0.0.1"], // Any version will do
                     ["actions-work-items", "0.4.4"],
+                    ...(basename(robot) === "package.yaml" ? [] : [["rpaframework", "11.3"], ["robocorp-workitems", "0.0.1"]]),
                 ],
             }
         );
