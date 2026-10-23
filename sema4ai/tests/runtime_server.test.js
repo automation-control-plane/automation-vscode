@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const net = require("node:net");
 const http = require("node:http");
 const Module = require("node:module");
-const {runtimeServerPort, assertRuntimePortAvailable} = require("../vscode-client/out/runtimeServerConfig");
+const {runtimeServerPort, assertRuntimePortAvailable, waitForOwnedRuntimeStop} = require("../vscode-client/out/runtimeServerConfig");
 const listen = server => new Promise(resolve => server.listen(0, "127.0.0.1", () => resolve(server.address().port)));
 const close = server => new Promise(resolve => server.close(resolve));
 
@@ -48,7 +48,11 @@ test("Runtime launch propagates configured port/address and never adopts or shut
         if (name === "vscode" && parent?.filename.endsWith("/legacyIntegrations.js")) return vscode;
         if (parent?.filename.endsWith("/actionServer.js")) {
             if (name === "vscode") return vscode;
-            if (name === "./runtimePaths" || name === "./runtimeServerConfig" || name === "./legacyIntegrations") return load.call(this, name, parent, main);
+            if (name === "./runtimeServerConfig") {
+                const actual = load.call(this, name, parent, main);
+                return {...actual, waitForOwnedRuntimeStop: options => actual.waitForOwnedRuntimeStop({...options, timeoutMs: 100, pollMs: 10})};
+            }
+            if (name === "./runtimePaths" || name === "./legacyIntegrations") return load.call(this, name, parent, main);
             if (name === "./rcc") return {getRobocorpHome: async () => "/isolated", createEnvWithRobocorpHome: () => ({ACTIONS_HOME: "/isolated/actions", ROBOTS_HOME: "/isolated/robots"})};
             if (name === "./channel") return {OUTPUT_CHANNEL: {appendLine() {}}};
             if (name === "./extension") return {langServer: {sendRequest: assert.fail}};
@@ -84,4 +88,15 @@ test("Runtime launch propagates configured port/address and never adopts or shut
         assert.equal(service.listening, true);
         assert.ok(vscode.window.terminals.includes(unrelated));
     } finally {await close(service);}
+});
+
+test("Owned shutdown wait is bounded and leaves an unrelated listener untouched", async () => {
+    const listener = net.createServer(socket => socket.end());
+    const port = await listen(listener);
+    try {
+        await assert.rejects(waitForOwnedRuntimeStop({port, processId: undefined, timeoutMs: 40, pollMs: 5}), /No replacement was started.*Existing listeners were left running/);
+        assert.equal(listener.listening, true);
+    } finally {await close(listener);}
+    // A free port alone is insufficient while the recorded process is still alive.
+    await assert.rejects(waitForOwnedRuntimeStop({port, processId: process.pid, timeoutMs: 30, pollMs: 5}), /Timed out waiting for owned Actions Runtime PID/);
 });

@@ -1,0 +1,160 @@
+{
+  "scope": "Additional unused task-created public repodata duplicates only; preserve final/prepared/qualified caches",
+  "before": {
+    "total": 33770192896,
+    "used": 27652481024,
+    "free": 4382949376
+  },
+  "paths": [
+    {
+      "path": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/actions-home/pkgs/cache",
+      "source_sha": "276ee966b26467010cd852bbeae60d0a0c4b9a00",
+      "files": [
+        {
+          "relative_path": "88ec62ec.json",
+          "bytes": 458565622,
+          "sha256": "4d7ee0c54e1fb11bd6fe6e379ac07045d41fabdf053d5daf398d543639053f10"
+        },
+        {
+          "relative_path": "88ec62ec.solv",
+          "bytes": 209490158,
+          "sha256": "8660413aa58e6ad112c5bd31cfa82a6569d1fb59986af3cc68b8cae018f92be6"
+        },
+        {
+          "relative_path": "88ec62ec.state.json",
+          "bytes": 374,
+          "sha256": "d67083193f0871a61d690c5de4aa752c2d224718f4dd76b9272d8345fb4f5762"
+        },
+        {
+          "relative_path": "eb045dd1.json",
+          "bytes": 192550810,
+          "sha256": "4cc9e92a28c52efe2a2b68792bfb94541fa2024264b27021f065a5d521631b8c"
+        },
+        {
+          "relative_path": "eb045dd1.solv",
+          "bytes": 101731012,
+          "sha256": "8885a248088f71779cee6cf6aba69446afe4c6e743076ac0469995c761a5a331"
+        },
+        {
+          "relative_path": "eb045dd1.state.json",
+          "bytes": 372,
+          "sha256": "7451d168043151a39ff23491739b6b0d86cf323f9e770eeaa5d0da69507aa581"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/robots-home/pkgs/cache",
+      "source_sha": "276ee966b26467010cd852bbeae60d0a0c4b9a00",
+      "files": [
+        {
+          "relative_path": "88ec62ec.json",
+          "bytes": 458565622,
+          "sha256": "4d7ee0c54e1fb11bd6fe6e379ac07045d41fabdf053d5daf398d543639053f10"
+        },
+        {
+          "relative_path": "88ec62ec.solv",
+          "bytes": 209490158,
+          "sha256": "8660413aa58e6ad112c5bd31cfa82a6569d1fb59986af3cc68b8cae018f92be6"
+        },
+        {
+          "relative_path": "88ec62ec.state.json",
+          "bytes": 374,
+          "sha256": "714295243e78a3f6bac1203c3bbd10be07211ce46d32fbb3e1349f2ae667f1d1"
+        },
+        {
+          "relative_path": "eb045dd1.json",
+          "bytes": 192550810,
+          "sha256": "4cc9e92a28c52efe2a2b68792bfb94541fa2024264b27021f065a5d521631b8c"
+        },
+        {
+          "relative_path": "eb045dd1.solv",
+          "bytes": 101731012,
+          "sha256": "8885a248088f71779cee6cf6aba69446afe4c6e743076ac0469995c761a5a331"
+        },
+        {
+          "relative_path": "eb045dd1.state.json",
+          "bytes": 372,
+          "sha256": "4c465d502837ea963983fd8b9e0fae50e82d645a5ae865fbe66f515687847913"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/port-acceptance/automation-published-smoke-2p_ct_5_/actions-home/pkgs/cache",
+      "source_sha": "3fd375c90c3284922d502c05c89aadd92ff2c964",
+      "files": [
+        {
+          "relative_path": "88ec62ec.json",
+          "bytes": 458550119,
+          "sha256": "3b7ecefcf6510051238f975e72bfbf50b56218b952eb020b32bb6f93473d67e9"
+        },
+        {
+          "relative_path": "88ec62ec.solv",
+          "bytes": 209482714,
+          "sha256": "4156d1ab57b73703fb0f5e66d4432546d673707e8c78d4158870debba8457a92"
+        },
+        {
+          "relative_path": "88ec62ec.state.json",
+          "bytes": 374,
+          "sha256": "893f8412875d60775e4ce2f2cc912518a70f9a6905eaf3aace133d0c08348244"
+        },
+        {
+          "relative_path": "eb045dd1.json",
+          "bytes": 192548621,
+          "sha256": "0f3147857bdf8f62613a1e5b3bf43c318c646fe4ef1c8bdab5cc7c633e5a98a2"
+        },
+        {
+          "relative_path": "eb045dd1.solv",
+          "bytes": 101729826,
+          "sha256": "c2aa68c42e17cad0d049cd57d36da317c6c28c0085a495ffc91acf7152faab00"
+        },
+        {
+          "relative_path": "eb045dd1.state.json",
+          "bytes": 372,
+          "sha256": "cad4fb8e8eaef1914e7e6eeb8c3863a7c6fbc922163d242450fd9d9c0ec3a00b"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/port-acceptance/automation-published-smoke-2p_ct_5_/robots-home/pkgs/cache",
+      "source_sha": "3fd375c90c3284922d502c05c89aadd92ff2c964",
+      "files": [
+        {
+          "relative_path": "88ec62ec.json",
+          "bytes": 458550119,
+          "sha256": "3b7ecefcf6510051238f975e72bfbf50b56218b952eb020b32bb6f93473d67e9"
+        },
+        {
+          "relative_path": "88ec62ec.solv",
+          "bytes": 209482714,
+          "sha256": "4156d1ab57b73703fb0f5e66d4432546d673707e8c78d4158870debba8457a92"
+        },
+        {
+          "relative_path": "88ec62ec.state.json",
+          "bytes": 374,
+          "sha256": "7499efaedc14100cdf1ed061869eb1eac05c32cd51c19a44742d1977e7785143"
+        },
+        {
+          "relative_path": "eb045dd1.json",
+          "bytes": 192548621,
+          "sha256": "0f3147857bdf8f62613a1e5b3bf43c318c646fe4ef1c8bdab5cc7c633e5a98a2"
+        },
+        {
+          "relative_path": "eb045dd1.solv",
+          "bytes": 101729826,
+          "sha256": "c2aa68c42e17cad0d049cd57d36da317c6c28c0085a495ffc91acf7152faab00"
+        },
+        {
+          "relative_path": "eb045dd1.state.json",
+          "bytes": 372,
+          "sha256": "4937e9fca96ac91fa51302347cb3607f2ae5b9d67b32e942572b265b9597fda6"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "total": 33770192896,
+    "used": 23803088896,
+    "free": 8232341504
+  },
+  "freed_bytes": 3849392128
+}

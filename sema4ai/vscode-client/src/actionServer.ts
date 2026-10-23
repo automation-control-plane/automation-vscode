@@ -13,7 +13,7 @@ import { DATA_SERVER_STATUS_COMMAND_ID, fetchDataServerStatus } from "./dataExte
 import { convertDataServerInfoToEnvVar } from "./robo/actionPackage";
 import { createHash } from "crypto";
 import { withStudioEnvironment } from "./runtimePaths";
-import { assertRuntimePortAvailable, runtimeServerPort } from "./runtimeServerConfig";
+import { assertRuntimePortAvailable, runtimeServerPort, waitForOwnedRuntimeStop } from "./runtimeServerConfig";
 import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 
 const ACTION_SERVER_DEFAULT_PORT = 8082;
@@ -123,26 +123,37 @@ const disposeActionServerTerminal = (terminal: Terminal) => {
     terminal = undefined;
 };
 
-const stopActionServer = async () => {
+const stopActionServer = async (): Promise<boolean> => {
+    const server = ownedServer;
     let actionServerTerminal: Terminal = getActionServerTerminal();
-    if (!actionServerTerminal) {
-        return;
+    if (!server || !actionServerTerminal) {
+        return true;
     }
     // Dispose only our launch process. An HTTP port may have been rebound by an unrelated service.
-    await new Promise<void>((resolve, reject) => {
-        const timer = setTimeout(() => {
-            closed.dispose();
-            reject(new Error("Actions Runtime terminal did not close. Existing listeners were left untouched."));
-        }, 5000);
-        const closed = window.onDidCloseTerminal(terminal => {
-            if (terminal === actionServerTerminal) {
-                clearTimeout(timer);
+    try {
+        const processId = await actionServerTerminal.processId;
+        await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => {
                 closed.dispose();
-                resolve();
-            }
+                reject(new Error("Actions Runtime terminal did not close. Existing listeners were left untouched."));
+            }, 5000);
+            const closed = window.onDidCloseTerminal(terminal => {
+                if (terminal === actionServerTerminal) {
+                    clearTimeout(timer);
+                    closed.dispose();
+                    resolve();
+                }
+            });
+            disposeActionServerTerminal(actionServerTerminal);
         });
-        disposeActionServerTerminal(actionServerTerminal);
-    });
+        OUTPUT_CHANNEL.appendLine(`Waiting for owned Actions Runtime to exit and release 127.0.0.1:${server.port}.`);
+        await waitForOwnedRuntimeStop({port: server.port, processId});
+        return true;
+    } catch (error) {
+        OUTPUT_CHANNEL.appendLine(String(error));
+        window.showErrorMessage(String(error));
+        return false;
+    }
 };
 
 const startActionServerInternal = async (directory: Uri) => {
@@ -245,12 +256,15 @@ export const startActionServer = async (directory: Uri) => {
                 return;
             }
 
-            await stopActionServer();
+            if (!(await stopActionServer())) {
+                return;
+            }
         } else {
             OUTPUT_CHANNEL.appendLine("Action server not alive.");
 
-            /* Called just in case to ensure ActionServer terminal is not active. */
-            disposeActionServerTerminal(actionServerTerminal);
+            if (!(await stopActionServer())) {
+                return;
+            }
         }
     }
 
@@ -258,7 +272,9 @@ export const startActionServer = async (directory: Uri) => {
 };
 
 export const restartActionServer = async (directory: Uri) => {
-    await stopActionServer();
+    if (!(await stopActionServer())) {
+        return;
+    }
     await startActionServerInternal(directory);
 };
 

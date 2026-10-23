@@ -1,0 +1,42 @@
+
+> automation-vscode@2.20.5 pretest
+> cd vscode-client && tsc -p ./ && cd ..
+
+
+> automation-vscode@2.20.5 test
+> node --test tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js tests/runtime_restart.test.js tests/resources_tree.test.js tests/owned_workflow.test.js
+
+✔ Owned display branding retains stable extension and integration IDs (3.616992ms)
+✔ Issue UI opens the private repository draft without vendor upload or account lookup (2.660794ms)
+✔ Default contributions hide vendor publishing/navigation while keeping stable compatibility IDs (2.294252ms)
+✔ Actual package tree retains local build/server and removes vendor destinations by default (4.267289ms)
+✔ Explicit compatibility opt-in retains accurately named legacy destinations (0.641739ms)
+✔ Current Python API activates and updates the resource without the legacy experiment flag (4.018141ms)
+✔ Current Python lookup resolves the selected environment and never reports invalid discovery as system Python (2.590219ms)
+✔ Automatic package selection waits for the asynchronous Python API update (3.562794ms)
+✔ Legacy execution-details and scoped configuration lookup remain available (3.60321ms)
+✔ Python Environments selection synchronizes when the legacy Python API already has the RCC path (0.793653ms)
+✔ Unresolved Python Environments metadata never clears a selection or changes global settings (1.33367ms)
+✔ Explicitly disabled Python Environments keeps the scoped legacy API without activating the companion (0.334714ms)
+✔ Contributed Package Resources exposes and routes Work Items for Action and Robot selections (3.851111ms)
+✔ Package Resources keeps missing/unsupported package messages (0.506646ms)
+✔ Unix defaults and explicit homes remain separate (2.252758ms)
+✔ Windows paths retain their drive and separators (1.936907ms)
+✔ Published artifacts have exact identity and no architecture fallback (1.273335ms)
+✔ Published Work Items receives FileAdapter paths and preserves explicit controls (0.275161ms)
+✔ Studio discovery keeps its original home while local environments stay separate (1.788567ms)
+✔ Optional Studio/Data backends preserve explicit operator environment (0.445581ms)
+✔ Start -> Restart waits beyond terminal close for the owned listener to release its port (148.141148ms)
+✔ Runtime port validates overrides and refuses an occupied loopback listener without touching it (24.44566ms)
+✔ Runtime launch propagates configured port/address and never adopts or shuts down an unknown service (132.4322ms)
+✔ Owned shutdown wait is bounded and leaves an unrelated listener untouched (72.557398ms)
+✔ Action and Robot launches select published FileAdapter input/output and respect overrides (3.608904ms)
+✔ Cancelling Work Items selection cancels launch (0.300283ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 523.622467
