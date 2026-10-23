@@ -166,6 +166,23 @@ export async function convertOutputWorkItemToInput(item: WorkItemFSEntry): Promi
 
 export async function newWorkItemInWorkItemsTree(): Promise<void> {
     const workItemInfo = await getWorkItemInfo();
+    const manifest = workItemInfo?.robot_yaml;
+    if (manifest && basename(manifest) === "package.yaml") {
+        await vscode.commands.executeCommand("automation.workItems.open");
+        return;
+    }
+    if (manifest) {
+        const interpreter = await resolveInterpreter(manifest);
+        if (interpreter.success && interpreter.result?.environ?.CONDA_PREFIX) {
+            const owned: LibraryVersionInfoDict = await vscode.commands.executeCommand(SEMA4AI_VERIFY_LIBRARY_VERSION_INTERNAL, {
+                conda_prefix: interpreter.result.environ.CONDA_PREFIX, libs_and_version: [["actions-work-items", "0.4.4"]],
+            });
+            if (owned?.success || basename(manifest) === "package.yaml") {
+                await vscode.commands.executeCommand("automation.workItems.open");
+                return;
+            }
+        }
+    }
 
     let workItemName: string = await vscode.window.showInputBox({
         "prompt": "Please provide work item name",
@@ -217,6 +234,7 @@ export function openWorkItemHelp() {
 
 export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBase {
     private workItemsInfo: WorkItemsInfo | undefined = undefined;
+    private nativeSupported = false;
 
     protected PATTERN_TO_LISTEN: string = "**/devdata/**";
 
@@ -225,6 +243,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
     }
 
     private async handleRoot(): Promise<WorkItemFSEntry[]> {
+        this.nativeSupported = false;
         const elements: WorkItemFSEntry[] = [];
 
         const robotEntry: RobotEntry = getSelectedRobot();
@@ -341,6 +360,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
             if (!libraryVersionInfoActionResult["success"]) {
                 return libraryVersionInfoActionResult["message"];
             }
+            this.nativeSupported = libraryVersionInfoActionResult.result?.library === "actions-work-items";
         } catch (error) {
             msg = "Error verifying rpaframework version.";
             logError(msg, error, "WORKITEM_VERIFY_RPA_VERSION");
@@ -433,6 +453,8 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                 treeItem.iconPath = new vscode.ThemeIcon("sign-out");
             } else if (element.kind === "inputWorkItemDir") {
                 treeItem.iconPath = new vscode.ThemeIcon("sign-in");
+            } else if (this.nativeSupported && (element.kind === "inputWorkItem" || element.kind === "outputWorkItem")) {
+                treeItem.command = { command: "automation.workItems.open", title: "Edit Work Item", arguments: [element] };
             }
         }
         return treeItem;

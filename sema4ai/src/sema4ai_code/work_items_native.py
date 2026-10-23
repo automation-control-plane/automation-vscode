@@ -5,6 +5,7 @@ JSON protocol; diagnostics go to stderr. Queue lifecycle remains SDK-owned.
 """
 
 import base64
+from datetime import datetime, timezone
 import hashlib
 from importlib.metadata import version
 import json
@@ -63,11 +64,41 @@ def handle(request):
     mode, op = request["mode"], request["op"]
     if mode not in {"file", "sqlite"}:
         raise ValueError("This bridge supports FileAdapter and SDK SQLite only.")
+    contract_path = storage / "payload-contract.json"
+    contract = json.loads(contract_path.read_text()) if contract_path.exists() else {}
+
+    def checked_payload(value):
+        value = payload(value)
+        checks = {"string": lambda x: isinstance(x, str), "integer": lambda x: type(x) is int,
+                  "number": lambda x: type(x) in (int, float), "boolean": lambda x: type(x) is bool,
+                  "object": lambda x: isinstance(x, dict), "array": lambda x: isinstance(x, list),
+                  "null": lambda x: x is None}
+        for name, kind in contract.items():
+            if name not in value or not checks[kind](value[name]):
+                raise ValueError(f"Payload field {name!r} is required and must be {kind}.")
+        return value
+
+    if op == "contract":
+        value = request["payload"]
+        if not isinstance(value, dict) or len(value) > 100 or any(
+            not isinstance(name, str) or not name or len(name) > 100 or
+            not isinstance(kind, str) or kind not in {"string", "integer", "number", "boolean", "object", "array", "null"}
+            for name, kind in value.items()
+        ):
+            raise ValueError("Contract maps required top-level fields to string/integer/number/boolean/object/array/null. This is not full JSON Schema.")
+        if contract_path.exists() and request.get("revision") != digest(contract_path):
+            raise ValueError("Payload contract changed. Refresh before editing.")
+        contract_path.write_text(json.dumps(value, indent=2))
+        return {}
     queue = component(request.get("queue", "input"))
     adapter = None
     if mode == "sqlite":
         adapter = SQLiteAdapter(db_path=str(storage / "queue.db"), queue_name=queue,
                                 output_queue_name=queue + ".outputs", files_dir=str(storage / "files"))
+    if op == "recover":
+        if not adapter:
+            raise ValueError("Orphan recovery is an SDK SQLite operation, not a file fixture operation.")
+        return {"recovered": adapter.recover_orphaned_work_items()}
 
     def file_item(key):
         relative, index = key.rsplit("#", 1)
@@ -101,9 +132,11 @@ def handle(request):
         receipts = []
         for path in sorted((storage / "executions").glob("*/receipt.json"))[-100:]:
             receipts.append(json.loads(path.read_text()))
+        replays = [json.loads(path.read_text()) for path in sorted((storage / "replays").glob("*.json"))[-100:]]
         if adapter:
             items = adapter.list_items(queue_name=queue) + adapter.list_items(queue_name=queue + ".outputs")
-            return {"items": items, "receipts": receipts, "stats": adapter.get_queue_stats(queue), "authority": "actions-work-items SQLiteAdapter"}
+            return {"items": items, "receipts": receipts, "replays": replays, "contract": contract, "contract_revision": digest(contract_path) if contract_path.exists() else None,
+                    "stats": adapter.get_queue_stats(queue), "authority": "actions-work-items SQLiteAdapter"}
         items = []
         for role, folder in (("input", "work-items-in"), ("output", "work-items-out")):
             parent = child(root, "devdata/" + folder)
@@ -123,9 +156,10 @@ def handle(request):
                 except (ValueError, TypeError, AttributeError) as error:
                     items.append({"id": str(path.relative_to(root)) + "#0", "name": path.parent.name,
                                   "state": "INVALID", "error_message": str(error), "role": role})
-        return {"items": items, "receipts": receipts, "authority": "Local test fixtures; execution receipts are not Runtime Runs"}
+        return {"items": items, "receipts": receipts, "replays": replays, "contract": contract, "contract_revision": digest(contract_path) if contract_path.exists() else None,
+                "authority": "Local test fixtures; execution receipts are not Runtime Runs"}
     if op in {"create", "replay"}:
-        value, files = payload(request.get("payload", {})), files_from_request()
+        value, files = checked_payload(request.get("payload", {})) if op == "create" else {}, files_from_request()
         parent_id = None
         if op == "replay":
             parent_id = request["id"]
@@ -138,6 +172,7 @@ def handle(request):
                 reader = FileAdapter(input_path=str(path), output_path=str(storage / (uuid4().hex + ".json")))
                 value = data[index].get("payload")
                 files = {name: reader.get_file(str(index), name) for name in data[index].get("files", {})}
+            checked_payload(value)
         if adapter:
             new_id = adapter.seed_input(payload=value, files=files, queue_name=queue)
         else:
@@ -153,7 +188,7 @@ def handle(request):
             write_new(storage / "replays" / (uuid4().hex + ".json"), {"source": parent_id, "copy": new_id, "mode": mode})
         return {"id": new_id}
     if op == "save":
-        value = payload(request["payload"])
+        value = checked_payload(request["payload"])
         if adapter:
             # SDK has no compare-and-swap edit contract. Do not race a consumer.
             raise ValueError("Published SQLite has no conditional payload edit. Replay as a new item instead.")
@@ -193,6 +228,7 @@ def handle(request):
         directory.mkdir(parents=True, exist_ok=False)
         if adapter:
             item = owned_item(key)
+            checked_payload(item["payload"])
             pending = [v for v in adapter.list_items(queue_name=queue) if v["state"] == "PENDING"]
             if len(pending) >= 100 or not pending or pending[-1]["id"] != key:
                 raise ValueError("SDK SQLite reserves FIFO. Choose the oldest pending input; queues of 100+ items require a worker.")
@@ -201,6 +237,7 @@ def handle(request):
                    "RC_WORKITEM_OUTPUT_QUEUE_NAME": queue + ".outputs"}
         else:
             path, index, data = file_item(key)
+            checked_payload(data[index].get("payload"))
             # A selected record gets an immutable, private execution fixture.
             # Copy through public APIs so relative attachments remain valid.
             reader = FileAdapter(input_path=str(path), output_path=str(directory / "unused.json"))
@@ -212,6 +249,8 @@ def handle(request):
             env = {"RC_WORKITEM_ADAPTER": "FileAdapter", "RC_WORKITEM_INPUT_PATH": str(input_path),
                    "RC_WORKITEM_OUTPUT_PATH": str(child(root, "devdata/work-items-out/native-" + run_id + "/work-items.json"))}
         receipt = {"id": run_id, "mode": mode, "input": key, "queue": queue, "state": "PREPARED",
+                   "input_binding": "Immutable selected fixture snapshot" if mode == "file" else "FIFO preview, not exclusive reservation; SDK parent_id is authoritative. Do not share this development queue with another consumer.",
+                   "created_at": datetime.now(timezone.utc).isoformat(),
                    "output": env.get("RC_WORKITEM_OUTPUT_PATH"), "authority": "VS Code local execution receipt; not Runtime Run/Attempt"}
         write_new(directory / "receipt.json", receipt)
         write_new(directory / "action-parameters.json", payload(request.get("parameters", {})))
@@ -220,9 +259,14 @@ def handle(request):
         path = child(storage, "executions/" + component(request["id"]) + "/receipt.json")
         value = json.loads(path.read_text())
         state = request["state"]
-        if state not in {"STARTED", "STOPPED", "CANCELLED", "LAUNCH_REJECTED"}:
+        if state not in {"STARTED", "EXITED", "STOPPED", "CANCELLED", "LAUNCH_REJECTED"}:
             raise ValueError("Invalid execution receipt event.")
-        value.update(state=state, session=request.get("session"), exit_code=request.get("exit_code"))
+        if state != "STOPPED" or value["state"] not in {"EXITED", "CANCELLED"}:
+            value["state"] = state
+        value["updated_at"] = datetime.now(timezone.utc).isoformat()
+        for name in ("session", "exit_code"):
+            if request.get(name) is not None:
+                value[name] = request[name]
         path.write_text(json.dumps(value, indent=2))
         return value
     raise ValueError("Unsupported local Work Items operation.")

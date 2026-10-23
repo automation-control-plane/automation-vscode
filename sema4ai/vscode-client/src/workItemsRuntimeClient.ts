@@ -1,0 +1,78 @@
+import * as http from "http";
+import * as https from "https";
+
+/** Published 1.0.4 REST surface only. Canonical durable lifecycle remains server-owned. */
+export class WorkItemsRuntimeClient {
+    readonly endpoint: string;
+    private verified = false;
+    constructor(endpoint: string, private readonly token: string) {
+        const url = new URL(endpoint);
+        if (url.username || url.password || url.search || url.hash || url.pathname !== "/") throw Error("Use a Runtime origin without credentials, path or query.");
+        const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+        if (!(url.protocol === "https:" || (url.protocol === "http:" && loopback))) throw Error("Managed Runtime requires HTTPS, or HTTP on loopback.");
+        if (!token || /[\r\n]/.test(token)) throw Error("An explicit Runtime API token is required.");
+        this.endpoint = url.origin;
+    }
+    private request(method: string, route: string, body?: Buffer, contentType = "application/json"): Promise<unknown> {
+        return new Promise((resolve, reject) => {
+            const request = (this.endpoint.startsWith("https:") ? https : http).request(this.endpoint + route,
+                { method, headers: { Authorization: "Bearer " + this.token, ...(body ? { "Content-Type": contentType, "Content-Length": body.length } : {}) } },
+                response => {
+                    let size = 0;
+                    const chunks: Buffer[] = [];
+                    response.on("data", chunk => {
+                        size += chunk.length;
+                        if (size > 4 * 1024 * 1024) { request.destroy(); reject(Error("Runtime response exceeds the editor limit.")); }
+                        else chunks.push(Buffer.from(chunk));
+                    });
+                    response.on("end", () => {
+                        const status = response.statusCode || 0;
+                        if (status < 200 || status >= 300) {
+                            // No redirect following, raw response/error/token logging or guessed retries.
+                            reject(Error(status === 401 || status === 403 ? `Runtime access denied (${status}). No local fallback.` :
+                                status === 503 ? "Runtime Work Items unavailable (503). Update/reinstall the compatible Runtime; no local fallback." : `Runtime request failed (${status}).`));
+                            return;
+                        }
+                        const bytes = Buffer.concat(chunks);
+                        if (!String(response.headers["content-type"]).includes("application/json")) {resolve(bytes); return;}
+                        try { resolve(JSON.parse(bytes.toString("utf8"))); } catch {reject(Error("Invalid Runtime JSON response."));}
+                    });
+                    response.on("error", () => reject(Error("Runtime response was interrupted.")));
+                });
+            request.setTimeout(10000, () => request.destroy(Error("Runtime request timed out.")));
+            request.on("error", () => reject(Error("Runtime connection failed. Reconnect to the configured endpoint.")));
+            request.end(body);
+        });
+    }
+    async connect(): Promise<{version: string; auth_enabled: boolean}> {
+        this.verified = false;
+        const config = await this.request("GET", "/config") as { version: string; auth_enabled: boolean };
+        if (config.version !== "1.0.4") throw Error("This client supports published Runtime 1.0.4. Candidate durable APIs require a separately verified capability contract.");
+        if (config.auth_enabled !== true) throw Error("Managed mode requires an authenticated Runtime. Configure its API key before connecting.");
+        await this.request("GET", "/api/work-items?limit=1");
+        this.verified = true;
+        return config;
+    }
+    private requireVerified(): void { if (!this.verified) throw Error("Connect and verify this Runtime before accessing Work Items."); }
+    async list(queue: string): Promise<{items: unknown[]; total: number}> {
+        this.requireVerified();
+        return this.request("GET", "/api/work-items?limit=100&queue_name=" + encodeURIComponent(queue)) as Promise<{items: unknown[]; total: number}>;
+    }
+    async seed(queue: string, payload: Record<string, unknown>): Promise<unknown> {
+        this.requireVerified();
+        const body = Buffer.from(JSON.stringify({queue_name: queue, payload}));
+        if (body.length > 2 * 1024 * 1024) throw Error("Payload exceeds the editor limit.");
+        return this.request("POST", "/api/work-items", body);
+    }
+    async attach(id: string, name: string, content: Buffer): Promise<unknown> {
+        this.requireVerified();
+        if (!/^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$/.test(name) || content.length > 2 * 1024 * 1024) throw Error("Invalid attachment name or size.");
+        const boundary = "automation-work-item-" + require("crypto").randomBytes(24).toString("hex");
+        const body = Buffer.concat([Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${name}"\r\nContent-Type: application/octet-stream\r\n\r\n`), content, Buffer.from(`\r\n--${boundary}--\r\n`)]);
+        return this.request("POST", `/api/work-items/${encodeURIComponent(id)}/files`, body, "multipart/form-data; boundary=" + boundary);
+    }
+    async download(id: string, name: string): Promise<Buffer> {
+        this.requireVerified();
+        return this.request("GET", `/api/work-items/${encodeURIComponent(id)}/files/${encodeURIComponent(name)}`) as Promise<Buffer>;
+    }
+}

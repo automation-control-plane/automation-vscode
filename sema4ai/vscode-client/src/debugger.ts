@@ -130,7 +130,7 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
             return;
         }
 
-        let env: { [key: string]: string } = interpreter.environ;
+        let env: { [key: string]: string } = { ...interpreter.environ };
         const baseEnv = debugConfiguration.baseEnv;
         if (baseEnv) {
             env = { ...env, ...baseEnv };
@@ -141,6 +141,9 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
             // through the package interpreter. Preserve explicit operator values.
             const allowed = new Set(["RC_WORKITEM_ADAPTER", "RC_WORKITEM_INPUT_PATH", "RC_WORKITEM_OUTPUT_PATH",
                 "RC_WORKITEM_DB_PATH", "RC_WORKITEM_FILES_DIR", "RC_WORKITEM_QUEUE_NAME", "RC_WORKITEM_OUTPUT_QUEUE_NAME"]);
+            if (["RPA_WORKITEMS_ADAPTER", "RPA_INPUT_WORKITEM_PATH", "RPA_OUTPUT_WORKITEM_PATH"].some(key => env[key])) {
+                throw Error("Explicit legacy Work Items overrides conflict with native selection. Existing configuration was preserved.");
+            }
             for (const [key, value] of Object.entries(debugConfiguration.automationWorkItems)) {
                 if (!allowed.has(key) || typeof value !== "string") throw Error("Invalid native Work Items launch environment.");
                 if (env[key] && env[key] !== value) throw Error(`Operator override ${key} conflicts with native Work Items selection. Existing configuration was preserved.`);

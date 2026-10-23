@@ -101,6 +101,45 @@ a.release_input(key,State.DONE)
         self.call("receipt", id=run["id"], state="STOPPED", session="synthetic-session")
         self.assertEqual(self.call("list")["receipts"][0]["state"], "STOPPED")
 
+    def test_typed_payload_contract_and_actual_exit_receipt(self):
+        self.call("contract", payload={"value": "integer"})
+        for value in ({}, {"value": "7"}, {"value": True}):
+            with self.assertRaisesRegex(ValueError, "must be integer"):
+                self.call("create", payload=value)
+        key = self.call("create", payload={"value": 7})["id"]
+        run = self.call("prepare", id=key)
+        self.call("receipt", id=run["id"], state="EXITED", session="synthetic", exit_code=1)
+        self.call("receipt", id=run["id"], state="STOPPED", session="synthetic")
+        receipt = self.call("list")["receipts"][0]
+        self.assertEqual((receipt["state"], receipt["exit_code"]), ("EXITED", 1))
+        with self.assertRaisesRegex(ValueError, "changed"):
+            self.call("contract", payload={"value": "string"}, revision="stale")
+
+    def test_sqlite_failure_replay_and_orphan_recovery_use_sdk(self):
+        import os
+        from unittest.mock import patch
+        key = self.call("create", "sqlite", payload={"value": 7})["id"]
+        prepared = self.call("prepare", "sqlite", id=key)
+        script = '''from actions.work_items import create_adapter, State
+a=create_adapter(); item=a.reserve_input()
+a.release_input(item,State.FAILED,code='SYNTHETIC',message='Synthetic failure')
+'''
+        result = subprocess.run([sys.executable, "-c", script], env={**os.environ, **prepared["env"]}, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        failed = next(item for item in self.call("list", "sqlite")["items"] if item["id"] == key)
+        self.assertEqual((failed["state"], failed["error_code"]), ("FAILED", "SYNTHETIC"))
+        replay = self.call("replay", "sqlite", id=key)["id"]
+        run = self.call("prepare", "sqlite", id=replay)
+        # The worker really reserves and exits; only this isolated test shortens
+        # the SDK timeout. Production recovery retains its normal timeout.
+        crashed = subprocess.run([sys.executable, "-c", "from actions.work_items import create_adapter; create_adapter().reserve_input()"], env={**os.environ, **run["env"]}, capture_output=True, text=True)
+        self.assertEqual(crashed.returncode, 0, crashed.stderr)
+        self.assertEqual(self.call("recover", "sqlite")["recovered"], [])
+        with patch.dict(os.environ, {"RC_WORKITEM_ORPHAN_TIMEOUT_MINUTES": "0"}):
+            self.assertIn(replay, self.call("recover", "sqlite")["recovered"])
+        item = next(item for item in self.call("list", "sqlite")["items"] if item["id"] == replay)
+        self.assertEqual(item["state"], "PENDING")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

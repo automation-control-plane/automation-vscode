@@ -46,6 +46,7 @@ test("Contributed Package Resources exposes and routes Work Items for Action and
         assert.ok(workItems, type);
         assert.ok(roots.some(item => item.subTree === "locators"));
         assert.equal(provider.getTreeItem(workItems).contextValue, "workItemsRoot");
+        assert.equal(provider.getTreeItem(workItems).command.command, "automation.workItems.open");
         const children = await provider.getChildren(workItems);
         assert.deepEqual(children.map(child => child.name), ["work-items-in", "work-items-out"]);
         assert.ok(children.every(child => child.subTree === "work-items"));

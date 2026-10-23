@@ -11,6 +11,8 @@ const commandApi = {executeCommand: async (id, args) => {
     }};
     if (id === commands.SEMA4AI_VERIFY_LIBRARY_VERSION_INTERNAL) {
         assert.ok(args.libs_and_version.some(([name, version]) => name === "actions-work-items" && version === "0.4.4"));
+        const yaml = calls.find(([id]) => id === commands.SEMA4AI_LIST_WORK_ITEMS_INTERNAL)?.[1].robot;
+        if (yaml?.endsWith('package.yaml')) assert.deepEqual(args.libs_and_version, [['actions-work-items', '0.4.4']]);
         return {success: true, result: {library: "actions-work-items", version: "0.4.4"}};
     }
     assert.fail(`Unexpected command: ${id}`);

@@ -130,6 +130,7 @@ export interface ActionResultWorkItems {
 
 export interface LibraryVersionInfoDict {
     success: boolean;
+    result?: { library: string; version: string };
 
     // if success == False, this can be some message to show to the user
     message?: string;
