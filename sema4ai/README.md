@@ -17,6 +17,9 @@ This private compatibility fork is under qualification. The [feature acceptance 
 - Python language server integration, Work Items, and web/desktop inspectors. Windows and Java inspectors require their platform prerequisites.
 - Published tooling: RCC **18.19.7**, Actions Runtime **1.0.4**, Core **1.0.3** and Work Items **0.4.4**. Explicit executable settings take precedence over downloads. Managed downloads verify release digests and executable identity.
 - Separate `ACTIONS_HOME` (default `~/.actions`) and `ROBOTS_HOME` (default `~/.robots`); Action Server state is under `ACTIONS_HOME/action-server`. Existing operator overrides are preserved. Existing data is never migrated automatically.
+- Configure `sema4ai.actionServer.port` (default `8082`) to an unused loopback port. Runtime launch refuses occupied ports and never adopts or stops unrelated listeners.
+- The **Automation: RCC Python** status item shows the resolved package interpreter path in its tooltip. Microsoft Python discovery may classify RCC environments as unknown; that classification is separate from the package interpreter used for run/debug.
+- Action and Robot Work Items use their owning package’s `devdata` folders; ordinary runs preserve previous outputs.
 - Stable `sema4ai.*` setting, command and debugger IDs remain for configuration compatibility.
 
 **Compatibility limits:** published Runtime 1.0.4 bundles RCC 18.19.3 and its artifact adapter rejects the requested RCC 18.19.7. This remains an open compatibility gate; version checks are not bypassed. Control Room, Sema4.ai Studio, Data Server, authentication, Agent CLI and publishing integrations remain available as explicitly labeled legacy integrations, subject to their backend and operator prerequisites. No vendor executable is downloaded as a fallback.

@@ -13,7 +13,7 @@
         "url": "https://github.com/automation-control-plane/automation-vscode.git"
     },
     "license": "Apache-2.0",
-    "version": "2.20.2",
+    "version": "2.20.3",
     "icon": "images/automation-icon.png",
     "engines": {
         "vscode": "^1.101.0"
@@ -27,7 +27,7 @@
         "compile": "cd vscode-client && tsc -p ./ && cd ..",
         "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
         "pretest": "cd vscode-client && tsc -p ./ && cd ..",
-        "test": "node --test tests/runtime_paths.test.js tests/branding.test.js",
+        "test": "node --test tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js",
         "test:host": "node ./vscode-client/out/tests/runTests.js",
         "prettier": "npx prettier -c vscode-client/**/*.ts",
         "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
@@ -239,6 +239,11 @@
             "title": "Automation Language Server Configuration",
             "type": "object",
             "properties": {
+                "sema4ai.actionServer.port": {
+                    "type": "number",
+                    "default": 8082,
+                    "description": "Loopback port for Actions Runtime. Choose an unused integer from 1 to 65535. Existing listeners are never stopped or adopted automatically."
+                },
                 "sema4ai.language-server.tcp-port": {
                     "type": "number",
                     "default": 0,

@@ -274,7 +274,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         )
         from sema4ai_code.resolve_interpreter import register_plugins
 
-        self._prefix_to_last_run_number_and_time: dict[str, tuple[int, float]] = {}
+        self._prefix_to_last_run_number_and_time: dict[tuple[str, str], tuple[int, float]] = {}
 
         self._pypi_cloud = PyPiCloud(weakref.WeakMethod(self._get_pypi_base_urls))  # type: ignore
         self._cache_dir = cache_dir
@@ -1073,11 +1073,13 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
             log.exception(message)
             return dict(success=False, message=message, result=None)
 
-        robot_yaml = self._find_robot_yaml_path_from_path(path, stat)
+        from sema4ai_code.find_robot_yaml import find_package_yaml_path_from_path
+
+        robot_yaml = find_package_yaml_path_from_path(path, stat)
         if not robot_yaml:
             return dict(
                 success=False,
-                message=f"Unable to find robot.yaml from {robot}.",
+                message=f"Unable to find package.yaml or robot.yaml from {robot}.",
                 result=None,
             )
 
@@ -1101,7 +1103,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         if work_items_out_dir.is_dir():
             output_work_items.extend(self._collect_work_items(work_items_out_dir))
             output_work_items.sort(key=sort_by_number_postfix)
-            if increment_output:
+            if increment_output and params.get("prune_output", False):
                 output_work_items = self._schedule_output_work_item_removal(
                     output_work_items, output_prefix
                 )
@@ -1135,9 +1137,8 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         output_work_items: list[WorkItem],
         output_prefix: str,
     ):
-        max_run, last_time = self._prefix_to_last_run_number_and_time.get(
-            output_prefix, (0, 0)
-        )
+        package_prefix = (str(work_items_out_dir), output_prefix)
+        max_run, last_time = self._prefix_to_last_run_number_and_time.get(package_prefix, (0, 0))
 
         if max_run > 0:
             if time.time() - last_time > self.TIMEOUT_TO_CONSIDER_LAST_RUN_FRESH:
@@ -1159,7 +1160,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
                         max_run = run_number
 
         next_run = max_run + 1
-        self._prefix_to_last_run_number_and_time[output_prefix] = (
+        self._prefix_to_last_run_number_and_time[package_prefix] = (
             next_run,
             time.time(),
         )

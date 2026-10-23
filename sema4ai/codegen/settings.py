@@ -32,6 +32,12 @@ class Setting:
 
 SETTINGS = [
     Setting(
+        "sema4ai.actionServer.port",
+        8082,
+        "Loopback port for Actions Runtime. Choose an unused integer from 1 to 65535. Existing listeners are never stopped or adopted automatically.",
+        setting_type="number",
+    ),
+    Setting(
         "sema4ai.language-server.tcp-port",
         0,
         "If the port is specified, connect to the language server previously started at the given port. Requires a VSCode restart to take effect.",

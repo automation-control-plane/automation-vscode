@@ -13,9 +13,14 @@ import { DATA_SERVER_STATUS_COMMAND_ID, fetchDataServerStatus } from "./dataExte
 import { convertDataServerInfoToEnvVar } from "./robo/actionPackage";
 import { createHash } from "crypto";
 import { withStudioEnvironment } from "./runtimePaths";
+import { assertRuntimePortAvailable, runtimeServerPort } from "./runtimeServerConfig";
 
 const ACTION_SERVER_DEFAULT_PORT = 8082;
 const ACTION_SERVER_TERMINAL_NAME = "Automation: Action Server";
+let ownedServer: { terminal: Terminal; port: number; directory: Uri } | undefined;
+
+export const getActionServerPort = (resource?: Uri): number =>
+    runtimeServerPort(workspace.getConfiguration("sema4ai", resource).get<number>("actionServer.port", ACTION_SERVER_DEFAULT_PORT));
 
 function downloadActionServer(): Thenable<string> {
     return downloadTool(Tool.ActionServer);
@@ -38,7 +43,7 @@ export const downloadOrGetActionServerLocation = async (): Promise<string | unde
     return await downloadActionServer();
 };
 
-export const isActionServerAlive = async (port: number = ACTION_SERVER_DEFAULT_PORT) => {
+export const isActionServerAlive = async (port: number = ownedServer?.port ?? getActionServerPort()) => {
     try {
         await fetchData(port, "/openapi.json", "GET");
         return true;
@@ -69,6 +74,7 @@ function makeRequest(postData: string, options: http.RequestOptions): Promise<st
         req.on("error", (error) => {
             reject(error);
         });
+        req.setTimeout(2000, () => req.destroy(new Error("Actions Runtime request timed out.")));
 
         req.write(postData);
         req.end();
@@ -82,7 +88,7 @@ async function fetchData(port: number, path: string, method: "POST" | "GET") {
     const postData = JSON.stringify({});
 
     const options: http.RequestOptions = {
-        hostname: "localhost",
+        hostname: "127.0.0.1",
         port: port,
         path: path,
         method: method,
@@ -95,20 +101,18 @@ async function fetchData(port: number, path: string, method: "POST" | "GET") {
     return await makeRequest(postData, options);
 }
 
-const shutdownExistingActionServer = async (port) => {
-    await fetchData(port, "/api/shutdown/", "POST");
-};
-
 export const getActionServerTerminal = (): undefined | Terminal => {
-    for (const terminal of window.terminals) {
-        if (terminal.name === ACTION_SERVER_TERMINAL_NAME) {
-            return terminal;
-        }
+    if (ownedServer && window.terminals.includes(ownedServer.terminal) && ownedServer.terminal.exitStatus === undefined) {
+        return ownedServer.terminal;
     }
+    ownedServer = undefined;
     return undefined;
 };
 
 const disposeActionServerTerminal = (terminal: Terminal) => {
+    if (ownedServer?.terminal === terminal) {
+        ownedServer = undefined;
+    }
     terminal.dispose();
     /**
      * @TODO:
@@ -120,13 +124,39 @@ const disposeActionServerTerminal = (terminal: Terminal) => {
 
 const stopActionServer = async () => {
     let actionServerTerminal: Terminal = getActionServerTerminal();
-
-    await shutdownExistingActionServer(ACTION_SERVER_DEFAULT_PORT);
-    disposeActionServerTerminal(actionServerTerminal);
+    if (!actionServerTerminal) {
+        return;
+    }
+    // Dispose only our launch process. An HTTP port may have been rebound by an unrelated service.
+    await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => {
+            closed.dispose();
+            reject(new Error("Actions Runtime terminal did not close. Existing listeners were left untouched."));
+        }, 5000);
+        const closed = window.onDidCloseTerminal(terminal => {
+            if (terminal === actionServerTerminal) {
+                clearTimeout(timer);
+                closed.dispose();
+                resolve();
+            }
+        });
+        disposeActionServerTerminal(actionServerTerminal);
+    });
 };
 
 const startActionServerInternal = async (directory: Uri) => {
+    if (!directory) {
+        return;
+    }
     let actionServerTerminal: Terminal = getActionServerTerminal();
+    let port: number;
+    try {
+        port = getActionServerPort(directory);
+        await assertRuntimePortAvailable(port);
+    } catch (error) {
+        window.showErrorMessage(String(error));
+        return;
+    }
 
     const location = await downloadOrGetActionServerLocation();
     if (!location) {
@@ -166,7 +196,8 @@ const startActionServerInternal = async (directory: Uri) => {
         shellPath: location,
         shellArgs: [
             "start",
-            `--port=${ACTION_SERVER_DEFAULT_PORT}`,
+            "--address=127.0.0.1",
+            `--port=${port}`,
             "--datadir=" +
                 path.join(
                     env.ACTIONS_HOME,
@@ -175,9 +206,10 @@ const startActionServerInternal = async (directory: Uri) => {
                 ),
         ],
     });
+    ownedServer = {terminal: actionServerTerminal, port, directory};
 
     actionServerTerminal.show();
-    OUTPUT_CHANNEL.appendLine("Starting action-server (in terminal): " + location);
+    OUTPUT_CHANNEL.appendLine(`Starting Actions Runtime (in terminal): ${location}; URL: http://127.0.0.1:${port}`);
 };
 
 export const findActionPackagePath = async ({ includeSemaOrg = true } = {}): Promise<Uri | undefined> => {
@@ -201,7 +233,7 @@ export const startActionServer = async (directory: Uri) => {
 
     let actionServerTerminal: Terminal = getActionServerTerminal();
     if (actionServerTerminal !== undefined) {
-        if (await isActionServerAlive(ACTION_SERVER_DEFAULT_PORT)) {
+        if (await isActionServerAlive()) {
             const RESTART = "Restart action server";
             const option = await window.showWarningMessage(
                 "The action server seems to be running already. How do you want to proceed?",

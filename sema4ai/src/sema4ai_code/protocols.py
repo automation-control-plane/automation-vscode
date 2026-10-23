@@ -1,7 +1,7 @@
 import typing
 from enum import Enum
 from pathlib import Path
-from typing import Any, ContextManager, Literal, TypeVar
+from typing import Any, ContextManager, Literal, TypeVar, NotRequired
 
 # Backward-compatibility imports:
 from sema4ai_ls_core.protocols import ActionResult, ActionResultDict  # noqa
@@ -133,7 +133,7 @@ class WorkItem(TypedDict):
 
 
 class WorkItemsInfo(TypedDict):
-    robot_yaml: str  # Full path to the robot which has these work item info
+    robot_yaml: str  # Compatibility key: full path to the owning robot.yaml or package.yaml.
 
     # Full path to the place where input work items are located
     input_folder_path: str
@@ -153,7 +153,8 @@ ActionResultDictWorkItems = ActionResultDict[WorkItemsInfo]
 class ListWorkItemsParams(TypedDict):
     robot: str  # Path to the robot for which we want the work items (may be just the folder or the yaml).
     output_prefix: str  # Prefix for output folder (such as 'run-' or 'interactive-').
-    increment_output: bool  # Whether a new output folder should be generated (and older ones should be collected).
+    increment_output: bool  # Whether a new output folder should be generated.
+    prune_output: NotRequired[bool]  # Explicit opt-in to legacy output retention; ordinary listing/runs preserve existing data.
 
 
 class ListActionsParams(TypedDict):

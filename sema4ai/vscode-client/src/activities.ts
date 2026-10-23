@@ -1045,6 +1045,19 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
         }
     }
 
+    return updateWorkItemEnvironment(newEnv, robot);
+}
+
+/** Configure the same local Work Items selection for Action and Robot launches. */
+export async function updateWorkItemEnvironment(
+    environment: Record<string, string>,
+    robot: string
+): Promise<Record<string, string> | "cancelled"> {
+    const newEnv = { ...environment };
+    const condaPrefix = newEnv.CONDA_PREFIX;
+    if (!condaPrefix) {
+        return newEnv;
+    }
     let workItemsActionResult: ActionResultWorkItems = await commands.executeCommand(
         roboCommands.SEMA4AI_LIST_WORK_ITEMS_INTERNAL,
         { "robot": robot, "increment_output": true }
@@ -1123,7 +1136,7 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
 
         let selectedItem = await showSelectOneQuickPick(
             items,
-            "Please select the work item input to be used by RPA.Robocorp.WorkItems."
+            "Please select the work item input for this package."
         );
         if (!selectedItem) {
             return "cancelled";

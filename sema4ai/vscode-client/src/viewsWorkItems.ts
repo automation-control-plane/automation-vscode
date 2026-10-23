@@ -336,6 +336,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                     "libs_and_version": [
                         ["rpaframework", "11.3"],
                         ["robocorp-workitems", "0.0.1"], // Any version will do
+                        ["actions-work-items", "0.4.4"],
                     ],
                 }
             );

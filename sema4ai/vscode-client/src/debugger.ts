@@ -15,7 +15,7 @@ import {
 } from "vscode";
 import * as roboConfig from "./robocorpSettings";
 import { OUTPUT_CHANNEL } from "./channel";
-import { resolveInterpreter, updateLaunchEnvironmentCommonTasksAndActions } from "./activities";
+import { resolveInterpreter, updateLaunchEnvironmentCommonTasksAndActions, updateWorkItemEnvironment } from "./activities";
 import {
     SEMA4AI_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
     SEMA4AI_UPDATE_LAUNCH_ENV,
@@ -138,7 +138,12 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
 
         if (isActionPackageLaunch) {
             env = await updateLaunchEnvironmentCommonTasksAndActions(env, debugConfiguration.package);
-            // Vault/work-items features not available in action server at this point.
+            const workItemEnv = await updateWorkItemEnvironment(env, debugConfiguration.package);
+            if (workItemEnv === "cancelled") {
+                OUTPUT_CHANNEL.appendLine("Launch cancelled");
+                return;
+            }
+            env = workItemEnv;
         } else {
             // Resolve environment (updates the environment to add vault
             // environment variables as well as work-items environment variables).

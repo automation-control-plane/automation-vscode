@@ -1,0 +1,32 @@
+
+> automation-vscode@2.20.3 pretest
+> cd vscode-client && tsc -p ./ && cd ..
+
+
+> automation-vscode@2.20.3 test
+> node --test tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js
+
+✔ Owned display branding retains stable extension and integration IDs (1.344425ms)
+✔ Issue UI opens the private repository draft without vendor upload or account lookup (2.672727ms)
+✔ Current Python API activates and updates the resource without the legacy experiment flag (3.804082ms)
+✔ Current Python lookup resolves the selected environment and never reports invalid discovery as system Python (0.656905ms)
+✔ Automatic package selection waits for the asynchronous Python API update (0.64789ms)
+✔ Legacy execution-details and scoped configuration lookup remain available (0.606673ms)
+✔ Unix defaults and explicit homes remain separate (2.968724ms)
+✔ Windows paths retain their drive and separators (1.571191ms)
+✔ Published artifacts have exact identity and no architecture fallback (1.828575ms)
+✔ Published Work Items receives FileAdapter paths and preserves explicit controls (0.402734ms)
+✔ Studio discovery keeps its original home while local environments stay separate (2.435072ms)
+✔ Optional Studio/Data backends preserve explicit operator environment (0.314967ms)
+✔ Runtime port validates overrides and refuses an occupied loopback listener without touching it (21.067056ms)
+✔ Runtime launch propagates configured port/address and never adopts or shuts down an unknown service (26.295118ms)
+✔ Action and Robot launches select published FileAdapter input/output and respect overrides (3.950962ms)
+✔ Cancelling Work Items selection cancels launch (0.321255ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 274.164536

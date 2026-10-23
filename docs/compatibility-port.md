@@ -264,3 +264,5 @@ changed after the qualified implementation commit.
 ## Automation branding checkpoint (2026-10-23)
 
 Candidate **2.20.2** applies the owner's explicit Automation Control Plane branding correction. See [executed checks and review boundaries](evidence/published-branding-20261023/README.md). This is an intermediate private candidate; the complete feature ledger and Runtime compatibility gate remain in scope. Desktop QA is exercising the actual installed VSIX on its supported Code installation; its earlier 2.20.1 Action run is not relabeled as acceptance of the new candidate.
+
+Candidate **2.20.3** adapts actual desktop QA defects: current Microsoft Python interpreter APIs plus a truthful resolved-package status item; Action Package Work Items tree/run/debug routing with actions-work-items 0.4.4; and configurable loopback Runtime port with occupied-listener protection. See the same evidence report for exact mocked/filesystem/socket checks and outstanding actual GUI retests. Ordinary Work Items output retention is now non-destructive; explicit cleanup requests retain the legacy retention handler. Full scope remains open.
