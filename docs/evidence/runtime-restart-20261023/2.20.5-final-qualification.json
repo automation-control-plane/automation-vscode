@@ -1,0 +1,232 @@
+{
+  "source_sha": "4ca10b8a9c8f437c49b39757cba6bd42ca043860",
+  "vsix": {
+    "version": "2.20.5",
+    "sha256": "0d7b553233dd24239c1eb78978812f9daf5ef8d193b792122b9d84814c267b68",
+    "bytes": 2021832,
+    "library_id": "libfile_8e6b5bb89d2c8191b6239a5fd1045d8b",
+    "installed_payload_files_matching": 713,
+    "source_files_matching": 712
+  },
+  "real_executions": [
+    {
+      "check": "rcc published wrapper identity",
+      "version": "v18.19.7",
+      "sha256": "f8e0394be7f47ee84d6f4cd734822b87b492a4d6102f977f6a18f29453703d48"
+    },
+    {
+      "check": "action-server published wrapper identity",
+      "version": "1.0.4",
+      "sha256": "d3c450a2b10b226613588cc40cc6ec18873b23c7427958b0752711e4531a1de4"
+    },
+    {
+      "check": "Action Package creation through extension backend",
+      "templates": 6,
+      "package": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/workspace/action-package/package.yaml"
+    },
+    {
+      "check": "Action discovery, lint and execution",
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_1c0bc041/bin/python3",
+      "result": "Hello Dakota"
+    },
+    {
+      "check": "Published Work Items FileAdapter input/output",
+      "version": "0.4.4",
+      "output": [
+        {
+          "payload": {
+            "observed": 7
+          },
+          "files": {}
+        }
+      ]
+    },
+    {
+      "check": "Robot creation and RCC execution",
+      "template": "01-python",
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_1c0bc041/bin/python3"
+    },
+    {
+      "check": "Action/Robot Holotree isolation",
+      "actions": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_1c0bc041",
+      "robots": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_1c0bc041"
+    },
+    {
+      "check": "Action breakpoint and continue",
+      "adapter": "debugpy",
+      "source": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/workspace/action-package/smoke_actions.py",
+      "line": 13,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0
+    },
+    {
+      "check": "Robot breakpoint and continue",
+      "adapter": "debugpy",
+      "source": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/workspace/robot-package/smoke_tasks.py",
+      "line": 7,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0
+    },
+    {
+      "check": "Published Runtime wrapper HTTP Action execution",
+      "command": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+        "start",
+        "--address=127.0.0.1",
+        "--port=60531",
+        "--min-processes=1",
+        "--max-processes=2",
+        "--datadir=/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/action-server/http-smoke-7afaced2daae"
+      ],
+      "result": "Hello HTTP Dakota",
+      "datadir": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/action-server/http-smoke-7afaced2daae",
+      "runtime_version": "1.0.4",
+      "bundled_rcc_version": "v18.19.3",
+      "shutdown_status": 200,
+      "runtime_exit_code": 1,
+      "forced_termination": false
+    },
+    {
+      "check": "Published Runtime local package build and metadata",
+      "package_path": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/dist/published-compatibility-smoke.zip"
+    }
+  ],
+  "restart": {
+    "root": "/workspace/port-acceptance/restart-2.20.5/runtime-restart-FvKvu9",
+    "extension": "/workspace/port-acceptance/restart-2.20.5/extensions/automation-control-plane.automation-vscode-2.20.5",
+    "version": "2.20.5",
+    "source_sha": "4ca10b8a9c8f437c49b39757cba6bd42ca043860",
+    "scope": "Actual published wrapper and compiled extension; simulated Code terminal events, not GUI acceptance",
+    "port": 45865,
+    "events": [
+      {
+        "event": "spawn",
+        "pid": 11169,
+        "at": 1792764925479,
+        "argv": [
+          "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+          "start",
+          "--address=127.0.0.1",
+          "--port=45865",
+          "--datadir=/tmp/automation-owned-2.20.4-final/automation-published-smoke-3zmw9h_n/actions-home/action-server/vscode-d091ea396019"
+        ]
+      },
+      {
+        "event": "output",
+        "text": "Starting Actions Runtime (in terminal): /workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64; URL: http://127.0.0.1:45865",
+        "at": 1792764925479
+      },
+      {
+        "event": "first-ready",
+        "pid": 11169,
+        "at": 1792764931108
+      },
+      {
+        "event": "restart-confirmed",
+        "at": 1792764931119
+      },
+      {
+        "event": "terminal-closed",
+        "pid": 11169,
+        "at": 1792764931119
+      },
+      {
+        "event": "output",
+        "text": "Waiting for owned Actions Runtime to exit and release 127.0.0.1:45865.",
+        "at": 1792764931119
+      },
+      {
+        "event": "process-exited",
+        "pid": 11169,
+        "code": 1,
+        "signal": null,
+        "at": 1792764931465
+      },
+      {
+        "event": "spawn",
+        "pid": 11255,
+        "at": 1792764931527,
+        "argv": [
+          "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+          "start",
+          "--address=127.0.0.1",
+          "--port=45865",
+          "--datadir=/tmp/automation-owned-2.20.4-final/automation-published-smoke-3zmw9h_n/actions-home/action-server/vscode-d091ea396019"
+        ]
+      },
+      {
+        "event": "output",
+        "text": "Starting Actions Runtime (in terminal): /workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64; URL: http://127.0.0.1:45865",
+        "at": 1792764931527
+      },
+      {
+        "event": "terminal-closed",
+        "pid": 11255,
+        "at": 1792764937370
+      },
+      {
+        "event": "process-exited",
+        "pid": 11255,
+        "code": 1,
+        "signal": null,
+        "at": 1792764937673
+      }
+    ],
+    "errors": [],
+    "result": "PASS",
+    "old_pid": 11169,
+    "new_pid": 11255,
+    "action_result": "Hello Restart QA"
+  },
+  "language_server": {
+    "command": [
+      "/workspace/port-acceptance/language-server-smoke/actions/holotree/257fd4c_c5e81ff_1c0bc041/bin/python3",
+      "-u",
+      "/workspace/port-acceptance/restart-2.20.5/extensions/automation-control-plane.automation-vscode-2.20.5/src/sema4ai_code/__main__.py"
+    ],
+    "scope": "Packaged Python language-server stdio; not VS Code Extension Host activation",
+    "packages": [
+      "Published compatibility smoke",
+      "robot-package"
+    ],
+    "interpreters": {
+      "actions": {
+        "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_1c0bc041/bin/python3",
+        "ROBOCORP_HOME": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home",
+        "RCC_VERSION": "v18.19.7"
+      },
+      "robots": {
+        "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_1c0bc041/bin/python3",
+        "ROBOCORP_HOME": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home",
+        "RCC_VERSION": "v18.19.7"
+      }
+    },
+    "action_work_items": {
+      "scope": "Actual installed LSP command and FileAdapter action execution; not GUI selection",
+      "input_value": 7,
+      "observed": 7,
+      "library": {
+        "library": "actions-work-items",
+        "version": "0.4.4"
+      },
+      "input": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/workspace/action-package/devdata/work-items-in/qa-e7a032a9a50e49bebb0b03ee5724f24d/work-items.json",
+      "output": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/workspace/action-package/devdata/work-items-out/gui-check-1/work-items.json",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_1c0bc041/bin/python3",
+        "/workspace/port-acceptance/restart-2.20.5/extensions/automation-control-plane.automation-vscode-2.20.5/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "smoke_actions.py",
+        "-a",
+        "consume"
+      ]
+    }
+  },
+  "remaining": [
+    "Native desktop Restart button retest",
+    "First-class Work Items directive 6366927805: NOT COMPLETE",
+    "Runtime 1.0.4 adapter pins bundled RCC18.19.3; RCC18.19.7 is extension-owned tool",
+    "Windows/macOS untested"
+  ]
+}
