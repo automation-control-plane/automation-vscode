@@ -3,13 +3,13 @@ const assert=require('node:assert/strict');
 const vm=require('node:vm');
 const fs=require('node:fs');
 
-function editor() {
+function editor(initialState) {
     const nodes=new Map(),messages=[],receivers=[];
-    function element(){return {value:'',textContent:'',children:[],disabled:false,hidden:false,
+    function element(tag){return {tag,value:'',textContent:'',children:[],disabled:false,hidden:false,
         append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;},
         set innerHTML(_){assert.fail('Business fields must not become HTML');}};}
     const document={getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},createElement:element};
-    const scope={document,acquireVsCodeApi:()=>({postMessage:message=>messages.push(JSON.parse(JSON.stringify(message)))}),window:{addEventListener:(_,callback)=>receivers.push(callback)}};
+    const scope={document,acquireVsCodeApi:()=>({postMessage:message=>{messages.push(JSON.parse(JSON.stringify(message)));if(message.op==='restoreEditorDraft')receivers.forEach(callback=>callback({data:{type:'editorDraftRestore',state:initialState}}));}}),window:{addEventListener:(_,callback)=>receivers.push(callback)}};
     vm.runInNewContext(fs.readFileSync('resources/work-items/form.js','utf8')+'\n'+fs.readFileSync('resources/work-items/editor.js','utf8')+'\n'+fs.readFileSync('resources/work-items/managed-editor.js','utf8'),scope);
     return {get:document.getElementById,messages,receive:data=>receivers.forEach(callback=>callback({data}))};
 }
@@ -25,7 +25,7 @@ function add(env,name,kind,value){
 }
 
 test('Empty input -> field/value form -> create -> save/debug -> output without JSON or schema editing',()=>{
-    const e=editor();assert.equal(e.messages[0].op,'refresh');
+    const e=editor();assert.equal(e.messages.find(message=>message.op==='mode').mode,'file');
     add(e,'value','number',7);
     e.get('create').onclick();assert.deepEqual(e.messages.at(-1).payload,{value:7});
     e.receive({type:'state',mode:'file',package:'/workspace/action/package.yaml',selectId:'input#0',items:[{id:'input#0',name:'invoice',role:'input',payload:{value:7},files:['invoice.txt'],revision:'abc',state:'LOCAL_FIXTURE'}],receipts:[]});
@@ -35,7 +35,7 @@ test('Empty input -> field/value form -> create -> save/debug -> output without 
     e.get('files').children[0].onclick();assert.equal(e.messages.at(-1).op,'download');
     e.receive({type:'state',mode:'file',package:'/workspace/action/package.yaml',items:[{id:'input#0',name:'invoice',role:'input',payload:{value:8},files:[],revision:'new',state:'LOCAL_FIXTURE'},
         {id:'devdata/work-items-out/native-run1/work-items.json#0',role:'output',payload:{observed:8},files:[],state:'LOCAL_FIXTURE'}],receipts:[{id:'run1',mode:'file',input:'input#0',state:'EXITED',exit_code:0}]});
-    const card=e.get('receipts').children[0];assert.equal(card.children[0].textContent,'Local input · Finished · exit 0');card.children[2].onclick();
+    const card=e.get('receipts').children[0];assert.equal(card.children[0].textContent,'Succeeded · exit 0');card.children[2].onclick();
     assert.equal(e.get('save').disabled,true);assert.equal(e.get('payload-apply-json').disabled,true);
 });
 
@@ -55,10 +55,10 @@ test('Duplicate form names block submission; nested objects/arrays and own names
 });
 
 test('AI proposal is review/apply only; malformed proposals and mode changes cannot apply to another draft',()=>{
-    const e=editor();const before=e.messages.length;
+    const e=editor();const business=()=>e.messages.filter(message=>message.op!=='editorDraftState').length;const before=business();
     e.receive({type:'payload-proposal',mode:'file',json:'{"value":7,"nested":[true,null]}'});
-    assert.equal(e.messages.length,before);assert.equal(e.get('proposal-review').hidden,false);
-    e.get('apply-proposal').onclick();assert.equal(e.messages.length,before);
+    assert.equal(business(),before);assert.equal(e.get('proposal-review').hidden,false);
+    e.get('apply-proposal').onclick();assert.equal(business(),before);
     e.get('create').onclick();assert.deepEqual(e.messages.at(-1).payload,{value:7,nested:[true,null]});
     e.receive({type:'payload-proposal',mode:'file',json:'{"value":1,"value":2}'});
     assert.equal(e.get('proposal-review').hidden,true);assert.match(e.get('proposal-status').textContent,/Duplicate/);
@@ -82,4 +82,67 @@ test('Metadata refresh preserves an unsaved form draft and its original conflict
     e.receive({type:'state',mode:'file',package:'/workspace/action/package.yaml',contract:{value:'integer'},items:[{id:'input#0',role:'input',payload:{value:99},files:[],revision:'external-change'}],receipts:[]});
     e.get('save').onclick();assert.equal(e.messages.at(-1).payload.value,8);assert.equal(e.messages.at(-1).revision,'original');
     e.get('reload-payload').onclick();e.get('save').onclick();assert.equal(e.messages.at(-1).payload.value,99);assert.equal(e.messages.at(-1).revision,'external-change');
+});
+
+test('Closing/reopening restores unsaved name, fields and invalid values using editor state only',()=>{
+    const first=editor();first.get('name').value='unsaved-invoice';first.get('name').oninput();
+    add(first,'value','number','not-a-number');
+    const state=first.messages.filter(message=>message.op==='editorDraftState').at(-1).state;
+    const reopened=editor(state);
+    reopened.receive({type:'state',mode:'file',package:'/workspace/action/package.yaml',items:[],receipts:[]});
+    assert.equal(reopened.get('name').value,'unsaved-invoice');assert.match(reopened.get('validation').textContent,/valid number/);
+    const row=fieldGroup(reopened).children[0];assert.equal(row.children[0].value,'value');assert.equal(row.children[2].value,'not-a-number');
+    assert.ok(reopened.messages.every(message=>!['create','save','run','debug','proposePayload','managed.connect','managed.enqueue','managed.claim'].includes(message.op)));
+    row.children[2].value='7';row.children[2].oninput();reopened.get('create').onclick();assert.equal(reopened.messages.at(-1).payload.value,7);
+});
+
+test('Closing/reopening keeps an existing-item draft bound to its original saved revision',()=>{
+    const first=editor();first.receive({type:'state',mode:'file',selectId:'input#0',items:[{id:'input#0',role:'input',payload:{value:7},files:[],revision:'original'}],receipts:[]});
+    const row=fieldGroup(first).children[0];row.children[2].value='8';row.children[2].oninput();
+    const state=first.messages.filter(message=>message.op==='editorDraftState').at(-1).state;
+    const reopened=editor(state);reopened.receive({type:'state',mode:'file',items:[{id:'input#0',role:'input',payload:{value:99},files:[],revision:'external-change'}],receipts:[]});
+    reopened.get('save').onclick();assert.equal(reopened.messages.at(-1).payload.value,8);assert.equal(reopened.messages.at(-1).revision,'original');
+});
+
+test('Selection scopes results, sidebar state and genuinely read-only output controls',()=>{
+    const e=editor();
+    const input={id:'in#0',name:'invoice-123456789abc',role:'input',payload:{value:7},files:[],revision:'a',state:'LOCAL_FIXTURE'};
+    const output={id:'devdata/work-items-out/native-r1/work-items.json#0',role:'output',payload:{observed:7,nested:{value:8}},files:['result.txt'],state:'LOCAL_FIXTURE'};
+    e.receive({type:'state',mode:'file',selectId:input.id,items:[input,output],receipts:[{id:'r1',input:input.id,state:'EXITED',exit_code:0}]});
+    assert.equal(e.get('items').children.length,1);assert.equal(e.get('items').children[0].ariaCurrent,'true');
+    assert.equal(e.get('items').children[0].children[0].textContent,'invoice');
+    assert.equal(e.get('run').hidden,false);assert.equal(e.get('recover').hidden,true);assert.equal(e.get('connect').hidden,true);
+    assert.equal(e.get('last-execution').textContent,'Succeeded · exit 0');
+    e.get('new').onclick();assert.equal(e.get('last-execution').textContent,'Not run');
+    assert.equal(e.get('run').hidden,true);assert.equal(e.get('create').hidden,false);
+    e.get('show-outputs').onclick();e.get('items').children[0].onclick();
+    for(const id of ['run','debug','create','save','attach','reload-payload','parameters-section','proposal-tools'])assert.equal(e.get(id).hidden,true,id);
+    const all=node=>[node,...node.children.flatMap(all)];
+    assert.ok(all(e.get('payload-fields')).every(node=>!['button','input','select'].includes(node.tag)));
+    assert.equal(e.get('replay').className,'primary');assert.equal(e.get('last-execution').textContent,'Succeeded · exit 0');
+});
+
+test('Replay opens an editable persistent draft; submission copies source attachments without editing the source',()=>{
+    const e=editor();const source={id:'completed-source',queue_name:'input.outputs',payload:{value:7},files:['proof.txt'],state:'COMPLETED'};
+    e.receive({type:'state',mode:'sqlite',selectId:source.id,items:[source],receipts:[]});
+    const before=e.messages.filter(message=>message.op==='replay').length;
+    e.get('replay').onclick();assert.equal(e.messages.filter(message=>message.op==='replay').length,before);
+    assert.equal(e.get('selection-state').textContent,'Replay draft');assert.equal(e.get('files').children[0].textContent,'proof.txt');
+    const row=fieldGroup(e).children[0];row.children[2].value='8';row.children[2].oninput();
+    const saved=e.messages.filter(message=>message.op==='editorDraftState').at(-1).state;
+    const reopened=editor(saved);reopened.receive({type:'state',mode:'sqlite',items:[source],receipts:[]});
+    reopened.get('create').onclick();const request=reopened.messages.at(-1);
+    assert.equal(request.op,'replay');assert.equal(request.id,source.id);assert.deepEqual(request.payload,{value:8});assert.deepEqual(request.source_payload,{value:7});
+    assert.deepEqual(source.payload,{value:7});
+});
+
+test('New draft survives navigation and queue switches; discard requires host confirmation',()=>{
+    const e=editor();add(e,'value','number',7);e.get('name').value='kept';e.get('name').oninput();
+    e.receive({type:'state',mode:'file',items:[{id:'saved',role:'input',payload:{value:99},files:[],revision:'a'}],receipts:[]});
+    e.get('items').children[0].onclick();e.get('new').onclick();e.get('create').onclick();assert.equal(e.messages.at(-1).payload.value,7);assert.equal(e.get('name').value,'kept');
+    e.get('discard-draft').onclick();assert.equal(e.messages.at(-1).op,'discardDraft');e.get('create').onclick();assert.equal(e.messages.at(-1).payload.value,7);
+    e.receive({type:'draftDiscarded'});e.get('create').onclick();assert.deepEqual(e.messages.at(-1).payload,{});
+    e.get('mode').value='sqlite';e.get('mode').onchange();add(e,'value','number',1);
+    e.get('queue').value='second';e.get('apply-queue').onclick();e.get('create').onclick();assert.deepEqual(e.messages.at(-1).payload,{});
+    e.get('queue').value='input';e.get('apply-queue').onclick();e.get('create').onclick();assert.equal(e.messages.at(-1).payload.value,1);
 });

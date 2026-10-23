@@ -97,6 +97,22 @@
         }
         return read(root,0);
     }
+    function restoreNode(state, depth=0, budget={count:0}) {
+        if(!state || !kinds.includes(state.kind) || depth>64 || ++budget.count>2000)throw Error('Saved draft has an invalid field structure.');
+        const result=node(state.kind);
+        if(state.kind==='object') {
+            if(!Array.isArray(state.entries))throw Error('Saved object fields are invalid.');
+            result.entries=state.entries.map(entry=>{if(typeof entry?.key!=='string')throw Error('Saved field name is invalid.');return {key:entry.key,node:restoreNode(entry.node,depth+1,budget)};});
+        } else if(state.kind==='array') {
+            if(!Array.isArray(state.children))throw Error('Saved array fields are invalid.');
+            result.children=state.children.map(child=>restoreNode(child,depth+1,budget));
+        } else if(state.kind==='boolean') {
+            if(typeof state.value!=='boolean')throw Error('Saved boolean value is invalid.');result.value=state.value;
+        } else if(state.kind!=='null') {
+            if(typeof state.value!=='string')throw Error('Saved field value is invalid.');result.value=state.value;
+        }
+        return result;
+    }
     function stringify(value, indent = 0) {
         if (typeof value === 'number') {numeric(Object.is(value,-0) ? '-0' : String(value)); return Object.is(value,-0) ? '-0' : String(value);}
         if (value === null || typeof value === 'boolean' || typeof value === 'string') return JSON.stringify(value);
@@ -116,7 +132,9 @@
         setJSON(text) {const value=parse(text);this.setValue(value);this.changed();}
         changed() {this.onChange(this);}
         setReadOnly(value) {this.readOnly=!!value;this.render();}
-        button(label, fn) {const button=this.document.createElement('button');button.textContent=label;button.disabled=this.readOnly;button.onclick=fn;return button;}
+        getState() {return {root:this.root?restoreNode(this.root):undefined,error:this.error};}
+        setState(state) {this.error=state?.error;try{this.root=state?.root?restoreNode(state.root):undefined;if(!this.root&&!this.error)throw Error('Saved draft is unavailable.');}catch(error){this.root=undefined;this.error=error.message;}this.render();}
+        button(label, fn) {const button=this.document.createElement('button');button.textContent=label;button.className='quiet form-add';button.onclick=fn;return button;}
         render() {
             this.container.replaceChildren();
             if(this.error){const message=this.document.createElement('p');message.textContent=this.error;this.container.append(message);return;}
@@ -125,21 +143,28 @@
                 if(current.kind==='object') {
                     for(const entry of current.entries) {
                         const row=this.document.createElement('div');row.className='work-item-form-field';group.append(row);
-                        const key=this.document.createElement('input');key.value=entry.key;key.placeholder='Field name';key.ariaLabel='Field name';key.disabled=this.readOnly;
+                        const key=this.document.createElement(this.readOnly?'span':'input');key.value=entry.key;key.textContent=entry.key;key.className=this.readOnly?'field-key':'';key.placeholder='Field name';key.ariaLabel='Field name';
                         key.oninput=()=>{entry.key=key.value;this.changed();};row.append(key);
                         drawValue(entry.node,row,depth+1);
-                        row.append(this.button('Remove field',()=>{current.entries.splice(current.entries.indexOf(entry),1);this.render();this.changed();}));
+                        if(!this.readOnly){const remove=this.button('×',()=>{current.entries.splice(current.entries.indexOf(entry),1);this.render();this.changed();this.container.querySelector?.('button')?.focus();});remove.className='quiet remove';remove.ariaLabel='Remove field '+entry.key;remove.title='Remove field';row.append(remove);}
                     }
-                    group.append(this.button('Add field',()=>{let number=1,name='field';const names=new Set(current.entries.map(entry=>entry.key));while(names.has(name))name='field'+(++number);current.entries.push({key:name,node:node()});this.render();this.changed();}));
+                    if(!this.readOnly)group.append(this.button('Add field',()=>{let number=1,name='field';const names=new Set(current.entries.map(entry=>entry.key));while(names.has(name))name='field'+(++number);const child=node();current.entries.push({key:name,node:child});this.render();this.changed();this.container.querySelector?.('[data-field="'+child.id+'"] > input')?.focus();}));
                 } else if(current.kind==='array') {
-                    current.children.forEach((child,index)=>{const row=this.document.createElement('div');row.className='work-item-form-field';group.append(row);const label=this.document.createElement('span');label.textContent='Item '+(index+1);row.append(label);drawValue(child,row,depth+1);row.append(this.button('Remove item',()=>{current.children.splice(index,1);this.render();this.changed();}));});
-                    group.append(this.button('Add item',()=>{current.children.push(node());this.render();this.changed();}));
+                    current.children.forEach((child,index)=>{const row=this.document.createElement('div');row.className='work-item-form-field';group.append(row);const label=this.document.createElement('span');label.className='field-key';label.textContent='Item '+(index+1);row.append(label);drawValue(child,row,depth+1);if(!this.readOnly){const remove=this.button('×',()=>{current.children.splice(index,1);this.render();this.changed();});remove.className='quiet remove';remove.ariaLabel='Remove item '+(index+1);row.append(remove);}});
+                    if(!this.readOnly)group.append(this.button('Add item',()=>{const child=node();current.children.push(child);this.render();this.changed();this.container.querySelector?.('[data-field="'+child.id+'"] input')?.focus();}));
                 }
             };
             const drawValue=(current,parent,depth)=>{
+                parent.setAttribute?.('data-field',String(current.id));
+                if(this.readOnly){
+                    const type=this.document.createElement('span');type.className='field-type';type.textContent=current.kind;parent.append(type);
+                    if(current.kind==='object'||current.kind==='array')draw(current,parent,depth);
+                    else {const value=this.document.createElement('span');value.className='field-value';value.textContent=current.kind==='null'?'null':String(current.value);parent.append(value);}
+                    return;
+                }
                 const type=this.document.createElement('select');type.ariaLabel='Value type';type.disabled=this.readOnly;
                 for(const kind of kinds){const option=this.document.createElement('option');option.value=kind;option.textContent=kind;type.append(option);}type.value=current.kind;
-                type.onchange=()=>{Object.assign(current,node(type.value));this.render();this.changed();};parent.append(type);
+                type.onchange=()=>{Object.assign(current,node(type.value));this.render();this.changed();this.container.querySelector?.('[data-field="'+current.id+'"] > select')?.focus();};parent.append(type);
                 if(current.kind==='object'||current.kind==='array'){draw(current,parent,depth);return;}
                 if(current.kind==='null'){const label=this.document.createElement('span');label.textContent='null';parent.append(label);return;}
                 const input=this.document.createElement(current.kind==='boolean'?'select':'input');input.ariaLabel='Field value';input.disabled=this.readOnly;
@@ -150,5 +175,5 @@
             if(this.root.kind==='object'||this.root.kind==='array')draw(this.root,this.container,0);else drawValue(this.root,this.container,0);
         }
     }
-    return {parse,stringify,fromValue,toValue,node,Editor};
+    return {parse,stringify,fromValue,toValue,node,restoreNode,Editor};
 });

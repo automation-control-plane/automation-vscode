@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-{{nonce}}'; style-src 'nonce-{{nonce}}';"><style nonce="{{nonce}}">{{style}}</style></head>
+<body>
+<header class="header">
+  <div class="identity"><h1>Work Items</h1><p id="package" class="muted"></p></div>
+  <label class="mode-control"><span class="muted">Storage</span><select id="mode" aria-label="Work Item storage"><option value="file">Local inputs</option><option value="sqlite">Local queue</option><option value="published">Runtime storage</option><option value="managed">Managed queues</option></select></label>
+  <button id="connect" hidden>Connect Runtime…</button><button id="refresh" class="quiet">Refresh</button>
+  <details class="overflow"><summary aria-label="Storage settings and details" title="Storage settings and details">···</summary><div class="overflow-content">
+    <label id="local-queue-label" hidden>Queue <input id="queue" value="input" maxlength="80"></label><button id="apply-queue" hidden>Load queue</button>
+    <button id="recover" hidden>Recover interrupted items…</button><p id="authority"></p><p id="package-path" class="hint"></p>
+  </div></details>
+</header>
+<div id="status" role="status" aria-live="polite">Loading package…</div>
+<main id="local-root" class="layout">
+  <nav class="sidebar" aria-label="Work Items">
+    <div class="sidebar-heading"><h2>Items</h2><button id="new" class="quiet">+ New input</button></div>
+    <div class="tabs" aria-label="Item kind"><button id="show-inputs" class="quiet" aria-pressed="true">Inputs</button><button id="show-outputs" class="quiet" aria-pressed="false">Outputs</button></div>
+    <div id="items"></div>
+  </nav>
+  <section class="detail" aria-label="Selected Work Item">
+    <div class="detail-heading"><div><h2 id="selection">New input</h2><span id="selection-state" class="badge">Draft</span></div>
+      <div class="actions"><button id="create" class="primary">Create input</button><button id="run" class="primary" hidden>Run</button><button id="debug" hidden>Debug</button><button id="replay" hidden>Replay as new input</button></div>
+    </div>
+    <p id="selection-note" class="hint block"></p>
+    <label id="name-label" class="name-field">Name <input id="name" value="input" maxlength="80"></label>
+    <section class="block" aria-label="Payload"><div class="block-heading"><h3>Fields</h3><span id="field-count" class="muted"></span></div>
+      <div class="field-columns" aria-hidden="true"><span>Name</span><span>Type</span><span>Value</span></div>
+      <div id="payload-fields" aria-label="Payload field editor"></div><p id="validation" role="alert"></p><p id="validation-hints" class="hint"></p>
+      <div class="secondary-tools"><button id="save" hidden>Save changes</button><button id="reload-payload" class="quiet" hidden>Reload saved values</button><button id="discard-draft" class="quiet">Discard draft…</button></div>
+    </section>
+    <section class="block" aria-label="Attachments"><div class="block-heading"><h3>Attachments</h3><button id="attach" class="quiet" hidden>+ Add attachment…</button></div><div id="files"></div><p id="attachment-hint" class="hint"></p></section>
+    <div class="editor-extras">
+      <details id="parameters-section"><summary>Action inputs</summary><p class="hint">Arguments passed to the Action, separately from these Work Item fields.</p><div id="parameters-fields" aria-label="Action parameter field editor"></div><p id="parameters-validation" role="alert"></p><details><summary>Advanced Action input JSON</summary><textarea id="parameters">{}</textarea><button id="parameters-apply-json">Apply to form</button></details></details>
+      <details id="payload-advanced"><summary>Advanced JSON</summary><textarea id="payload" aria-label="Advanced payload JSON"></textarea><button id="payload-apply-json">Apply to form</button></details>
+      <div id="local-proposal-slot"><details id="proposal-tools"><summary>Suggest fields with AI…</summary><p class="hint">Use an existing VS Code model. Review before applying; nothing runs automatically.</p><label>Describe the fields and values<textarea id="proposal-instructions" placeholder="For example: invoice number, amount and line items"></textarea></label><button id="propose-fields">Generate proposal…</button><p id="proposal-status" role="status"></p><div id="proposal-review" hidden><h3>Review proposed fields</h3><div id="proposal-fields"></div><button id="apply-proposal">Apply to draft</button></div></details>
+      </div><details id="item-details"><summary>Item details and lineage</summary><pre id="details"></pre></details>
+    </div>
+    <section class="result" aria-label="Execution result"><div class="block-heading"><h3 id="result-heading">Result</h3><span id="result-time" class="muted"></span></div><p id="last-execution" role="status">Not run</p><div id="latest-outputs"></div><details><summary>All execution history</summary><div id="receipts"></div></details></section>
+  </section>
+</main>
+<div id="managed-root" hidden><p id="managed-status" role="status"></p><p id="managed-identity"></p><h2>Authorized queues</h2><div id="managed-queues"></div><button id="managed-refresh">Refresh managed state</button><button id="managed-more-queues">More queues</button><h2>Items and review proposals</h2><div class="layout"><section><div id="managed-items"></div><button id="managed-more-items">More items</button><h3>Reviews</h3><div id="managed-reviews"></div><button id="managed-more-reviews">More reviews</button></section><section><h3>Selected business item / exact review binding</h3><div id="managed-summary"></div><details><summary>Exact Runtime record and binding</summary><pre id="managed-details"></pre></details><details class="managed-setup"><summary>Create a managed input</summary><h3>Payload fields</h3><div id="managed-payload-fields"></div><p id="managed-payload-validation" role="alert"></p><details><summary>Advanced managed payload JSON (optional)</summary><textarea id="managed-payload">{}</textarea><button id="managed-payload-apply-json">Apply JSON to managed form</button></details><div id="managed-proposal-slot"></div><button id="managed-snapshot">Load admitted snapshot…</button><button id="managed-enqueue">Enqueue with pinned snapshot</button><details><summary>Pinned execution snapshot</summary><pre id="managed-snapshot-view"></pre></details></details><details><summary>Authorized item operations</summary><label>Intervention reason<input id="managed-reason" maxlength="1024"></label><label>Reconciliation receipt (when required)<input id="managed-reconciliation" maxlength="128"></label><button id="managed-retry">Retry</button><button id="managed-cancel">Cancel item</button><button id="managed-approve">Approve exact review</button><button id="managed-reject">Reject exact review</button></details><details><summary>Authorized worker lifecycle (explicit operations)</summary><label>Lease seconds<input id="managed-lease" type="number" min="1" max="3600" value="60"></label><button id="managed-claim">Claim next item</button><button id="managed-renew">Renew actual claim</button><label>Business outcome<select id="managed-outcome"><option value="done">Done</option><option value="business_failed">Business failure</option><option value="application_failed">Application failure</option></select></label><button id="managed-complete">Complete with actual Run evidence</button></details><h3>Actual Runs / Attempts / result / artifacts</h3><div id="managed-runs"></div><div id="managed-attempts"></div><details><summary>Run result, admission and provenance</summary><pre id="managed-run-details"></pre></details><div id="managed-artifacts"></div><pre id="managed-logs"></pre><button id="managed-more-logs">More logs</button></section></div><h2>Retained uncertain requests</h2><p>These are client request receipts, not Runtime queue state. Reconcile the exact key; do not create a replacement after a timeout.</p><div id="managed-pending"></div></div><script nonce="{{nonce}}">{{script}}</script></body></html>

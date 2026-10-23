@@ -42,6 +42,27 @@ class NativeWorkItemsSDK(unittest.TestCase):
         self.assertNotEqual(copied, key)
         self.assertEqual(len(self.call("list")["items"]), 2)
 
+    def test_edited_replay_preserves_source_attachments_and_lineage(self):
+        for manifest in ("package.yaml", "robot.yaml"):
+            self.manifest = self.root / manifest
+            self.manifest.write_text("name: synthetic\n")
+            for mode in ("file", "sqlite"):
+                with self.subTest(manifest=manifest, mode=mode):
+                    source = self.call("create", mode, payload={"value": 7}, name="original")["id"]
+                    self.call("attach", mode, id=source, name="proof.txt", files={"proof.txt": base64.b64encode(b"unchanged bytes").decode()})
+                    original = next(item for item in self.call("list", mode)["items"] if item["id"] == source)
+                    copy = self.call("replay", mode, id=source, payload={"value": 8}, source_payload={"value": 7}, revision=original.get("revision"), name="edited-copy")["id"]
+                    self.assertNotEqual(copy, source)
+                    result = self.call("list", mode)
+                    self.assertEqual(next(item for item in result["items"] if item["id"] == source)["payload"], {"value": 7})
+                    self.assertEqual(next(item for item in result["items"] if item["id"] == copy)["payload"], {"value": 8})
+                    self.assertEqual(base64.b64decode(self.call("download", mode, id=copy, name="proof.txt")["content"]), b"unchanged bytes")
+                    self.assertTrue(any(entry["source"] == source and entry["copy"] == copy for entry in result["replays"]))
+                    count = len(result["items"])
+                    with self.assertRaisesRegex(ValueError, "source payload changed"):
+                        self.call("replay", mode, id=source, payload={"value": 9}, source_payload={"value": 99})
+                    self.assertEqual(len(self.call("list", mode)["items"]), count)
+
     def test_sqlite_public_lifecycle_survives_process_restart(self):
         key = self.call("create", "sqlite", payload={"value": 7})["id"]
         prepared = self.call("prepare", "sqlite", id=key)

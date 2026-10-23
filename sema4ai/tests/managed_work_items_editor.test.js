@@ -9,7 +9,7 @@ test('Managed editor keeps queue/review/Run identity separate and gates controls
         append(...values){this.children.push(...values);},replaceChildren(...values){this.children=values;},
         set innerHTML(_){assert.fail('Runtime content must never become HTML');}};}
     const document={getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},createElement:element};
-    const scope={document,acquireVsCodeApi:()=>({postMessage:message=>messages.push(JSON.parse(JSON.stringify(message)))}),window:{addEventListener:(_,callback)=>receivers.push(callback)}};
+    const scope={document,acquireVsCodeApi:()=>({postMessage:message=>{messages.push(JSON.parse(JSON.stringify(message)));if(message.op==='restoreEditorDraft')receivers.forEach(callback=>callback({data:{type:'editorDraftRestore'}}));}}),window:{addEventListener:(_,callback)=>receivers.push(callback)}};
     vm.runInNewContext(fs.readFileSync('resources/work-items/form.js','utf8')+'\n'+fs.readFileSync('resources/work-items/editor.js','utf8')+'\n'+fs.readFileSync('resources/work-items/managed-editor.js','utf8'),scope);
     const get=document.getElementById;
     get('mode').value='managed';get('mode').onchange();

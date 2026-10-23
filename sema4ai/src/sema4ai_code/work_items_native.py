@@ -185,10 +185,16 @@ def handle(request):
                 files = {name: adapter.get_file(parent_id, name) for name in source["files"]}
             else:
                 path, index, data = file_item(parent_id)
+                if request.get("revision") is not None and digest(path) != request["revision"]:
+                    raise ValueError("Replay source changed since loading. Refresh and review the original before copying.")
                 reader = FileAdapter(input_path=str(path), output_path=str(storage / (uuid4().hex + ".json")))
                 value = data[index].get("payload")
                 files = {name: reader.get_file(str(index), name) for name in data[index].get("files", {})}
-            checked_payload(value)
+            if "source_payload" in request and value != request["source_payload"]:
+                raise ValueError("Replay source payload changed. Refresh and review the original before copying.")
+            # A replay draft may be edited before submission; the original and
+            # its attachments remain owned by the SDK and are never mutated.
+            value = checked_payload(request.get("payload", value))
         if adapter:
             new_id = adapter.seed_input(payload=value, files=files, queue_name=queue)
         else:

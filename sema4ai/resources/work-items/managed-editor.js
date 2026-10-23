@@ -1,6 +1,6 @@
 /* Canonical Runtime projections; the host retains targets, bindings and keys. */
 let managedState = {}, managedLogCursor;
-const managedPayloadEditor=new WorkItemForms.Editor(byId('managed-payload-fields'),{onChange:editor=>showPayloadValue(editor,'managed-payload','managed-payload-validation')});
+const managedPayloadEditor=new WorkItemForms.Editor(byId('managed-payload-fields'),{onChange:editor=>{showPayloadValue(editor,'managed-payload','managed-payload-validation');persistEditorState();}});
 byId('managed-payload-apply-json').onclick=()=>{try{managedPayloadEditor.setJSON(byId('managed-payload').value);}catch(error){byId('managed-payload-validation').textContent=error.message;}};
 function managedSend(op, extra = {}) {api.postMessage({op: 'managed.' + op, ...extra});}
 function managedButton(parent, label, callback) {const button = document.createElement('button'); button.textContent = label; button.onclick = callback; parent.append(button);}
@@ -84,3 +84,5 @@ window.addEventListener('message', ({data}) => {
     for (const retained of data.pending || []) managedButton(byId('managed-pending'), `Reconcile exact ${retained.operation} · ${retained.key}`,
         () => managedSend('reconcile', {key:retained.key}));
 });
+for (const name of ['enqueue','claim','renew','complete','retry','cancel','approve','reject']) byId('managed-' + name).disabled = true;
+initializeWorkItemEditor();

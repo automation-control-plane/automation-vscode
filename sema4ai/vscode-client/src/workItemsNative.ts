@@ -20,6 +20,7 @@ interface LocalResult { receipts?: ({id: string; [key: string]: unknown})[]; ite
 export function registerNativeWorkItems(context: vscode.ExtensionContext): void {
     const panels = new Map<string, {panel: vscode.WebviewPanel; select: (id: string) => void; refresh: () => Promise<void>}>();
     const packageStates = new Map<string, {sessions: Map<string, vscode.DebugSession>; runs: Set<string>; listening: boolean; pending: Promise<unknown>; call?: (request: Request & Record<string, unknown>) => Promise<LocalResult>}>();
+    const editorDrafts = new Map<string, unknown>();
     context.subscriptions.push(vscode.commands.registerCommand(OPEN_NATIVE_WORK_ITEMS, async (item?: {filePath?: string}) => {
         if (!vscode.workspace.isTrusted) {
             await vscode.window.showErrorMessage("Trust this workspace before loading its Work Items interpreter.");
@@ -32,6 +33,7 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
             return;
         }
         const key = path.resolve(manifest);
+        const editorStateKey = "workItems.editor.v1." + require("crypto").createHash("sha256").update(key).digest("hex");
         if (panels.has(key)) {
             const existing = panels.get(key);
             existing.panel.reveal();
@@ -119,10 +121,36 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
         packageState.listening = true;
         context.subscriptions.push(...lifecycle);
         const listener = panel.webview.onDidReceiveMessage(message => {
+                // UI drafts use VS Code's existing memento, independently of
+                // task/model/network operations. Closing a panel must not drop
+                // edits queued behind an interpreter or model request.
+                if (message?.op === "restoreEditorDraft") {
+                    const state = editorDrafts.get(key) || context.workspaceState.get(editorStateKey);
+                    void panel.webview.postMessage({type: "editorDraftRestore", state});
+                    return;
+                }
+                if (message?.op === "editorDraftState") {
+                    try {
+                        const state = message.state;
+                        if (!state || state.version !== 1 || !["file", "sqlite", "published", "managed"].includes(state.mode) ||
+                            typeof state.name !== "string" || typeof state.queue !== "string" || state.name.length > 80 || state.queue.length > 80 ||
+                            !Array.isArray(state.drafts) || state.drafts.length > 100 || Buffer.byteLength(JSON.stringify(state)) > 4 * 1024 * 1024) throw Error("Editor draft state exceeds the supported bounds. Keep this tab open and save the input.");
+                        const allowed = ["version", "mode", "queue", "name", "activeKey", "selectedId", "revision", "dirty", "root", "error", "parameters", "managedRoot", "replaySource", "drafts"];
+                        if (Object.keys(state).some(name => !allowed.includes(name))) throw Error("Invalid editor draft state.");
+                        editorDrafts.set(key, state);
+                        void Promise.resolve(context.workspaceState.update(editorStateKey, state)).catch(() => panel.webview.postMessage({type: "error", message: "Unable to preserve this draft in editor state. Keep the tab open and save the input."}));
+                    } catch (error) {void panel.webview.postMessage({type: "error", message: error.message});}
+                    return;
+                }
                 busy = busy.then(async () => {
                     if (!vscode.workspace.isTrusted) throw Error("Workspace trust is required for Work Items.");
                     if (!message || typeof message.op !== "string") throw Error("Invalid editor request.");
                     await panel.webview.postMessage({ type: "loading" });
+                    if (message.op === "discardDraft") {
+                        const answer = await vscode.window.showWarningMessage("Discard this unsaved input draft? Saved items and outputs stay unchanged.", {modal: true}, "Discard draft");
+                        if (answer === "Discard draft") await panel.webview.postMessage({type: "draftDiscarded"});
+                        await refresh(); return;
+                    }
                     if (message.op === "proposePayload") {
                         const json = await proposeWorkItemPayload(message.instructions);
                         if (json !== undefined) await panel.webview.postMessage({type: "payload-proposal", json, mode, input_id: message.id});
@@ -190,7 +218,7 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
                             await refresh(); return;
                         }
                         const request: Request & Record<string, unknown> = { op: message.op, mode, queue };
-                        for (const field of ["id", "name", "payload", "revision", "parameters"]) if (message[field] !== undefined) request[field] = message[field];
+                        for (const field of ["id", "name", "payload", "revision", "parameters", "source_payload"]) if (message[field] !== undefined) request[field] = message[field];
                         if (message.op === "attach") {
                             const chosen = await vscode.window.showOpenDialog({ canSelectMany: false, openLabel: "Attach to Work Item" });
                             if (!chosen?.length) { await refresh(); return; }
@@ -246,9 +274,11 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
 }
 
 function editorHtml(nonce: string): string {
-    const script = fs.readFileSync(path.join(__dirname, "../../resources/work-items/form.js"), "utf8") + "\n" + fs.readFileSync(path.join(__dirname, "../../resources/work-items/editor.js"), "utf8") + "\n" +
-        fs.readFileSync(path.join(__dirname, "../../resources/work-items/managed-editor.js"), "utf8");
-    return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}';"><style nonce="${nonce}">
-    body{font:var(--vscode-font-size) var(--vscode-font-family);color:var(--vscode-foreground);padding:20px;max-width:1100px}select,input,textarea,button{font:inherit;color:var(--vscode-input-foreground);background:var(--vscode-input-background);border:1px solid var(--vscode-input-border);padding:7px;margin:4px}button{cursor:pointer;background:var(--vscode-button-background);color:var(--vscode-button-foreground)}textarea{display:block;box-sizing:border-box;width:100%;min-height:160px;font-family:var(--vscode-editor-font-family)}#status{white-space:pre-wrap;padding:10px}#items button{display:block;text-align:left;width:100%}.work-item-form-node{border-left:2px solid var(--vscode-panel-border);padding-left:12px;margin:6px 0}.work-item-form-field{display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:6px 0}.work-item-form-field>.work-item-form-node{flex-basis:100%}.work-item-form-field input{min-width:120px;max-width:280px}.work-item-form-field select{max-width:140px}.layout{display:grid;grid-template-columns:1fr 2fr;gap:20px}pre{white-space:pre-wrap;overflow-wrap:anywhere}#files button{display:inline-block}.error{color:var(--vscode-errorForeground)}@media(max-width:700px){.layout{display:block}#local-root{display:flex;flex-direction:column}#local-root>section:last-child{order:0}#local-root>section:first-child{order:1}}#items{max-height:24rem;overflow:auto}#package{overflow-wrap:anywhere}
-    </style></head><body><h1>Work Items</h1><p id="package"></p><label>Mode <select id="mode"><option value="file">Local inputs</option><option value="sqlite">Persistent local queue</option><option value="published">Runtime storage (1.0.4)</option><option value="managed">Managed queues</option></select></label><label id="local-queue-label">Queue <input id="queue" value="input" maxlength="80"></label><button id="refresh">Refresh</button><button id="recover">Recover interrupted local items…</button><button id="connect">Connect / reconnect Runtime…</button><p id="authority"></p><div id="status" role="status" aria-live="polite">Loading package…</div><details><summary>Propose fields with an existing VS Code model</summary><label>Describe the fields and values<textarea id="proposal-instructions" placeholder="For example: invoice number, amount and line items"></textarea></label><button id="propose-fields">Generate field proposal…</button><p id="proposal-status"></p><div id="proposal-review" hidden><h3>Review proposed fields and values</h3><div id="proposal-fields"></div><button id="apply-proposal">Apply reviewed proposal to draft</button></div></details><div id="local-root" class="layout"><section><h2>Inputs and outputs</h2><button id="new">New input</button><div id="items"></div><details><summary>Execution history and lineage</summary><div id="receipts"></div></details></section><section><h2 id="selection">New input</h2><label>Name <input id="name" value="input"></label><p id="validation-hints"></p><div id="payload-fields" aria-label="Payload field editor"></div><p id="validation" role="alert"></p><button id="reload-payload">Reload saved values</button><details id="payload-advanced"><summary>Advanced JSON (optional)</summary><textarea id="payload" aria-label="Advanced payload JSON"></textarea><button id="payload-apply-json">Apply JSON to form</button></details><button id="create">Create input</button><button id="save">Save payload</button><button id="replay">Replay as new input</button><h3>Attachments</h3><div id="files"></div><button id="attach">Add attachment…</button><details><summary>Action inputs</summary><div id="parameters-fields" aria-label="Action parameter field editor"></div><p id="parameters-validation" role="alert"></p><details><summary>Advanced Action input JSON (optional)</summary><textarea id="parameters">{}</textarea><button id="parameters-apply-json">Apply JSON to Action input form</button></details></details><button id="run">Run selected input</button><button id="debug">Debug selected input</button><p id="last-execution" role="status"></p><div id="latest-outputs"></div><details><summary>Selected item state, error and lineage</summary><pre id="details"></pre></details></section></div><div id="managed-root" hidden><p id="managed-status" role="status"></p><p id="managed-identity"></p><h2>Authorized queues</h2><div id="managed-queues"></div><button id="managed-refresh">Refresh managed state</button><button id="managed-more-queues">More queues</button><h2>Items and review proposals</h2><div class="layout"><section><div id="managed-items"></div><button id="managed-more-items">More items</button><h3>Reviews</h3><div id="managed-reviews"></div><button id="managed-more-reviews">More reviews</button></section><section><h3>Selected business item / exact review binding</h3><div id="managed-summary"></div><details><summary>Exact Runtime record and binding</summary><pre id="managed-details"></pre></details><h3>New managed payload fields</h3><div id="managed-payload-fields"></div><p id="managed-payload-validation" role="alert"></p><details><summary>Advanced managed payload JSON (optional)</summary><textarea id="managed-payload">{}</textarea><button id="managed-payload-apply-json">Apply JSON to managed form</button></details><button id="managed-snapshot">Load admitted snapshot…</button><button id="managed-enqueue">Enqueue with pinned snapshot</button><details><summary>Pinned execution snapshot</summary><pre id="managed-snapshot-view"></pre></details><label>Intervention reason<input id="managed-reason" maxlength="1024"></label><label>Reconciliation receipt (when required)<input id="managed-reconciliation" maxlength="128"></label><button id="managed-retry">Retry</button><button id="managed-cancel">Cancel item</button><button id="managed-approve">Approve exact review</button><button id="managed-reject">Reject exact review</button><details><summary>Authorized worker lifecycle (explicit operations)</summary><label>Lease seconds<input id="managed-lease" type="number" min="1" max="3600" value="60"></label><button id="managed-claim">Claim next item</button><button id="managed-renew">Renew actual claim</button><label>Business outcome<select id="managed-outcome"><option value="done">Done</option><option value="business_failed">Business failure</option><option value="application_failed">Application failure</option></select></label><button id="managed-complete">Complete with actual Run evidence</button></details><h3>Actual Runs / Attempts / result / artifacts</h3><div id="managed-runs"></div><div id="managed-attempts"></div><details><summary>Run result, admission and provenance</summary><pre id="managed-run-details"></pre></details><div id="managed-artifacts"></div><pre id="managed-logs"></pre><button id="managed-more-logs">More logs</button></section></div><h2>Retained uncertain requests</h2><p>These are client request receipts, not Runtime queue state. Reconcile the exact key; do not create a replacement after a timeout.</p><div id="managed-pending"></div></div><script nonce="${nonce}">${script}</script></body></html>`;
+    const resource = (name: string) => fs.readFileSync(path.join(__dirname, "../../resources/work-items", name), "utf8");
+    const values = {
+        nonce,
+        style: resource("panel.css"),
+        script: ["form.js", "editor.js", "managed-editor.js"].map(resource).join("\n"),
+    };
+    return resource("panel.html").replace(/\{\{(nonce|style|script)\}\}/g, (_, key: string) => values[key]);
 }
