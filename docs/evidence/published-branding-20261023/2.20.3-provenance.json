@@ -1,0 +1,25 @@
+{
+  "version": "2.20.3",
+  "extension_id": "automation-control-plane.automation-vscode",
+  "source_sha": "0c5bb00dc4b8aac9ef95efe48e4222a26d298399",
+  "vsix_sha256": "172d88fb297686cd62ca99a402a23a3e547de33bfa242a47e8f03491f4f36adb",
+  "bytes": 2018401,
+  "library_file_id": "libfile_3ccceea3fca8819194002db913602933",
+  "installed_payload_files_matched": 711,
+  "tests": {
+    "node_passed": 16,
+    "python_passed": 55,
+    "python_skipped": 1
+  },
+  "real_smoke": {
+    "stages_passed": 11,
+    "source_sha": "0c5bb00dc4b8aac9ef95efe48e4222a26d298399",
+    "command_exits": [
+      0
+    ],
+    "scope": "Actual installed extension files; synthetic task-owned homes; not VS Code GUI"
+  },
+  "desktop_gui_retest": "pending",
+  "actual_installed_lsp_work_items": "input 7 -> observed 7; published actions-work-items 0.4.4; warmed separate task-owned homes",
+  "source_payload_files_matched": 710
+}

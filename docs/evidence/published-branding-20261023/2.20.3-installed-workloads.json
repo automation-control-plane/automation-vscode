@@ -1,0 +1,192 @@
+{
+  "root": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll",
+  "source_sha": "0c5bb00dc4b8aac9ef95efe48e4222a26d298399",
+  "real_executions": [
+    {
+      "check": "rcc published wrapper identity",
+      "version": "v18.19.7",
+      "sha256": "f8e0394be7f47ee84d6f4cd734822b87b492a4d6102f977f6a18f29453703d48"
+    },
+    {
+      "check": "action-server published wrapper identity",
+      "version": "1.0.4",
+      "sha256": "d3c450a2b10b226613588cc40cc6ec18873b23c7427958b0752711e4531a1de4"
+    },
+    {
+      "check": "Action Package creation through extension backend",
+      "templates": 6,
+      "package": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/action-package/package.yaml"
+    },
+    {
+      "check": "Action discovery, lint and execution",
+      "python": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/holotree/c25bb7f_c5e81ff_1c0bc041/bin/python3",
+      "result": "Hello Dakota"
+    },
+    {
+      "check": "Published Work Items FileAdapter input/output",
+      "version": "0.4.4",
+      "output": [
+        {
+          "payload": {
+            "observed": 7
+          },
+          "files": {}
+        }
+      ]
+    },
+    {
+      "check": "Robot creation and RCC execution",
+      "template": "01-python",
+      "python": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/robots-home/holotree/c25bb7f_c5e81ff_1c0bc041/bin/python3"
+    },
+    {
+      "check": "Action/Robot Holotree isolation",
+      "actions": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/holotree/c25bb7f_c5e81ff_1c0bc041",
+      "robots": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/robots-home/holotree/c25bb7f_c5e81ff_1c0bc041"
+    },
+    {
+      "check": "Action breakpoint and continue",
+      "adapter": "debugpy",
+      "source": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/action-package/smoke_actions.py",
+      "line": 13,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0
+    },
+    {
+      "check": "Robot breakpoint and continue",
+      "adapter": "debugpy",
+      "source": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/robot-package/smoke_tasks.py",
+      "line": 7,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0
+    },
+    {
+      "check": "Published Runtime wrapper HTTP Action execution",
+      "command": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+        "start",
+        "--address=127.0.0.1",
+        "--port=57239",
+        "--min-processes=1",
+        "--max-processes=2",
+        "--datadir=/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/action-server/http-smoke-b417fb908455"
+      ],
+      "result": "Hello HTTP Dakota",
+      "datadir": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/action-server/http-smoke-b417fb908455",
+      "runtime_version": "1.0.4",
+      "bundled_rcc_version": "v18.19.3",
+      "shutdown_status": 200,
+      "runtime_exit_code": 1,
+      "forced_termination": false
+    },
+    {
+      "check": "Published Runtime local package build and metadata",
+      "package_path": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/dist/published-compatibility-smoke.zip"
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/rcc-linux64",
+        "--version"
+      ],
+      "cwd": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll",
+      "exit": 0,
+      "log": "command-0.log"
+    },
+    {
+      "argv": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+        "version"
+      ],
+      "cwd": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll",
+      "exit": 0,
+      "log": "command-1.log"
+    },
+    {
+      "argv": [
+        "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/holotree/c25bb7f_c5e81ff_1c0bc041/bin/python3",
+        "/workspace/port-acceptance/branded-2.20.3/extensions/automation-control-plane.automation-vscode-2.20.3/src/sema4ai_code/robo/action_runtime.py",
+        "list",
+        "--skip-lint",
+        "--glob",
+        "smoke_actions.py"
+      ],
+      "cwd": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/action-package",
+      "exit": 0,
+      "log": "command-2.log"
+    },
+    {
+      "argv": [
+        "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/holotree/c25bb7f_c5e81ff_1c0bc041/bin/python3",
+        "/workspace/port-acceptance/branded-2.20.3/extensions/automation-control-plane.automation-vscode-2.20.3/src/sema4ai_code/robo/lint_in_target_env.py"
+      ],
+      "cwd": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/action-package",
+      "exit": 0,
+      "log": "command-3.log"
+    },
+    {
+      "argv": [
+        "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/holotree/c25bb7f_c5e81ff_1c0bc041/bin/python3",
+        "/workspace/port-acceptance/branded-2.20.3/extensions/automation-control-plane.automation-vscode-2.20.3/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/action-package/smoke_actions.py",
+        "-a",
+        "welcome",
+        "--json-input",
+        "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/action-package/input.json",
+        "--json-output",
+        "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/action-result.json"
+      ],
+      "cwd": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/action-package",
+      "exit": 0,
+      "log": "command-4.log"
+    },
+    {
+      "argv": [
+        "node",
+        "-e",
+        "const fs=require('fs'); const {publishedWorkItemEnvironment}=require(process.argv[1]); process.stdout.write(JSON.stringify(publishedWorkItemEnvironment(JSON.parse(fs.readFileSync(0,'utf8')))));",
+        "/workspace/port-acceptance/branded-2.20.3/extensions/automation-control-plane.automation-vscode-2.20.3/vscode-client/out/runtimePaths.js"
+      ],
+      "cwd": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll",
+      "exit": 0,
+      "log": "command-5.log"
+    },
+    {
+      "argv": [
+        "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/holotree/c25bb7f_c5e81ff_1c0bc041/bin/python3",
+        "/workspace/port-acceptance/branded-2.20.3/extensions/automation-control-plane.automation-vscode-2.20.3/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/action-package/smoke_actions.py",
+        "-a",
+        "consume"
+      ],
+      "cwd": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/action-package",
+      "exit": 0,
+      "log": "command-6.log"
+    },
+    {
+      "argv": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/rcc-linux64",
+        "run",
+        "--robot",
+        "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/robot-package/robot.yaml",
+        "--task",
+        "Smoke task",
+        "--bundled",
+        "--robocorp",
+        "--controller",
+        "AutomationVSCodeSmoke"
+      ],
+      "cwd": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace/robot-package",
+      "exit": 0,
+      "log": "command-7.log"
+    }
+  ],
+  "action_python": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/holotree/c25bb7f_c5e81ff_1c0bc041/bin/python3",
+  "robot_python": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/robots-home/holotree/c25bb7f_c5e81ff_1c0bc041/bin/python3",
+  "workspace": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/workspace"
+}

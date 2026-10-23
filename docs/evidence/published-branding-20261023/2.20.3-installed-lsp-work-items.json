@@ -1,0 +1,43 @@
+{
+  "command": [
+    "/workspace/port-acceptance/language-server-smoke/actions/holotree/257fd4c_c5e81ff_1c0bc041/bin/python3",
+    "-u",
+    "/workspace/port-acceptance/branded-2.20.3/extensions/automation-control-plane.automation-vscode-2.20.3/src/sema4ai_code/__main__.py"
+  ],
+  "scope": "Packaged Python language-server stdio; not VS Code Extension Host activation",
+  "packages": [
+    "Published compatibility smoke",
+    "robot-package"
+  ],
+  "interpreters": {
+    "actions": {
+      "python": "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/actions-home/holotree/8b9872a_c5e81ff_1c0bc041/bin/python3",
+      "ROBOCORP_HOME": "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/actions-home",
+      "RCC_VERSION": "v18.19.7"
+    },
+    "robots": {
+      "python": "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/robots-home/holotree/8b9872a_c5e81ff_1c0bc041/bin/python3",
+      "ROBOCORP_HOME": "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/robots-home",
+      "RCC_VERSION": "v18.19.7"
+    }
+  },
+  "action_work_items": {
+    "scope": "Actual installed LSP command and FileAdapter action execution; not GUI selection",
+    "input_value": 7,
+    "observed": 7,
+    "library": {
+      "library": "actions-work-items",
+      "version": "0.4.4"
+    },
+    "input": "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/workspace/action-package/devdata/work-items-in/qa-db98a290095e408fb615577b83ed76a6/work-items.json",
+    "output": "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/workspace/action-package/devdata/work-items-out/gui-check-1/work-items.json",
+    "command": [
+      "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/actions-home/holotree/8b9872a_c5e81ff_1c0bc041/bin/python3",
+      "/workspace/port-acceptance/branded-2.20.3/extensions/automation-control-plane.automation-vscode-2.20.3/src/sema4ai_code/robo/launch_actions.py",
+      "run",
+      "smoke_actions.py",
+      "-a",
+      "consume"
+    ]
+  }
+}
