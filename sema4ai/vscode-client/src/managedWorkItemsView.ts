@@ -123,7 +123,8 @@ export class ManagedWorkItemsView {
             record.state = "confirmed";
             await this.refresh();
         } catch (error) {
-            if (error instanceof RuntimeHTTPError && [401, 403, 404, 413, 422].includes(error.status)) {
+            if (error instanceof RuntimeHTTPError && ([401, 403, 404, 413, 422].includes(error.status) ||
+                (error.status === 409 && ["stale_claim", "changed_input", "approval_required", "unsupported_operation"].includes(error.code)))) {
                 record.state = "denied";
                 await fs.promises.writeFile(path.join(this.journalDir, key + ".receipt.json"), JSON.stringify({denied: true, status: error.status, code: error.code}), {flag: "wx", mode: 0o600});
                 if ([401, 403].includes(error.status)) this.clearProjection();
@@ -180,6 +181,7 @@ export class ManagedWorkItemsView {
             if (info.size > 512 * 1024) throw Error("Snapshot exceeds the protocol limit.");
             this.snapshot = JSON.parse(Buffer.from(await vscode.workspace.fs.readFile(source[0])).toString("utf8"));
         } else if (op === "managed.enqueue") {
+            if (this.queue?.mode === "reviewed") throw Error("This is a reviewed queue. Approve its exact pending proposal; direct enqueue cannot create an approval.");
             if (!this.snapshot) throw Error("An existing admitted execution snapshot is required. Select an admitted item or load the exact registered snapshot; the client cannot invent one.");
             await this.mutate("items.enqueue", {snapshot: this.snapshot, payload: message.payload}); return;
         } else if (op === "managed.decide") {

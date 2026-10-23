@@ -15,7 +15,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
     // This is not an installed Extension Host or managed SQL worker proof.
     const scratch=await fs.mkdtemp(path.join(os.tmpdir(),'managed-view-'));
     const secret=new Map(),state=new Map(),posted=[],calls=[],confirmations=[];
-    let inputs=[],save=path.join(scratch,'artifact.txt'),disconnect=false,denied=false,replay=false;
+    let inputs=[],save=path.join(scratch,'artifact.txt'),disconnect=false,denied=false,replay=false,conflict;
     const payload=Buffer.from('proof');
     const artifact={handle:'synthetic-artifact',run_id:I,digest:'sha256:'+crypto.createHash('sha256').update(payload).digest('hex'),size:payload.length};
     const item=response(command('items.get')).result.item;item.run_ids=[I];
@@ -29,6 +29,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         let raw='';req.on('data',chunk=>raw+=chunk);req.on('end',()=>{
             const c=JSON.parse(raw);calls.push(c);
             if(denied){res.statusCode=403;return res.end(JSON.stringify({schema_version:MANAGED_VERSION,error:{code:'forbidden'}}));}
+            if(conflict&&c.operation==='items.retry'){res.statusCode=409;return res.end(JSON.stringify({schema_version:MANAGED_VERSION,error:{code:conflict}}));}
             if(disconnect&&c.operation==='items.enqueue'){disconnect=false;req.socket.destroy();return;}
             const out=response(c);
             if(c.operation==='queues.list')out.result.queues=[{queue,label:'Authorized synthetic queue',mode:'producer',permissions,counts:{PENDING:1}}];
@@ -77,6 +78,12 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         replay=true;await view.handle({op:'managed.reconcile',key:first.idempotency_key});
         const second=calls.filter(c=>c.operation==='items.enqueue').at(-1);assert.deepEqual(second,first);
         assert.equal(posted.at(-1).pending.length,0);
+        item.claim={queue,item_id:I,owner_id:I,epoch:3};item.lease_deadline_ms='1000';item.queue_state='IN_PROGRESS';item.business_state='running';
+        await view.handle({op:'managed.item',id:I});
+        conflict='stale_claim';await assert.rejects(view.handle({op:'managed.retry',reason:'explicit test'}),/stale_claim/);
+        assert.equal(posted.at(-1).pending.length,0);
+        conflict='blocked_uncertain_effect';await assert.rejects(view.handle({op:'managed.retry',reason:'explicit test'}),/blocked_uncertain_effect/);
+        assert.equal(posted.at(-1).pending.length,1);conflict=undefined;
         denied=true;await assert.rejects(view.handle({op:'managed.item',id:I}),/denied/);
         assert.equal(posted.at(-1).capabilities,undefined);assert.deepEqual(posted.at(-1).items,[]);
         assert.ok(!JSON.stringify(posted).includes('synthetic-token'));

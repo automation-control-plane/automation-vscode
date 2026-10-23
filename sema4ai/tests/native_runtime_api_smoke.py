@@ -68,8 +68,10 @@ def main():
 (async()=>{const c=new WorkItemsRuntimeClient(process.env.ENDPOINT,process.env.TEST_TOKEN);await c.connect();
 const seeded=await c.seed('native-qa',{value:7});await c.attach(seeded.id,'invoice.txt',Buffer.from('synthetic invoice'));
 const bytes=await c.download(seeded.id,'invoice.txt');if(!Buffer.isBuffer(bytes)||bytes.toString()!=='synthetic invoice')throw Error('attachment mismatch');
+const jsonBytes=Buffer.from('{"value":7}');await c.attach(seeded.id,'payload.json',jsonBytes);
+const downloadedJSON=await c.download(seeded.id,'payload.json');if(!Buffer.isBuffer(downloadedJSON)||!downloadedJSON.equals(jsonBytes))throw Error('JSON attachment byte mismatch');
 const listed=await c.list('native-qa');if(!listed.items.some(item=>item.id===seeded.id))throw Error('missing item');
-console.log(JSON.stringify({id:seeded.id,state:seeded.state,payload:seeded.payload,attachment_bytes:bytes.length,listed:listed.total}));})().catch(e=>{console.error(e.message);process.exitCode=1});'''
+console.log(JSON.stringify({id:seeded.id,state:seeded.state,payload:seeded.payload,attachment_bytes:bytes.length,json_attachment_bytes:downloadedJSON.length,listed:listed.total}));})().catch(e=>{console.error(e.message);process.exitCode=1});'''
             result = subprocess.run(["node", "-e", node], env={**env, "CLIENT": str(Path(args.extension_root).resolve() / "vscode-client/out/workItemsRuntimeClient.js"), "ENDPOINT": base, "TEST_TOKEN": token}, capture_output=True, text=True, timeout=60)
             assert result.returncode == 0, result.stderr
             report["checks"].append({"check": "Actual compiled client connect/enqueue/list/upload/download", **json.loads(result.stdout)})
