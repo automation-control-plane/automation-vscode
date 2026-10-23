@@ -42,8 +42,8 @@ function select(item) {
     }
     byId('save').disabled = !item || mode !== 'file' || item.role !== 'input';
     byId('attach').disabled = !item;
-    byId('replay').disabled = !item || mode === 'managed';
-    for (const id of ['run','debug']) byId(id).disabled = !item || !!output || mode === 'managed';
+    byId('replay').disabled = !item || mode === 'managed' || mode === 'published';
+    for (const id of ['run','debug']) byId(id).disabled = !item || !!output || mode === 'managed' || mode === 'published';
 }
 for (const id of ['create','save','replay','attach','run','debug']) byId(id).onclick = () => {
     try {
@@ -55,23 +55,25 @@ for (const id of ['create','save','replay','attach','run','debug']) byId(id).onc
     } catch (error) { byId('validation').textContent = error.message; }
 };
 byId('new').onclick = () => select(undefined);
-byId('connect').onclick = () => send('connect');
+byId('connect').onclick = () => send(mode === 'managed' ? 'managed.connect' : 'connect');
 byId('recover').onclick = () => send('recover');
 byId('contract-save').onclick = () => {
     try {send('contract', {payload: object('contract'), revision: contractRevision});}
     catch (error) {byId('validation').textContent = error.message;}
 };
-byId('refresh').onclick = () => send('mode', {mode: byId('mode').value, queue: byId('queue').value});
-byId('mode').onchange = () => {mode = byId('mode').value; items = []; byId('items').replaceChildren(); byId('receipts').replaceChildren(); select(undefined); send('mode', {mode, queue: byId('queue').value});};
+function showMode() {byId('local-root').hidden = mode === 'managed'; byId('managed-root').hidden = mode !== 'managed'; byId('local-queue-label').hidden = mode === 'managed';}
+byId('refresh').onclick = () => send(mode === 'managed' ? 'managed.refresh' : 'mode', {mode: byId('mode').value, queue: byId('queue').value});
+byId('mode').onchange = () => {mode = byId('mode').value; showMode(); items = []; byId('items').replaceChildren(); byId('receipts').replaceChildren(); select(undefined); send('mode', {mode, queue: byId('queue').value});};
 window.addEventListener('message', ({data}) => {
     byId('status').className = data.type === 'error' ? 'error' : '';
     if (data.type === 'loading') {byId('status').textContent = 'Loading…'; return;}
     if (data.type === 'error' || data.type === 'unsupported') {byId('status').textContent = data.message; return;}
     if (data.type !== 'state') return;
     mode = data.mode; items = data.items || [];
+    showMode();
     byId('mode').value = mode;
     byId('queue').value = data.queue || 'input';
-    byId('contract-save').disabled = mode === 'managed';
+    byId('contract-save').disabled = mode === 'managed' || mode === 'published';
     byId('recover').disabled = mode !== 'sqlite';
     byId('run').textContent = mode === 'sqlite' ? 'Run next queue input (FIFO)' : 'Save & Run selected input';
     byId('debug').textContent = mode === 'sqlite' ? 'Debug next queue input (FIFO)' : 'Save & Debug selected input';

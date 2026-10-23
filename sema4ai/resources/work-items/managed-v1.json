@@ -1,0 +1,7011 @@
+{
+  "api_prefix": "/api/managed-work-items/v1",
+  "commands": {
+    "$defs": {
+      "CanvasApplicationRef": {
+        "additionalProperties": false,
+        "description": "Pinned application subject, not app registration or generation proof.",
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "string"
+          },
+          "revision_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Revision Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "app_id",
+          "revision_id"
+        ],
+        "title": "CanvasApplicationRef",
+        "type": "object"
+      },
+      "CanvasResultScope": {
+        "additionalProperties": false,
+        "description": "Trusted server binding; knowing these references grants no access.",
+        "properties": {
+          "application": {
+            "$ref": "#/$defs/CanvasApplicationRef"
+          },
+          "deployment": {
+            "$ref": "#/$defs/DeploymentRevisionRef"
+          }
+        },
+        "required": [
+          "deployment",
+          "application"
+        ],
+        "title": "CanvasResultScope",
+        "type": "object"
+      },
+      "CapabilityId": {
+        "title": "CapabilityId",
+        "type": "string"
+      },
+      "CapabilityRef": {
+        "additionalProperties": false,
+        "properties": {
+          "capability_id": {
+            "$ref": "#/$defs/CapabilityId"
+          },
+          "package_revision": {
+            "$ref": "#/$defs/PackageRevisionRef"
+          }
+        },
+        "required": [
+          "package_revision",
+          "capability_id"
+        ],
+        "title": "CapabilityRef",
+        "type": "object"
+      },
+      "Claim": {
+        "additionalProperties": false,
+        "properties": {
+          "idempotency_key": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "lease_seconds": {
+            "maximum": 3600,
+            "minimum": 1,
+            "title": "Lease Seconds",
+            "type": "integer"
+          },
+          "operation": {
+            "const": "items.claim",
+            "title": "Operation",
+            "type": "string"
+          },
+          "queue": {
+            "$ref": "#/$defs/QueueRef"
+          },
+          "schema_version": {
+            "const": "actions.managed-work-items/v1",
+            "default": "actions.managed-work-items/v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "queue",
+          "operation",
+          "idempotency_key",
+          "lease_seconds"
+        ],
+        "title": "Claim",
+        "type": "object"
+      },
+      "ClaimRef": {
+        "additionalProperties": false,
+        "properties": {
+          "epoch": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Epoch",
+            "type": "integer"
+          },
+          "item_id": {
+            "title": "Item Id",
+            "type": "string"
+          },
+          "owner_id": {
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "queue": {
+            "$ref": "#/$defs/QueueRef"
+          }
+        },
+        "required": [
+          "queue",
+          "item_id",
+          "owner_id",
+          "epoch"
+        ],
+        "title": "ClaimRef",
+        "type": "object"
+      },
+      "Complete": {
+        "additionalProperties": false,
+        "properties": {
+          "claim": {
+            "$ref": "#/$defs/ClaimRef"
+          },
+          "idempotency_key": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "operation": {
+            "const": "items.complete",
+            "title": "Operation",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "done",
+              "business_failed",
+              "application_failed"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "output_payloads": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "maxItems": 100,
+            "title": "Output Payloads",
+            "type": "array"
+          },
+          "queue": {
+            "$ref": "#/$defs/QueueRef"
+          },
+          "run_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Run Ids",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "actions.managed-work-items/v1",
+            "default": "actions.managed-work-items/v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "queue",
+          "operation",
+          "idempotency_key",
+          "claim",
+          "outcome"
+        ],
+        "title": "Complete",
+        "type": "object"
+      },
+      "Decide": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "approve",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "operation": {
+            "const": "reviews.decide",
+            "title": "Operation",
+            "type": "string"
+          },
+          "proposal": {
+            "$ref": "#/$defs/ReviewProposal"
+          },
+          "queue": {
+            "$ref": "#/$defs/QueueRef"
+          },
+          "schema_version": {
+            "const": "actions.managed-work-items/v1",
+            "default": "actions.managed-work-items/v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "queue",
+          "operation",
+          "idempotency_key",
+          "proposal",
+          "decision"
+        ],
+        "title": "Decide",
+        "type": "object"
+      },
+      "DeploymentId": {
+        "format": "uuid",
+        "title": "DeploymentId",
+        "type": "string"
+      },
+      "DeploymentRevisionId": {
+        "title": "DeploymentRevisionId",
+        "type": "string"
+      },
+      "DeploymentRevisionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "deployment_id": {
+            "$ref": "#/$defs/DeploymentId"
+          },
+          "revision_id": {
+            "$ref": "#/$defs/DeploymentRevisionId"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "deployment_id",
+          "revision_id"
+        ],
+        "title": "DeploymentRevisionRef",
+        "type": "object"
+      },
+      "Enqueue": {
+        "additionalProperties": false,
+        "properties": {
+          "idempotency_key": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "operation": {
+            "const": "items.enqueue",
+            "title": "Operation",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "queue": {
+            "$ref": "#/$defs/QueueRef"
+          },
+          "review": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ReviewProposal"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "schema_version": {
+            "const": "actions.managed-work-items/v1",
+            "default": "actions.managed-work-items/v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/$defs/ExecutionSnapshot"
+          }
+        },
+        "required": [
+          "queue",
+          "operation",
+          "idempotency_key",
+          "snapshot",
+          "payload"
+        ],
+        "title": "Enqueue",
+        "type": "object"
+      },
+      "ExecutionSnapshot": {
+        "additionalProperties": false,
+        "description": "Trusted control-plane registration; this type is not compiler admission.",
+        "properties": {
+          "action_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "canvas_application": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CanvasApplicationRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "capability": {
+            "$ref": "#/$defs/CapabilityRef"
+          },
+          "capability_schema_digest": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Capability Schema Digest",
+            "type": "string"
+          },
+          "data_binding": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/InvoiceBinding"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "deployment": {
+            "$ref": "#/$defs/DeploymentRevisionRef"
+          },
+          "output_provider": {
+            "$ref": "#/$defs/ProviderProfileRevisionRef"
+          },
+          "policy": {
+            "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+          },
+          "runtime_kind": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Runtime Kind",
+            "type": "string"
+          },
+          "runtime_plan": {
+            "$ref": "#/$defs/RuntimePlanRef"
+          },
+          "worker": {
+            "$ref": "#/$defs/WorkerProfileRevisionRef"
+          }
+        },
+        "required": [
+          "deployment",
+          "capability",
+          "runtime_plan",
+          "worker",
+          "policy",
+          "output_provider",
+          "runtime_kind",
+          "capability_schema_digest",
+          "action_id"
+        ],
+        "title": "ExecutionSnapshot",
+        "type": "object"
+      },
+      "Inspect": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Artifact Handle"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "maxLength": 4096,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cursor"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Item Id"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "operation": {
+            "enum": [
+              "items.list",
+              "items.get",
+              "reviews.list",
+              "runs.get",
+              "runs.logs",
+              "artifacts.read"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "queue": {
+            "$ref": "#/$defs/QueueRef"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Run Id"
+          },
+          "schema_version": {
+            "const": "actions.managed-work-items/v1",
+            "default": "actions.managed-work-items/v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "queue",
+          "operation"
+        ],
+        "title": "Inspect",
+        "type": "object"
+      },
+      "Intervention": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_epoch": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "title": "Expected Epoch",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "item_id": {
+            "title": "Item Id",
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "items.retry",
+              "items.cancel"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "queue": {
+            "$ref": "#/$defs/QueueRef"
+          },
+          "reason": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "reconciliation_receipt": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reconciliation Receipt"
+          },
+          "schema_version": {
+            "const": "actions.managed-work-items/v1",
+            "default": "actions.managed-work-items/v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "queue",
+          "operation",
+          "idempotency_key",
+          "item_id",
+          "expected_epoch",
+          "reason"
+        ],
+        "title": "Intervention",
+        "type": "object"
+      },
+      "InvoiceBinding": {
+        "additionalProperties": false,
+        "description": "Trusted immutable deployment binding; source version is an operator claim.",
+        "properties": {
+          "effect": {
+            "const": "read",
+            "default": "read",
+            "title": "Effect",
+            "type": "string"
+          },
+          "limits": {
+            "$ref": "#/$defs/InvoiceLimits"
+          },
+          "operation": {
+            "const": "invoices.overdue/v1",
+            "default": "invoices.overdue/v1",
+            "title": "Operation",
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/$defs/ProviderProfileRevisionRef"
+          },
+          "source_version": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Source Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "source_version"
+        ],
+        "title": "InvoiceBinding",
+        "type": "object"
+      },
+      "InvoiceLimits": {
+        "additionalProperties": false,
+        "properties": {
+          "max_bytes": {
+            "default": 4194304,
+            "maximum": 16777216,
+            "minimum": 1,
+            "title": "Max Bytes",
+            "type": "integer"
+          },
+          "max_rows": {
+            "default": 10000,
+            "maximum": 100000,
+            "minimum": 1,
+            "title": "Max Rows",
+            "type": "integer"
+          },
+          "timeout_ms": {
+            "default": 5000,
+            "maximum": 30000,
+            "minimum": 1,
+            "title": "Timeout Ms",
+            "type": "integer"
+          }
+        },
+        "title": "InvoiceLimits",
+        "type": "object"
+      },
+      "JsonValue": {},
+      "PackageId": {
+        "format": "uuid",
+        "title": "PackageId",
+        "type": "string"
+      },
+      "PackageRevisionId": {
+        "title": "PackageRevisionId",
+        "type": "string"
+      },
+      "PackageRevisionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "package_id": {
+            "$ref": "#/$defs/PackageId"
+          },
+          "revision_id": {
+            "$ref": "#/$defs/PackageRevisionId"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "package_id",
+          "revision_id"
+        ],
+        "title": "PackageRevisionRef",
+        "type": "object"
+      },
+      "PlanDigest": {
+        "title": "PlanDigest",
+        "type": "string"
+      },
+      "PolicyId": {
+        "format": "uuid",
+        "title": "PolicyId",
+        "type": "string"
+      },
+      "PolicyRevisionId": {
+        "title": "PolicyRevisionId",
+        "type": "string"
+      },
+      "ProviderProfileId": {
+        "format": "uuid",
+        "title": "ProviderProfileId",
+        "type": "string"
+      },
+      "ProviderProfileRevisionId": {
+        "title": "ProviderProfileRevisionId",
+        "type": "string"
+      },
+      "ProviderProfileRevisionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "provider_profile_id": {
+            "$ref": "#/$defs/ProviderProfileId"
+          },
+          "revision_id": {
+            "$ref": "#/$defs/ProviderProfileRevisionId"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "provider_profile_id",
+          "revision_id"
+        ],
+        "title": "ProviderProfileRevisionRef",
+        "type": "object"
+      },
+      "QueueRef": {
+        "additionalProperties": false,
+        "properties": {
+          "deployment": {
+            "$ref": "#/$defs/DeploymentRevisionRef"
+          },
+          "queue_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+            "title": "Queue Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "deployment",
+          "queue_id"
+        ],
+        "title": "QueueRef",
+        "type": "object"
+      },
+      "Queues": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "anyOf": [
+              {
+                "maxLength": 4096,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cursor"
+          },
+          "deployment_id": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DeploymentId"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "operation": {
+            "const": "queues.list",
+            "title": "Operation",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "actions.managed-work-items/v1",
+            "default": "actions.managed-work-items/v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "operation",
+          "workspace_id"
+        ],
+        "title": "Queues",
+        "type": "object"
+      },
+      "Renew": {
+        "additionalProperties": false,
+        "properties": {
+          "claim": {
+            "$ref": "#/$defs/ClaimRef"
+          },
+          "idempotency_key": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "lease_seconds": {
+            "maximum": 3600,
+            "minimum": 1,
+            "title": "Lease Seconds",
+            "type": "integer"
+          },
+          "operation": {
+            "const": "items.renew",
+            "title": "Operation",
+            "type": "string"
+          },
+          "queue": {
+            "$ref": "#/$defs/QueueRef"
+          },
+          "schema_version": {
+            "const": "actions.managed-work-items/v1",
+            "default": "actions.managed-work-items/v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "queue",
+          "operation",
+          "idempotency_key",
+          "claim",
+          "lease_seconds"
+        ],
+        "title": "Renew",
+        "type": "object"
+      },
+      "ReviewBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "handle": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Handle",
+            "type": "string"
+          },
+          "input_digest": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Input Digest",
+            "type": "string"
+          },
+          "request_fingerprint": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Request Fingerprint",
+            "type": "string"
+          },
+          "result_digest": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Result Digest",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^[0-9a-f-]{36}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/$defs/CanvasResultScope"
+          },
+          "source_version": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Source Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "handle",
+          "run_id",
+          "result_digest",
+          "input_digest",
+          "source_version",
+          "request_fingerprint"
+        ],
+        "title": "ReviewBinding",
+        "type": "object"
+      },
+      "ReviewProposal": {
+        "additionalProperties": false,
+        "properties": {
+          "binding": {
+            "$ref": "#/$defs/ReviewBinding"
+          },
+          "review_id": {
+            "title": "Review Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "review_id",
+          "binding"
+        ],
+        "title": "ReviewProposal",
+        "type": "object"
+      },
+      "RuntimePlanRef": {
+        "additionalProperties": false,
+        "properties": {
+          "package_revision": {
+            "$ref": "#/$defs/PackageRevisionRef"
+          },
+          "plan_digest": {
+            "$ref": "#/$defs/PlanDigest"
+          }
+        },
+        "required": [
+          "package_revision",
+          "plan_digest"
+        ],
+        "title": "RuntimePlanRef",
+        "type": "object"
+      },
+      "WorkerProfileId": {
+        "format": "uuid",
+        "title": "WorkerProfileId",
+        "type": "string"
+      },
+      "WorkerProfileRevisionId": {
+        "title": "WorkerProfileRevisionId",
+        "type": "string"
+      },
+      "WorkerProfileRevisionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "revision_id": {
+            "$ref": "#/$defs/WorkerProfileRevisionId"
+          },
+          "worker_profile_id": {
+            "$ref": "#/$defs/WorkerProfileId"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "worker_profile_id",
+          "revision_id"
+        ],
+        "title": "WorkerProfileRevisionRef",
+        "type": "object"
+      },
+      "WorkspaceId": {
+        "format": "uuid",
+        "title": "WorkspaceId",
+        "type": "string"
+      },
+      "WorkspacePolicyRevisionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "policy_id": {
+            "$ref": "#/$defs/PolicyId"
+          },
+          "revision_id": {
+            "$ref": "#/$defs/PolicyRevisionId"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "policy_id",
+          "revision_id"
+        ],
+        "title": "WorkspacePolicyRevisionRef",
+        "type": "object"
+      }
+    },
+    "discriminator": {
+      "mapping": {
+        "artifacts.read": "#/$defs/Inspect",
+        "items.cancel": "#/$defs/Intervention",
+        "items.claim": "#/$defs/Claim",
+        "items.complete": "#/$defs/Complete",
+        "items.enqueue": "#/$defs/Enqueue",
+        "items.get": "#/$defs/Inspect",
+        "items.list": "#/$defs/Inspect",
+        "items.renew": "#/$defs/Renew",
+        "items.retry": "#/$defs/Intervention",
+        "queues.list": "#/$defs/Queues",
+        "reviews.decide": "#/$defs/Decide",
+        "reviews.list": "#/$defs/Inspect",
+        "runs.get": "#/$defs/Inspect",
+        "runs.logs": "#/$defs/Inspect"
+      },
+      "propertyName": "operation"
+    },
+    "oneOf": [
+      {
+        "$ref": "#/$defs/Queues"
+      },
+      {
+        "$ref": "#/$defs/Inspect"
+      },
+      {
+        "$ref": "#/$defs/Enqueue"
+      },
+      {
+        "$ref": "#/$defs/Claim"
+      },
+      {
+        "$ref": "#/$defs/Renew"
+      },
+      {
+        "$ref": "#/$defs/Complete"
+      },
+      {
+        "$ref": "#/$defs/Intervention"
+      },
+      {
+        "$ref": "#/$defs/Decide"
+      }
+    ]
+  },
+  "contract_version": "actions.managed-work-items/v1",
+  "minimum_runtime": "1.1.0a13",
+  "minimum_sdk": "0.5.0a1",
+  "results": {
+    "artifacts.read": {
+      "$defs": {
+        "ArtifactRef": {
+          "additionalProperties": false,
+          "properties": {
+            "digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Digest",
+              "type": "string"
+            },
+            "handle": {
+              "title": "Handle",
+              "type": "string"
+            },
+            "run_id": {
+              "title": "Run Id",
+              "type": "string"
+            },
+            "size": {
+              "maximum": 67108864,
+              "minimum": 0,
+              "title": "Size",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "handle",
+            "run_id",
+            "digest",
+            "size"
+          ],
+          "title": "ArtifactRef",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "artifact": {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        "data_base64": {
+          "maxLength": 90000,
+          "title": "Data Base64",
+          "type": "string"
+        },
+        "eof": {
+          "title": "Eof",
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Next Cursor"
+        },
+        "offset": {
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "artifact",
+        "offset",
+        "data_base64",
+        "eof"
+      ],
+      "title": "ArtifactChunk",
+      "type": "object"
+    },
+    "items.cancel": {
+      "$defs": {
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CapabilityId": {
+          "title": "CapabilityId",
+          "type": "string"
+        },
+        "CapabilityRef": {
+          "additionalProperties": false,
+          "properties": {
+            "capability_id": {
+              "$ref": "#/$defs/CapabilityId"
+            },
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            }
+          },
+          "required": [
+            "package_revision",
+            "capability_id"
+          ],
+          "title": "CapabilityRef",
+          "type": "object"
+        },
+        "ClaimRef": {
+          "additionalProperties": false,
+          "properties": {
+            "epoch": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Epoch",
+              "type": "integer"
+            },
+            "item_id": {
+              "title": "Item Id",
+              "type": "string"
+            },
+            "owner_id": {
+              "title": "Owner Id",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            }
+          },
+          "required": [
+            "queue",
+            "item_id",
+            "owner_id",
+            "epoch"
+          ],
+          "title": "ClaimRef",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ExecutionSnapshot": {
+          "additionalProperties": false,
+          "description": "Trusted control-plane registration; this type is not compiler admission.",
+          "properties": {
+            "action_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Action Id",
+              "type": "string"
+            },
+            "canvas_application": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CanvasApplicationRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "capability": {
+              "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_schema_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Capability Schema Digest",
+              "type": "string"
+            },
+            "data_binding": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InvoiceBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "output_provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "policy": {
+              "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+            },
+            "runtime_kind": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Runtime Kind",
+              "type": "string"
+            },
+            "runtime_plan": {
+              "$ref": "#/$defs/RuntimePlanRef"
+            },
+            "worker": {
+              "$ref": "#/$defs/WorkerProfileRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "capability",
+            "runtime_plan",
+            "worker",
+            "policy",
+            "output_provider",
+            "runtime_kind",
+            "capability_schema_digest",
+            "action_id"
+          ],
+          "title": "ExecutionSnapshot",
+          "type": "object"
+        },
+        "InvoiceBinding": {
+          "additionalProperties": false,
+          "description": "Trusted immutable deployment binding; source version is an operator claim.",
+          "properties": {
+            "effect": {
+              "const": "read",
+              "default": "read",
+              "title": "Effect",
+              "type": "string"
+            },
+            "limits": {
+              "$ref": "#/$defs/InvoiceLimits"
+            },
+            "operation": {
+              "const": "invoices.overdue/v1",
+              "default": "invoices.overdue/v1",
+              "title": "Operation",
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "source_version"
+          ],
+          "title": "InvoiceBinding",
+          "type": "object"
+        },
+        "InvoiceLimits": {
+          "additionalProperties": false,
+          "properties": {
+            "max_bytes": {
+              "default": 4194304,
+              "maximum": 16777216,
+              "minimum": 1,
+              "title": "Max Bytes",
+              "type": "integer"
+            },
+            "max_rows": {
+              "default": 10000,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Max Rows",
+              "type": "integer"
+            },
+            "timeout_ms": {
+              "default": 5000,
+              "maximum": 30000,
+              "minimum": 1,
+              "title": "Timeout Ms",
+              "type": "integer"
+            }
+          },
+          "title": "InvoiceLimits",
+          "type": "object"
+        },
+        "ItemView": {
+          "additionalProperties": false,
+          "properties": {
+            "available_after_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Available After Ms",
+              "type": "string"
+            },
+            "business_state": {
+              "enum": [
+                "ready",
+                "running",
+                "blocked",
+                "needs_review",
+                "completed",
+                "business_failed",
+                "application_failed",
+                "cancelled",
+                "dead_letter",
+                "unknown"
+              ],
+              "title": "Business State",
+              "type": "string"
+            },
+            "child_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Child Ids",
+              "type": "array"
+            },
+            "claim": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ClaimRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "created_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Created Ms",
+              "type": "string"
+            },
+            "delivery_count": {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "title": "Delivery Count",
+              "type": "integer"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "lease_deadline_ms": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9]{1,20}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Lease Deadline Ms"
+            },
+            "parent_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parent Id"
+            },
+            "payload": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "protected_input_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Protected Input Digest",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            },
+            "queue_state": {
+              "enum": [
+                "PENDING",
+                "IN_PROGRESS",
+                "DONE",
+                "FAILED"
+              ],
+              "title": "Queue State",
+              "type": "string"
+            },
+            "review_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Review Id"
+            },
+            "run_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Run Ids",
+              "type": "array"
+            },
+            "snapshot": {
+              "$ref": "#/$defs/ExecutionSnapshot"
+            }
+          },
+          "required": [
+            "queue",
+            "id",
+            "queue_state",
+            "business_state",
+            "payload",
+            "protected_input_digest",
+            "snapshot",
+            "delivery_count",
+            "available_after_ms",
+            "created_ms"
+          ],
+          "title": "ItemView",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "PackageId": {
+          "format": "uuid",
+          "title": "PackageId",
+          "type": "string"
+        },
+        "PackageRevisionId": {
+          "title": "PackageRevisionId",
+          "type": "string"
+        },
+        "PackageRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_id": {
+              "$ref": "#/$defs/PackageId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PackageRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "package_id",
+            "revision_id"
+          ],
+          "title": "PackageRevisionRef",
+          "type": "object"
+        },
+        "PlanDigest": {
+          "title": "PlanDigest",
+          "type": "string"
+        },
+        "PolicyId": {
+          "format": "uuid",
+          "title": "PolicyId",
+          "type": "string"
+        },
+        "PolicyRevisionId": {
+          "title": "PolicyRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileId": {
+          "format": "uuid",
+          "title": "ProviderProfileId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionId": {
+          "title": "ProviderProfileRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "provider_profile_id": {
+              "$ref": "#/$defs/ProviderProfileId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/ProviderProfileRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "provider_profile_id",
+            "revision_id"
+          ],
+          "title": "ProviderProfileRevisionRef",
+          "type": "object"
+        },
+        "QueueRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "queue_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+              "title": "Queue Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment",
+            "queue_id"
+          ],
+          "title": "QueueRef",
+          "type": "object"
+        },
+        "RuntimePlanRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            },
+            "plan_digest": {
+              "$ref": "#/$defs/PlanDigest"
+            }
+          },
+          "required": [
+            "package_revision",
+            "plan_digest"
+          ],
+          "title": "RuntimePlanRef",
+          "type": "object"
+        },
+        "WorkerProfileId": {
+          "format": "uuid",
+          "title": "WorkerProfileId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionId": {
+          "title": "WorkerProfileRevisionId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "revision_id": {
+              "$ref": "#/$defs/WorkerProfileRevisionId"
+            },
+            "worker_profile_id": {
+              "$ref": "#/$defs/WorkerProfileId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "worker_profile_id",
+            "revision_id"
+          ],
+          "title": "WorkerProfileRevisionRef",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        },
+        "WorkspacePolicyRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_id": {
+              "$ref": "#/$defs/PolicyId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PolicyRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "policy_id",
+            "revision_id"
+          ],
+          "title": "WorkspacePolicyRevisionRef",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ItemView"
+        },
+        "replay": {
+          "default": false,
+          "title": "Replay",
+          "type": "boolean"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "server_time_ms"
+      ],
+      "title": "ItemResult",
+      "type": "object"
+    },
+    "items.claim": {
+      "$defs": {
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CapabilityId": {
+          "title": "CapabilityId",
+          "type": "string"
+        },
+        "CapabilityRef": {
+          "additionalProperties": false,
+          "properties": {
+            "capability_id": {
+              "$ref": "#/$defs/CapabilityId"
+            },
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            }
+          },
+          "required": [
+            "package_revision",
+            "capability_id"
+          ],
+          "title": "CapabilityRef",
+          "type": "object"
+        },
+        "ClaimRef": {
+          "additionalProperties": false,
+          "properties": {
+            "epoch": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Epoch",
+              "type": "integer"
+            },
+            "item_id": {
+              "title": "Item Id",
+              "type": "string"
+            },
+            "owner_id": {
+              "title": "Owner Id",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            }
+          },
+          "required": [
+            "queue",
+            "item_id",
+            "owner_id",
+            "epoch"
+          ],
+          "title": "ClaimRef",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ExecutionSnapshot": {
+          "additionalProperties": false,
+          "description": "Trusted control-plane registration; this type is not compiler admission.",
+          "properties": {
+            "action_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Action Id",
+              "type": "string"
+            },
+            "canvas_application": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CanvasApplicationRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "capability": {
+              "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_schema_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Capability Schema Digest",
+              "type": "string"
+            },
+            "data_binding": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InvoiceBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "output_provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "policy": {
+              "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+            },
+            "runtime_kind": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Runtime Kind",
+              "type": "string"
+            },
+            "runtime_plan": {
+              "$ref": "#/$defs/RuntimePlanRef"
+            },
+            "worker": {
+              "$ref": "#/$defs/WorkerProfileRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "capability",
+            "runtime_plan",
+            "worker",
+            "policy",
+            "output_provider",
+            "runtime_kind",
+            "capability_schema_digest",
+            "action_id"
+          ],
+          "title": "ExecutionSnapshot",
+          "type": "object"
+        },
+        "InvoiceBinding": {
+          "additionalProperties": false,
+          "description": "Trusted immutable deployment binding; source version is an operator claim.",
+          "properties": {
+            "effect": {
+              "const": "read",
+              "default": "read",
+              "title": "Effect",
+              "type": "string"
+            },
+            "limits": {
+              "$ref": "#/$defs/InvoiceLimits"
+            },
+            "operation": {
+              "const": "invoices.overdue/v1",
+              "default": "invoices.overdue/v1",
+              "title": "Operation",
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "source_version"
+          ],
+          "title": "InvoiceBinding",
+          "type": "object"
+        },
+        "InvoiceLimits": {
+          "additionalProperties": false,
+          "properties": {
+            "max_bytes": {
+              "default": 4194304,
+              "maximum": 16777216,
+              "minimum": 1,
+              "title": "Max Bytes",
+              "type": "integer"
+            },
+            "max_rows": {
+              "default": 10000,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Max Rows",
+              "type": "integer"
+            },
+            "timeout_ms": {
+              "default": 5000,
+              "maximum": 30000,
+              "minimum": 1,
+              "title": "Timeout Ms",
+              "type": "integer"
+            }
+          },
+          "title": "InvoiceLimits",
+          "type": "object"
+        },
+        "ItemView": {
+          "additionalProperties": false,
+          "properties": {
+            "available_after_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Available After Ms",
+              "type": "string"
+            },
+            "business_state": {
+              "enum": [
+                "ready",
+                "running",
+                "blocked",
+                "needs_review",
+                "completed",
+                "business_failed",
+                "application_failed",
+                "cancelled",
+                "dead_letter",
+                "unknown"
+              ],
+              "title": "Business State",
+              "type": "string"
+            },
+            "child_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Child Ids",
+              "type": "array"
+            },
+            "claim": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ClaimRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "created_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Created Ms",
+              "type": "string"
+            },
+            "delivery_count": {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "title": "Delivery Count",
+              "type": "integer"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "lease_deadline_ms": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9]{1,20}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Lease Deadline Ms"
+            },
+            "parent_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parent Id"
+            },
+            "payload": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "protected_input_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Protected Input Digest",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            },
+            "queue_state": {
+              "enum": [
+                "PENDING",
+                "IN_PROGRESS",
+                "DONE",
+                "FAILED"
+              ],
+              "title": "Queue State",
+              "type": "string"
+            },
+            "review_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Review Id"
+            },
+            "run_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Run Ids",
+              "type": "array"
+            },
+            "snapshot": {
+              "$ref": "#/$defs/ExecutionSnapshot"
+            }
+          },
+          "required": [
+            "queue",
+            "id",
+            "queue_state",
+            "business_state",
+            "payload",
+            "protected_input_digest",
+            "snapshot",
+            "delivery_count",
+            "available_after_ms",
+            "created_ms"
+          ],
+          "title": "ItemView",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "PackageId": {
+          "format": "uuid",
+          "title": "PackageId",
+          "type": "string"
+        },
+        "PackageRevisionId": {
+          "title": "PackageRevisionId",
+          "type": "string"
+        },
+        "PackageRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_id": {
+              "$ref": "#/$defs/PackageId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PackageRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "package_id",
+            "revision_id"
+          ],
+          "title": "PackageRevisionRef",
+          "type": "object"
+        },
+        "PlanDigest": {
+          "title": "PlanDigest",
+          "type": "string"
+        },
+        "PolicyId": {
+          "format": "uuid",
+          "title": "PolicyId",
+          "type": "string"
+        },
+        "PolicyRevisionId": {
+          "title": "PolicyRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileId": {
+          "format": "uuid",
+          "title": "ProviderProfileId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionId": {
+          "title": "ProviderProfileRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "provider_profile_id": {
+              "$ref": "#/$defs/ProviderProfileId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/ProviderProfileRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "provider_profile_id",
+            "revision_id"
+          ],
+          "title": "ProviderProfileRevisionRef",
+          "type": "object"
+        },
+        "QueueRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "queue_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+              "title": "Queue Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment",
+            "queue_id"
+          ],
+          "title": "QueueRef",
+          "type": "object"
+        },
+        "RuntimePlanRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            },
+            "plan_digest": {
+              "$ref": "#/$defs/PlanDigest"
+            }
+          },
+          "required": [
+            "package_revision",
+            "plan_digest"
+          ],
+          "title": "RuntimePlanRef",
+          "type": "object"
+        },
+        "WorkerProfileId": {
+          "format": "uuid",
+          "title": "WorkerProfileId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionId": {
+          "title": "WorkerProfileRevisionId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "revision_id": {
+              "$ref": "#/$defs/WorkerProfileRevisionId"
+            },
+            "worker_profile_id": {
+              "$ref": "#/$defs/WorkerProfileId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "worker_profile_id",
+            "revision_id"
+          ],
+          "title": "WorkerProfileRevisionRef",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        },
+        "WorkspacePolicyRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_id": {
+              "$ref": "#/$defs/PolicyId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PolicyRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "policy_id",
+            "revision_id"
+          ],
+          "title": "WorkspacePolicyRevisionRef",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "claim": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClaimRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "item": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ItemView"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lease_deadline_ms": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Lease Deadline Ms"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "claim",
+        "lease_deadline_ms",
+        "server_time_ms"
+      ],
+      "title": "ClaimResult",
+      "type": "object"
+    },
+    "items.complete": {
+      "$defs": {
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CapabilityId": {
+          "title": "CapabilityId",
+          "type": "string"
+        },
+        "CapabilityRef": {
+          "additionalProperties": false,
+          "properties": {
+            "capability_id": {
+              "$ref": "#/$defs/CapabilityId"
+            },
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            }
+          },
+          "required": [
+            "package_revision",
+            "capability_id"
+          ],
+          "title": "CapabilityRef",
+          "type": "object"
+        },
+        "ClaimRef": {
+          "additionalProperties": false,
+          "properties": {
+            "epoch": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Epoch",
+              "type": "integer"
+            },
+            "item_id": {
+              "title": "Item Id",
+              "type": "string"
+            },
+            "owner_id": {
+              "title": "Owner Id",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            }
+          },
+          "required": [
+            "queue",
+            "item_id",
+            "owner_id",
+            "epoch"
+          ],
+          "title": "ClaimRef",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ExecutionSnapshot": {
+          "additionalProperties": false,
+          "description": "Trusted control-plane registration; this type is not compiler admission.",
+          "properties": {
+            "action_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Action Id",
+              "type": "string"
+            },
+            "canvas_application": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CanvasApplicationRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "capability": {
+              "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_schema_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Capability Schema Digest",
+              "type": "string"
+            },
+            "data_binding": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InvoiceBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "output_provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "policy": {
+              "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+            },
+            "runtime_kind": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Runtime Kind",
+              "type": "string"
+            },
+            "runtime_plan": {
+              "$ref": "#/$defs/RuntimePlanRef"
+            },
+            "worker": {
+              "$ref": "#/$defs/WorkerProfileRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "capability",
+            "runtime_plan",
+            "worker",
+            "policy",
+            "output_provider",
+            "runtime_kind",
+            "capability_schema_digest",
+            "action_id"
+          ],
+          "title": "ExecutionSnapshot",
+          "type": "object"
+        },
+        "InvoiceBinding": {
+          "additionalProperties": false,
+          "description": "Trusted immutable deployment binding; source version is an operator claim.",
+          "properties": {
+            "effect": {
+              "const": "read",
+              "default": "read",
+              "title": "Effect",
+              "type": "string"
+            },
+            "limits": {
+              "$ref": "#/$defs/InvoiceLimits"
+            },
+            "operation": {
+              "const": "invoices.overdue/v1",
+              "default": "invoices.overdue/v1",
+              "title": "Operation",
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "source_version"
+          ],
+          "title": "InvoiceBinding",
+          "type": "object"
+        },
+        "InvoiceLimits": {
+          "additionalProperties": false,
+          "properties": {
+            "max_bytes": {
+              "default": 4194304,
+              "maximum": 16777216,
+              "minimum": 1,
+              "title": "Max Bytes",
+              "type": "integer"
+            },
+            "max_rows": {
+              "default": 10000,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Max Rows",
+              "type": "integer"
+            },
+            "timeout_ms": {
+              "default": 5000,
+              "maximum": 30000,
+              "minimum": 1,
+              "title": "Timeout Ms",
+              "type": "integer"
+            }
+          },
+          "title": "InvoiceLimits",
+          "type": "object"
+        },
+        "ItemView": {
+          "additionalProperties": false,
+          "properties": {
+            "available_after_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Available After Ms",
+              "type": "string"
+            },
+            "business_state": {
+              "enum": [
+                "ready",
+                "running",
+                "blocked",
+                "needs_review",
+                "completed",
+                "business_failed",
+                "application_failed",
+                "cancelled",
+                "dead_letter",
+                "unknown"
+              ],
+              "title": "Business State",
+              "type": "string"
+            },
+            "child_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Child Ids",
+              "type": "array"
+            },
+            "claim": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ClaimRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "created_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Created Ms",
+              "type": "string"
+            },
+            "delivery_count": {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "title": "Delivery Count",
+              "type": "integer"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "lease_deadline_ms": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9]{1,20}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Lease Deadline Ms"
+            },
+            "parent_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parent Id"
+            },
+            "payload": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "protected_input_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Protected Input Digest",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            },
+            "queue_state": {
+              "enum": [
+                "PENDING",
+                "IN_PROGRESS",
+                "DONE",
+                "FAILED"
+              ],
+              "title": "Queue State",
+              "type": "string"
+            },
+            "review_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Review Id"
+            },
+            "run_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Run Ids",
+              "type": "array"
+            },
+            "snapshot": {
+              "$ref": "#/$defs/ExecutionSnapshot"
+            }
+          },
+          "required": [
+            "queue",
+            "id",
+            "queue_state",
+            "business_state",
+            "payload",
+            "protected_input_digest",
+            "snapshot",
+            "delivery_count",
+            "available_after_ms",
+            "created_ms"
+          ],
+          "title": "ItemView",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "PackageId": {
+          "format": "uuid",
+          "title": "PackageId",
+          "type": "string"
+        },
+        "PackageRevisionId": {
+          "title": "PackageRevisionId",
+          "type": "string"
+        },
+        "PackageRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_id": {
+              "$ref": "#/$defs/PackageId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PackageRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "package_id",
+            "revision_id"
+          ],
+          "title": "PackageRevisionRef",
+          "type": "object"
+        },
+        "PlanDigest": {
+          "title": "PlanDigest",
+          "type": "string"
+        },
+        "PolicyId": {
+          "format": "uuid",
+          "title": "PolicyId",
+          "type": "string"
+        },
+        "PolicyRevisionId": {
+          "title": "PolicyRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileId": {
+          "format": "uuid",
+          "title": "ProviderProfileId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionId": {
+          "title": "ProviderProfileRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "provider_profile_id": {
+              "$ref": "#/$defs/ProviderProfileId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/ProviderProfileRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "provider_profile_id",
+            "revision_id"
+          ],
+          "title": "ProviderProfileRevisionRef",
+          "type": "object"
+        },
+        "QueueRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "queue_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+              "title": "Queue Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment",
+            "queue_id"
+          ],
+          "title": "QueueRef",
+          "type": "object"
+        },
+        "RuntimePlanRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            },
+            "plan_digest": {
+              "$ref": "#/$defs/PlanDigest"
+            }
+          },
+          "required": [
+            "package_revision",
+            "plan_digest"
+          ],
+          "title": "RuntimePlanRef",
+          "type": "object"
+        },
+        "WorkerProfileId": {
+          "format": "uuid",
+          "title": "WorkerProfileId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionId": {
+          "title": "WorkerProfileRevisionId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "revision_id": {
+              "$ref": "#/$defs/WorkerProfileRevisionId"
+            },
+            "worker_profile_id": {
+              "$ref": "#/$defs/WorkerProfileId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "worker_profile_id",
+            "revision_id"
+          ],
+          "title": "WorkerProfileRevisionRef",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        },
+        "WorkspacePolicyRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_id": {
+              "$ref": "#/$defs/PolicyId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PolicyRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "policy_id",
+            "revision_id"
+          ],
+          "title": "WorkspacePolicyRevisionRef",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ItemView"
+        },
+        "replay": {
+          "default": false,
+          "title": "Replay",
+          "type": "boolean"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "server_time_ms"
+      ],
+      "title": "ItemResult",
+      "type": "object"
+    },
+    "items.enqueue": {
+      "$defs": {
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CapabilityId": {
+          "title": "CapabilityId",
+          "type": "string"
+        },
+        "CapabilityRef": {
+          "additionalProperties": false,
+          "properties": {
+            "capability_id": {
+              "$ref": "#/$defs/CapabilityId"
+            },
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            }
+          },
+          "required": [
+            "package_revision",
+            "capability_id"
+          ],
+          "title": "CapabilityRef",
+          "type": "object"
+        },
+        "ClaimRef": {
+          "additionalProperties": false,
+          "properties": {
+            "epoch": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Epoch",
+              "type": "integer"
+            },
+            "item_id": {
+              "title": "Item Id",
+              "type": "string"
+            },
+            "owner_id": {
+              "title": "Owner Id",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            }
+          },
+          "required": [
+            "queue",
+            "item_id",
+            "owner_id",
+            "epoch"
+          ],
+          "title": "ClaimRef",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ExecutionSnapshot": {
+          "additionalProperties": false,
+          "description": "Trusted control-plane registration; this type is not compiler admission.",
+          "properties": {
+            "action_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Action Id",
+              "type": "string"
+            },
+            "canvas_application": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CanvasApplicationRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "capability": {
+              "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_schema_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Capability Schema Digest",
+              "type": "string"
+            },
+            "data_binding": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InvoiceBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "output_provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "policy": {
+              "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+            },
+            "runtime_kind": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Runtime Kind",
+              "type": "string"
+            },
+            "runtime_plan": {
+              "$ref": "#/$defs/RuntimePlanRef"
+            },
+            "worker": {
+              "$ref": "#/$defs/WorkerProfileRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "capability",
+            "runtime_plan",
+            "worker",
+            "policy",
+            "output_provider",
+            "runtime_kind",
+            "capability_schema_digest",
+            "action_id"
+          ],
+          "title": "ExecutionSnapshot",
+          "type": "object"
+        },
+        "InvoiceBinding": {
+          "additionalProperties": false,
+          "description": "Trusted immutable deployment binding; source version is an operator claim.",
+          "properties": {
+            "effect": {
+              "const": "read",
+              "default": "read",
+              "title": "Effect",
+              "type": "string"
+            },
+            "limits": {
+              "$ref": "#/$defs/InvoiceLimits"
+            },
+            "operation": {
+              "const": "invoices.overdue/v1",
+              "default": "invoices.overdue/v1",
+              "title": "Operation",
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "source_version"
+          ],
+          "title": "InvoiceBinding",
+          "type": "object"
+        },
+        "InvoiceLimits": {
+          "additionalProperties": false,
+          "properties": {
+            "max_bytes": {
+              "default": 4194304,
+              "maximum": 16777216,
+              "minimum": 1,
+              "title": "Max Bytes",
+              "type": "integer"
+            },
+            "max_rows": {
+              "default": 10000,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Max Rows",
+              "type": "integer"
+            },
+            "timeout_ms": {
+              "default": 5000,
+              "maximum": 30000,
+              "minimum": 1,
+              "title": "Timeout Ms",
+              "type": "integer"
+            }
+          },
+          "title": "InvoiceLimits",
+          "type": "object"
+        },
+        "ItemView": {
+          "additionalProperties": false,
+          "properties": {
+            "available_after_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Available After Ms",
+              "type": "string"
+            },
+            "business_state": {
+              "enum": [
+                "ready",
+                "running",
+                "blocked",
+                "needs_review",
+                "completed",
+                "business_failed",
+                "application_failed",
+                "cancelled",
+                "dead_letter",
+                "unknown"
+              ],
+              "title": "Business State",
+              "type": "string"
+            },
+            "child_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Child Ids",
+              "type": "array"
+            },
+            "claim": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ClaimRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "created_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Created Ms",
+              "type": "string"
+            },
+            "delivery_count": {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "title": "Delivery Count",
+              "type": "integer"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "lease_deadline_ms": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9]{1,20}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Lease Deadline Ms"
+            },
+            "parent_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parent Id"
+            },
+            "payload": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "protected_input_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Protected Input Digest",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            },
+            "queue_state": {
+              "enum": [
+                "PENDING",
+                "IN_PROGRESS",
+                "DONE",
+                "FAILED"
+              ],
+              "title": "Queue State",
+              "type": "string"
+            },
+            "review_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Review Id"
+            },
+            "run_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Run Ids",
+              "type": "array"
+            },
+            "snapshot": {
+              "$ref": "#/$defs/ExecutionSnapshot"
+            }
+          },
+          "required": [
+            "queue",
+            "id",
+            "queue_state",
+            "business_state",
+            "payload",
+            "protected_input_digest",
+            "snapshot",
+            "delivery_count",
+            "available_after_ms",
+            "created_ms"
+          ],
+          "title": "ItemView",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "PackageId": {
+          "format": "uuid",
+          "title": "PackageId",
+          "type": "string"
+        },
+        "PackageRevisionId": {
+          "title": "PackageRevisionId",
+          "type": "string"
+        },
+        "PackageRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_id": {
+              "$ref": "#/$defs/PackageId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PackageRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "package_id",
+            "revision_id"
+          ],
+          "title": "PackageRevisionRef",
+          "type": "object"
+        },
+        "PlanDigest": {
+          "title": "PlanDigest",
+          "type": "string"
+        },
+        "PolicyId": {
+          "format": "uuid",
+          "title": "PolicyId",
+          "type": "string"
+        },
+        "PolicyRevisionId": {
+          "title": "PolicyRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileId": {
+          "format": "uuid",
+          "title": "ProviderProfileId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionId": {
+          "title": "ProviderProfileRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "provider_profile_id": {
+              "$ref": "#/$defs/ProviderProfileId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/ProviderProfileRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "provider_profile_id",
+            "revision_id"
+          ],
+          "title": "ProviderProfileRevisionRef",
+          "type": "object"
+        },
+        "QueueRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "queue_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+              "title": "Queue Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment",
+            "queue_id"
+          ],
+          "title": "QueueRef",
+          "type": "object"
+        },
+        "RuntimePlanRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            },
+            "plan_digest": {
+              "$ref": "#/$defs/PlanDigest"
+            }
+          },
+          "required": [
+            "package_revision",
+            "plan_digest"
+          ],
+          "title": "RuntimePlanRef",
+          "type": "object"
+        },
+        "WorkerProfileId": {
+          "format": "uuid",
+          "title": "WorkerProfileId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionId": {
+          "title": "WorkerProfileRevisionId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "revision_id": {
+              "$ref": "#/$defs/WorkerProfileRevisionId"
+            },
+            "worker_profile_id": {
+              "$ref": "#/$defs/WorkerProfileId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "worker_profile_id",
+            "revision_id"
+          ],
+          "title": "WorkerProfileRevisionRef",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        },
+        "WorkspacePolicyRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_id": {
+              "$ref": "#/$defs/PolicyId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PolicyRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "policy_id",
+            "revision_id"
+          ],
+          "title": "WorkspacePolicyRevisionRef",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ItemView"
+        },
+        "replay": {
+          "default": false,
+          "title": "Replay",
+          "type": "boolean"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "server_time_ms"
+      ],
+      "title": "ItemResult",
+      "type": "object"
+    },
+    "items.get": {
+      "$defs": {
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CapabilityId": {
+          "title": "CapabilityId",
+          "type": "string"
+        },
+        "CapabilityRef": {
+          "additionalProperties": false,
+          "properties": {
+            "capability_id": {
+              "$ref": "#/$defs/CapabilityId"
+            },
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            }
+          },
+          "required": [
+            "package_revision",
+            "capability_id"
+          ],
+          "title": "CapabilityRef",
+          "type": "object"
+        },
+        "ClaimRef": {
+          "additionalProperties": false,
+          "properties": {
+            "epoch": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Epoch",
+              "type": "integer"
+            },
+            "item_id": {
+              "title": "Item Id",
+              "type": "string"
+            },
+            "owner_id": {
+              "title": "Owner Id",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            }
+          },
+          "required": [
+            "queue",
+            "item_id",
+            "owner_id",
+            "epoch"
+          ],
+          "title": "ClaimRef",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ExecutionSnapshot": {
+          "additionalProperties": false,
+          "description": "Trusted control-plane registration; this type is not compiler admission.",
+          "properties": {
+            "action_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Action Id",
+              "type": "string"
+            },
+            "canvas_application": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CanvasApplicationRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "capability": {
+              "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_schema_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Capability Schema Digest",
+              "type": "string"
+            },
+            "data_binding": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InvoiceBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "output_provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "policy": {
+              "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+            },
+            "runtime_kind": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Runtime Kind",
+              "type": "string"
+            },
+            "runtime_plan": {
+              "$ref": "#/$defs/RuntimePlanRef"
+            },
+            "worker": {
+              "$ref": "#/$defs/WorkerProfileRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "capability",
+            "runtime_plan",
+            "worker",
+            "policy",
+            "output_provider",
+            "runtime_kind",
+            "capability_schema_digest",
+            "action_id"
+          ],
+          "title": "ExecutionSnapshot",
+          "type": "object"
+        },
+        "InvoiceBinding": {
+          "additionalProperties": false,
+          "description": "Trusted immutable deployment binding; source version is an operator claim.",
+          "properties": {
+            "effect": {
+              "const": "read",
+              "default": "read",
+              "title": "Effect",
+              "type": "string"
+            },
+            "limits": {
+              "$ref": "#/$defs/InvoiceLimits"
+            },
+            "operation": {
+              "const": "invoices.overdue/v1",
+              "default": "invoices.overdue/v1",
+              "title": "Operation",
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "source_version"
+          ],
+          "title": "InvoiceBinding",
+          "type": "object"
+        },
+        "InvoiceLimits": {
+          "additionalProperties": false,
+          "properties": {
+            "max_bytes": {
+              "default": 4194304,
+              "maximum": 16777216,
+              "minimum": 1,
+              "title": "Max Bytes",
+              "type": "integer"
+            },
+            "max_rows": {
+              "default": 10000,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Max Rows",
+              "type": "integer"
+            },
+            "timeout_ms": {
+              "default": 5000,
+              "maximum": 30000,
+              "minimum": 1,
+              "title": "Timeout Ms",
+              "type": "integer"
+            }
+          },
+          "title": "InvoiceLimits",
+          "type": "object"
+        },
+        "ItemView": {
+          "additionalProperties": false,
+          "properties": {
+            "available_after_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Available After Ms",
+              "type": "string"
+            },
+            "business_state": {
+              "enum": [
+                "ready",
+                "running",
+                "blocked",
+                "needs_review",
+                "completed",
+                "business_failed",
+                "application_failed",
+                "cancelled",
+                "dead_letter",
+                "unknown"
+              ],
+              "title": "Business State",
+              "type": "string"
+            },
+            "child_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Child Ids",
+              "type": "array"
+            },
+            "claim": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ClaimRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "created_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Created Ms",
+              "type": "string"
+            },
+            "delivery_count": {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "title": "Delivery Count",
+              "type": "integer"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "lease_deadline_ms": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9]{1,20}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Lease Deadline Ms"
+            },
+            "parent_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parent Id"
+            },
+            "payload": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "protected_input_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Protected Input Digest",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            },
+            "queue_state": {
+              "enum": [
+                "PENDING",
+                "IN_PROGRESS",
+                "DONE",
+                "FAILED"
+              ],
+              "title": "Queue State",
+              "type": "string"
+            },
+            "review_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Review Id"
+            },
+            "run_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Run Ids",
+              "type": "array"
+            },
+            "snapshot": {
+              "$ref": "#/$defs/ExecutionSnapshot"
+            }
+          },
+          "required": [
+            "queue",
+            "id",
+            "queue_state",
+            "business_state",
+            "payload",
+            "protected_input_digest",
+            "snapshot",
+            "delivery_count",
+            "available_after_ms",
+            "created_ms"
+          ],
+          "title": "ItemView",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "PackageId": {
+          "format": "uuid",
+          "title": "PackageId",
+          "type": "string"
+        },
+        "PackageRevisionId": {
+          "title": "PackageRevisionId",
+          "type": "string"
+        },
+        "PackageRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_id": {
+              "$ref": "#/$defs/PackageId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PackageRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "package_id",
+            "revision_id"
+          ],
+          "title": "PackageRevisionRef",
+          "type": "object"
+        },
+        "PlanDigest": {
+          "title": "PlanDigest",
+          "type": "string"
+        },
+        "PolicyId": {
+          "format": "uuid",
+          "title": "PolicyId",
+          "type": "string"
+        },
+        "PolicyRevisionId": {
+          "title": "PolicyRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileId": {
+          "format": "uuid",
+          "title": "ProviderProfileId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionId": {
+          "title": "ProviderProfileRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "provider_profile_id": {
+              "$ref": "#/$defs/ProviderProfileId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/ProviderProfileRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "provider_profile_id",
+            "revision_id"
+          ],
+          "title": "ProviderProfileRevisionRef",
+          "type": "object"
+        },
+        "QueueRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "queue_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+              "title": "Queue Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment",
+            "queue_id"
+          ],
+          "title": "QueueRef",
+          "type": "object"
+        },
+        "RuntimePlanRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            },
+            "plan_digest": {
+              "$ref": "#/$defs/PlanDigest"
+            }
+          },
+          "required": [
+            "package_revision",
+            "plan_digest"
+          ],
+          "title": "RuntimePlanRef",
+          "type": "object"
+        },
+        "WorkerProfileId": {
+          "format": "uuid",
+          "title": "WorkerProfileId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionId": {
+          "title": "WorkerProfileRevisionId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "revision_id": {
+              "$ref": "#/$defs/WorkerProfileRevisionId"
+            },
+            "worker_profile_id": {
+              "$ref": "#/$defs/WorkerProfileId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "worker_profile_id",
+            "revision_id"
+          ],
+          "title": "WorkerProfileRevisionRef",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        },
+        "WorkspacePolicyRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_id": {
+              "$ref": "#/$defs/PolicyId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PolicyRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "policy_id",
+            "revision_id"
+          ],
+          "title": "WorkspacePolicyRevisionRef",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ItemView"
+        },
+        "replay": {
+          "default": false,
+          "title": "Replay",
+          "type": "boolean"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "server_time_ms"
+      ],
+      "title": "ItemResult",
+      "type": "object"
+    },
+    "items.list": {
+      "$defs": {
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CapabilityId": {
+          "title": "CapabilityId",
+          "type": "string"
+        },
+        "CapabilityRef": {
+          "additionalProperties": false,
+          "properties": {
+            "capability_id": {
+              "$ref": "#/$defs/CapabilityId"
+            },
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            }
+          },
+          "required": [
+            "package_revision",
+            "capability_id"
+          ],
+          "title": "CapabilityRef",
+          "type": "object"
+        },
+        "ClaimRef": {
+          "additionalProperties": false,
+          "properties": {
+            "epoch": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Epoch",
+              "type": "integer"
+            },
+            "item_id": {
+              "title": "Item Id",
+              "type": "string"
+            },
+            "owner_id": {
+              "title": "Owner Id",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            }
+          },
+          "required": [
+            "queue",
+            "item_id",
+            "owner_id",
+            "epoch"
+          ],
+          "title": "ClaimRef",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ExecutionSnapshot": {
+          "additionalProperties": false,
+          "description": "Trusted control-plane registration; this type is not compiler admission.",
+          "properties": {
+            "action_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Action Id",
+              "type": "string"
+            },
+            "canvas_application": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CanvasApplicationRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "capability": {
+              "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_schema_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Capability Schema Digest",
+              "type": "string"
+            },
+            "data_binding": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InvoiceBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "output_provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "policy": {
+              "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+            },
+            "runtime_kind": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Runtime Kind",
+              "type": "string"
+            },
+            "runtime_plan": {
+              "$ref": "#/$defs/RuntimePlanRef"
+            },
+            "worker": {
+              "$ref": "#/$defs/WorkerProfileRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "capability",
+            "runtime_plan",
+            "worker",
+            "policy",
+            "output_provider",
+            "runtime_kind",
+            "capability_schema_digest",
+            "action_id"
+          ],
+          "title": "ExecutionSnapshot",
+          "type": "object"
+        },
+        "InvoiceBinding": {
+          "additionalProperties": false,
+          "description": "Trusted immutable deployment binding; source version is an operator claim.",
+          "properties": {
+            "effect": {
+              "const": "read",
+              "default": "read",
+              "title": "Effect",
+              "type": "string"
+            },
+            "limits": {
+              "$ref": "#/$defs/InvoiceLimits"
+            },
+            "operation": {
+              "const": "invoices.overdue/v1",
+              "default": "invoices.overdue/v1",
+              "title": "Operation",
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "source_version"
+          ],
+          "title": "InvoiceBinding",
+          "type": "object"
+        },
+        "InvoiceLimits": {
+          "additionalProperties": false,
+          "properties": {
+            "max_bytes": {
+              "default": 4194304,
+              "maximum": 16777216,
+              "minimum": 1,
+              "title": "Max Bytes",
+              "type": "integer"
+            },
+            "max_rows": {
+              "default": 10000,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Max Rows",
+              "type": "integer"
+            },
+            "timeout_ms": {
+              "default": 5000,
+              "maximum": 30000,
+              "minimum": 1,
+              "title": "Timeout Ms",
+              "type": "integer"
+            }
+          },
+          "title": "InvoiceLimits",
+          "type": "object"
+        },
+        "ItemView": {
+          "additionalProperties": false,
+          "properties": {
+            "available_after_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Available After Ms",
+              "type": "string"
+            },
+            "business_state": {
+              "enum": [
+                "ready",
+                "running",
+                "blocked",
+                "needs_review",
+                "completed",
+                "business_failed",
+                "application_failed",
+                "cancelled",
+                "dead_letter",
+                "unknown"
+              ],
+              "title": "Business State",
+              "type": "string"
+            },
+            "child_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Child Ids",
+              "type": "array"
+            },
+            "claim": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ClaimRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "created_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Created Ms",
+              "type": "string"
+            },
+            "delivery_count": {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "title": "Delivery Count",
+              "type": "integer"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "lease_deadline_ms": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9]{1,20}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Lease Deadline Ms"
+            },
+            "parent_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parent Id"
+            },
+            "payload": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "protected_input_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Protected Input Digest",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            },
+            "queue_state": {
+              "enum": [
+                "PENDING",
+                "IN_PROGRESS",
+                "DONE",
+                "FAILED"
+              ],
+              "title": "Queue State",
+              "type": "string"
+            },
+            "review_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Review Id"
+            },
+            "run_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Run Ids",
+              "type": "array"
+            },
+            "snapshot": {
+              "$ref": "#/$defs/ExecutionSnapshot"
+            }
+          },
+          "required": [
+            "queue",
+            "id",
+            "queue_state",
+            "business_state",
+            "payload",
+            "protected_input_digest",
+            "snapshot",
+            "delivery_count",
+            "available_after_ms",
+            "created_ms"
+          ],
+          "title": "ItemView",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "PackageId": {
+          "format": "uuid",
+          "title": "PackageId",
+          "type": "string"
+        },
+        "PackageRevisionId": {
+          "title": "PackageRevisionId",
+          "type": "string"
+        },
+        "PackageRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_id": {
+              "$ref": "#/$defs/PackageId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PackageRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "package_id",
+            "revision_id"
+          ],
+          "title": "PackageRevisionRef",
+          "type": "object"
+        },
+        "PlanDigest": {
+          "title": "PlanDigest",
+          "type": "string"
+        },
+        "PolicyId": {
+          "format": "uuid",
+          "title": "PolicyId",
+          "type": "string"
+        },
+        "PolicyRevisionId": {
+          "title": "PolicyRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileId": {
+          "format": "uuid",
+          "title": "ProviderProfileId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionId": {
+          "title": "ProviderProfileRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "provider_profile_id": {
+              "$ref": "#/$defs/ProviderProfileId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/ProviderProfileRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "provider_profile_id",
+            "revision_id"
+          ],
+          "title": "ProviderProfileRevisionRef",
+          "type": "object"
+        },
+        "QueueRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "queue_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+              "title": "Queue Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment",
+            "queue_id"
+          ],
+          "title": "QueueRef",
+          "type": "object"
+        },
+        "RuntimePlanRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            },
+            "plan_digest": {
+              "$ref": "#/$defs/PlanDigest"
+            }
+          },
+          "required": [
+            "package_revision",
+            "plan_digest"
+          ],
+          "title": "RuntimePlanRef",
+          "type": "object"
+        },
+        "WorkerProfileId": {
+          "format": "uuid",
+          "title": "WorkerProfileId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionId": {
+          "title": "WorkerProfileRevisionId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "revision_id": {
+              "$ref": "#/$defs/WorkerProfileRevisionId"
+            },
+            "worker_profile_id": {
+              "$ref": "#/$defs/WorkerProfileId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "worker_profile_id",
+            "revision_id"
+          ],
+          "title": "WorkerProfileRevisionRef",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        },
+        "WorkspacePolicyRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_id": {
+              "$ref": "#/$defs/PolicyId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PolicyRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "policy_id",
+            "revision_id"
+          ],
+          "title": "WorkspacePolicyRevisionRef",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/ItemView"
+          },
+          "maxItems": 100,
+          "title": "Items",
+          "type": "array"
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Next Cursor"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "items",
+        "server_time_ms"
+      ],
+      "title": "ItemPage",
+      "type": "object"
+    },
+    "items.renew": {
+      "$defs": {
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CapabilityId": {
+          "title": "CapabilityId",
+          "type": "string"
+        },
+        "CapabilityRef": {
+          "additionalProperties": false,
+          "properties": {
+            "capability_id": {
+              "$ref": "#/$defs/CapabilityId"
+            },
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            }
+          },
+          "required": [
+            "package_revision",
+            "capability_id"
+          ],
+          "title": "CapabilityRef",
+          "type": "object"
+        },
+        "ClaimRef": {
+          "additionalProperties": false,
+          "properties": {
+            "epoch": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Epoch",
+              "type": "integer"
+            },
+            "item_id": {
+              "title": "Item Id",
+              "type": "string"
+            },
+            "owner_id": {
+              "title": "Owner Id",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            }
+          },
+          "required": [
+            "queue",
+            "item_id",
+            "owner_id",
+            "epoch"
+          ],
+          "title": "ClaimRef",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ExecutionSnapshot": {
+          "additionalProperties": false,
+          "description": "Trusted control-plane registration; this type is not compiler admission.",
+          "properties": {
+            "action_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Action Id",
+              "type": "string"
+            },
+            "canvas_application": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CanvasApplicationRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "capability": {
+              "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_schema_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Capability Schema Digest",
+              "type": "string"
+            },
+            "data_binding": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InvoiceBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "output_provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "policy": {
+              "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+            },
+            "runtime_kind": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Runtime Kind",
+              "type": "string"
+            },
+            "runtime_plan": {
+              "$ref": "#/$defs/RuntimePlanRef"
+            },
+            "worker": {
+              "$ref": "#/$defs/WorkerProfileRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "capability",
+            "runtime_plan",
+            "worker",
+            "policy",
+            "output_provider",
+            "runtime_kind",
+            "capability_schema_digest",
+            "action_id"
+          ],
+          "title": "ExecutionSnapshot",
+          "type": "object"
+        },
+        "InvoiceBinding": {
+          "additionalProperties": false,
+          "description": "Trusted immutable deployment binding; source version is an operator claim.",
+          "properties": {
+            "effect": {
+              "const": "read",
+              "default": "read",
+              "title": "Effect",
+              "type": "string"
+            },
+            "limits": {
+              "$ref": "#/$defs/InvoiceLimits"
+            },
+            "operation": {
+              "const": "invoices.overdue/v1",
+              "default": "invoices.overdue/v1",
+              "title": "Operation",
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "source_version"
+          ],
+          "title": "InvoiceBinding",
+          "type": "object"
+        },
+        "InvoiceLimits": {
+          "additionalProperties": false,
+          "properties": {
+            "max_bytes": {
+              "default": 4194304,
+              "maximum": 16777216,
+              "minimum": 1,
+              "title": "Max Bytes",
+              "type": "integer"
+            },
+            "max_rows": {
+              "default": 10000,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Max Rows",
+              "type": "integer"
+            },
+            "timeout_ms": {
+              "default": 5000,
+              "maximum": 30000,
+              "minimum": 1,
+              "title": "Timeout Ms",
+              "type": "integer"
+            }
+          },
+          "title": "InvoiceLimits",
+          "type": "object"
+        },
+        "ItemView": {
+          "additionalProperties": false,
+          "properties": {
+            "available_after_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Available After Ms",
+              "type": "string"
+            },
+            "business_state": {
+              "enum": [
+                "ready",
+                "running",
+                "blocked",
+                "needs_review",
+                "completed",
+                "business_failed",
+                "application_failed",
+                "cancelled",
+                "dead_letter",
+                "unknown"
+              ],
+              "title": "Business State",
+              "type": "string"
+            },
+            "child_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Child Ids",
+              "type": "array"
+            },
+            "claim": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ClaimRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "created_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Created Ms",
+              "type": "string"
+            },
+            "delivery_count": {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "title": "Delivery Count",
+              "type": "integer"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "lease_deadline_ms": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9]{1,20}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Lease Deadline Ms"
+            },
+            "parent_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parent Id"
+            },
+            "payload": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "protected_input_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Protected Input Digest",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            },
+            "queue_state": {
+              "enum": [
+                "PENDING",
+                "IN_PROGRESS",
+                "DONE",
+                "FAILED"
+              ],
+              "title": "Queue State",
+              "type": "string"
+            },
+            "review_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Review Id"
+            },
+            "run_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Run Ids",
+              "type": "array"
+            },
+            "snapshot": {
+              "$ref": "#/$defs/ExecutionSnapshot"
+            }
+          },
+          "required": [
+            "queue",
+            "id",
+            "queue_state",
+            "business_state",
+            "payload",
+            "protected_input_digest",
+            "snapshot",
+            "delivery_count",
+            "available_after_ms",
+            "created_ms"
+          ],
+          "title": "ItemView",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "PackageId": {
+          "format": "uuid",
+          "title": "PackageId",
+          "type": "string"
+        },
+        "PackageRevisionId": {
+          "title": "PackageRevisionId",
+          "type": "string"
+        },
+        "PackageRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_id": {
+              "$ref": "#/$defs/PackageId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PackageRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "package_id",
+            "revision_id"
+          ],
+          "title": "PackageRevisionRef",
+          "type": "object"
+        },
+        "PlanDigest": {
+          "title": "PlanDigest",
+          "type": "string"
+        },
+        "PolicyId": {
+          "format": "uuid",
+          "title": "PolicyId",
+          "type": "string"
+        },
+        "PolicyRevisionId": {
+          "title": "PolicyRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileId": {
+          "format": "uuid",
+          "title": "ProviderProfileId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionId": {
+          "title": "ProviderProfileRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "provider_profile_id": {
+              "$ref": "#/$defs/ProviderProfileId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/ProviderProfileRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "provider_profile_id",
+            "revision_id"
+          ],
+          "title": "ProviderProfileRevisionRef",
+          "type": "object"
+        },
+        "QueueRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "queue_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+              "title": "Queue Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment",
+            "queue_id"
+          ],
+          "title": "QueueRef",
+          "type": "object"
+        },
+        "RuntimePlanRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            },
+            "plan_digest": {
+              "$ref": "#/$defs/PlanDigest"
+            }
+          },
+          "required": [
+            "package_revision",
+            "plan_digest"
+          ],
+          "title": "RuntimePlanRef",
+          "type": "object"
+        },
+        "WorkerProfileId": {
+          "format": "uuid",
+          "title": "WorkerProfileId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionId": {
+          "title": "WorkerProfileRevisionId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "revision_id": {
+              "$ref": "#/$defs/WorkerProfileRevisionId"
+            },
+            "worker_profile_id": {
+              "$ref": "#/$defs/WorkerProfileId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "worker_profile_id",
+            "revision_id"
+          ],
+          "title": "WorkerProfileRevisionRef",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        },
+        "WorkspacePolicyRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_id": {
+              "$ref": "#/$defs/PolicyId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PolicyRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "policy_id",
+            "revision_id"
+          ],
+          "title": "WorkspacePolicyRevisionRef",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "claim": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClaimRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "item": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ItemView"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lease_deadline_ms": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Lease Deadline Ms"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "claim",
+        "lease_deadline_ms",
+        "server_time_ms"
+      ],
+      "title": "ClaimResult",
+      "type": "object"
+    },
+    "items.retry": {
+      "$defs": {
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CapabilityId": {
+          "title": "CapabilityId",
+          "type": "string"
+        },
+        "CapabilityRef": {
+          "additionalProperties": false,
+          "properties": {
+            "capability_id": {
+              "$ref": "#/$defs/CapabilityId"
+            },
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            }
+          },
+          "required": [
+            "package_revision",
+            "capability_id"
+          ],
+          "title": "CapabilityRef",
+          "type": "object"
+        },
+        "ClaimRef": {
+          "additionalProperties": false,
+          "properties": {
+            "epoch": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Epoch",
+              "type": "integer"
+            },
+            "item_id": {
+              "title": "Item Id",
+              "type": "string"
+            },
+            "owner_id": {
+              "title": "Owner Id",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            }
+          },
+          "required": [
+            "queue",
+            "item_id",
+            "owner_id",
+            "epoch"
+          ],
+          "title": "ClaimRef",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ExecutionSnapshot": {
+          "additionalProperties": false,
+          "description": "Trusted control-plane registration; this type is not compiler admission.",
+          "properties": {
+            "action_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Action Id",
+              "type": "string"
+            },
+            "canvas_application": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CanvasApplicationRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "capability": {
+              "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_schema_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Capability Schema Digest",
+              "type": "string"
+            },
+            "data_binding": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InvoiceBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "output_provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "policy": {
+              "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+            },
+            "runtime_kind": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Runtime Kind",
+              "type": "string"
+            },
+            "runtime_plan": {
+              "$ref": "#/$defs/RuntimePlanRef"
+            },
+            "worker": {
+              "$ref": "#/$defs/WorkerProfileRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "capability",
+            "runtime_plan",
+            "worker",
+            "policy",
+            "output_provider",
+            "runtime_kind",
+            "capability_schema_digest",
+            "action_id"
+          ],
+          "title": "ExecutionSnapshot",
+          "type": "object"
+        },
+        "InvoiceBinding": {
+          "additionalProperties": false,
+          "description": "Trusted immutable deployment binding; source version is an operator claim.",
+          "properties": {
+            "effect": {
+              "const": "read",
+              "default": "read",
+              "title": "Effect",
+              "type": "string"
+            },
+            "limits": {
+              "$ref": "#/$defs/InvoiceLimits"
+            },
+            "operation": {
+              "const": "invoices.overdue/v1",
+              "default": "invoices.overdue/v1",
+              "title": "Operation",
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "source_version"
+          ],
+          "title": "InvoiceBinding",
+          "type": "object"
+        },
+        "InvoiceLimits": {
+          "additionalProperties": false,
+          "properties": {
+            "max_bytes": {
+              "default": 4194304,
+              "maximum": 16777216,
+              "minimum": 1,
+              "title": "Max Bytes",
+              "type": "integer"
+            },
+            "max_rows": {
+              "default": 10000,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Max Rows",
+              "type": "integer"
+            },
+            "timeout_ms": {
+              "default": 5000,
+              "maximum": 30000,
+              "minimum": 1,
+              "title": "Timeout Ms",
+              "type": "integer"
+            }
+          },
+          "title": "InvoiceLimits",
+          "type": "object"
+        },
+        "ItemView": {
+          "additionalProperties": false,
+          "properties": {
+            "available_after_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Available After Ms",
+              "type": "string"
+            },
+            "business_state": {
+              "enum": [
+                "ready",
+                "running",
+                "blocked",
+                "needs_review",
+                "completed",
+                "business_failed",
+                "application_failed",
+                "cancelled",
+                "dead_letter",
+                "unknown"
+              ],
+              "title": "Business State",
+              "type": "string"
+            },
+            "child_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Child Ids",
+              "type": "array"
+            },
+            "claim": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ClaimRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "created_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Created Ms",
+              "type": "string"
+            },
+            "delivery_count": {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "title": "Delivery Count",
+              "type": "integer"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "lease_deadline_ms": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9]{1,20}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Lease Deadline Ms"
+            },
+            "parent_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parent Id"
+            },
+            "payload": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "protected_input_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Protected Input Digest",
+              "type": "string"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            },
+            "queue_state": {
+              "enum": [
+                "PENDING",
+                "IN_PROGRESS",
+                "DONE",
+                "FAILED"
+              ],
+              "title": "Queue State",
+              "type": "string"
+            },
+            "review_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Review Id"
+            },
+            "run_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Run Ids",
+              "type": "array"
+            },
+            "snapshot": {
+              "$ref": "#/$defs/ExecutionSnapshot"
+            }
+          },
+          "required": [
+            "queue",
+            "id",
+            "queue_state",
+            "business_state",
+            "payload",
+            "protected_input_digest",
+            "snapshot",
+            "delivery_count",
+            "available_after_ms",
+            "created_ms"
+          ],
+          "title": "ItemView",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "PackageId": {
+          "format": "uuid",
+          "title": "PackageId",
+          "type": "string"
+        },
+        "PackageRevisionId": {
+          "title": "PackageRevisionId",
+          "type": "string"
+        },
+        "PackageRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_id": {
+              "$ref": "#/$defs/PackageId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PackageRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "package_id",
+            "revision_id"
+          ],
+          "title": "PackageRevisionRef",
+          "type": "object"
+        },
+        "PlanDigest": {
+          "title": "PlanDigest",
+          "type": "string"
+        },
+        "PolicyId": {
+          "format": "uuid",
+          "title": "PolicyId",
+          "type": "string"
+        },
+        "PolicyRevisionId": {
+          "title": "PolicyRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileId": {
+          "format": "uuid",
+          "title": "ProviderProfileId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionId": {
+          "title": "ProviderProfileRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "provider_profile_id": {
+              "$ref": "#/$defs/ProviderProfileId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/ProviderProfileRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "provider_profile_id",
+            "revision_id"
+          ],
+          "title": "ProviderProfileRevisionRef",
+          "type": "object"
+        },
+        "QueueRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "queue_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+              "title": "Queue Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment",
+            "queue_id"
+          ],
+          "title": "QueueRef",
+          "type": "object"
+        },
+        "RuntimePlanRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            },
+            "plan_digest": {
+              "$ref": "#/$defs/PlanDigest"
+            }
+          },
+          "required": [
+            "package_revision",
+            "plan_digest"
+          ],
+          "title": "RuntimePlanRef",
+          "type": "object"
+        },
+        "WorkerProfileId": {
+          "format": "uuid",
+          "title": "WorkerProfileId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionId": {
+          "title": "WorkerProfileRevisionId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "revision_id": {
+              "$ref": "#/$defs/WorkerProfileRevisionId"
+            },
+            "worker_profile_id": {
+              "$ref": "#/$defs/WorkerProfileId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "worker_profile_id",
+            "revision_id"
+          ],
+          "title": "WorkerProfileRevisionRef",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        },
+        "WorkspacePolicyRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_id": {
+              "$ref": "#/$defs/PolicyId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PolicyRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "policy_id",
+            "revision_id"
+          ],
+          "title": "WorkspacePolicyRevisionRef",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ItemView"
+        },
+        "replay": {
+          "default": false,
+          "title": "Replay",
+          "type": "boolean"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "server_time_ms"
+      ],
+      "title": "ItemResult",
+      "type": "object"
+    },
+    "queues.list": {
+      "$defs": {
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "Permission": {
+          "enum": [
+            "work_items.read",
+            "work_items.enqueue",
+            "work_items.claim",
+            "work_items.complete",
+            "work_items.retry",
+            "work_items.cancel",
+            "work_items.review",
+            "work_items.artifact.read"
+          ],
+          "title": "Permission",
+          "type": "string"
+        },
+        "QueueRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "queue_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+              "title": "Queue Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment",
+            "queue_id"
+          ],
+          "title": "QueueRef",
+          "type": "object"
+        },
+        "QueueView": {
+          "additionalProperties": false,
+          "properties": {
+            "counts": {
+              "additionalProperties": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "title": "Counts",
+              "type": "object"
+            },
+            "label": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Label",
+              "type": "string"
+            },
+            "mode": {
+              "enum": [
+                "reviewed",
+                "producer",
+                "consumer",
+                "optional"
+              ],
+              "title": "Mode",
+              "type": "string"
+            },
+            "permissions": {
+              "items": {
+                "$ref": "#/$defs/Permission"
+              },
+              "title": "Permissions",
+              "type": "array"
+            },
+            "queue": {
+              "$ref": "#/$defs/QueueRef"
+            }
+          },
+          "required": [
+            "queue",
+            "label",
+            "mode",
+            "counts",
+            "permissions"
+          ],
+          "title": "QueueView",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Next Cursor"
+        },
+        "queues": {
+          "items": {
+            "$ref": "#/$defs/QueueView"
+          },
+          "maxItems": 100,
+          "title": "Queues",
+          "type": "array"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "queues",
+        "server_time_ms"
+      ],
+      "title": "QueuePage",
+      "type": "object"
+    },
+    "reviews.decide": {
+      "$defs": {
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CanvasResultScope": {
+          "additionalProperties": false,
+          "description": "Trusted server binding; knowing these references grants no access.",
+          "properties": {
+            "application": {
+              "$ref": "#/$defs/CanvasApplicationRef"
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "application"
+          ],
+          "title": "CanvasResultScope",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ReviewBinding": {
+          "additionalProperties": false,
+          "properties": {
+            "handle": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Handle",
+              "type": "string"
+            },
+            "input_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Input Digest",
+              "type": "string"
+            },
+            "request_fingerprint": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Request Fingerprint",
+              "type": "string"
+            },
+            "result_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Result Digest",
+              "type": "string"
+            },
+            "run_id": {
+              "pattern": "^[0-9a-f-]{36}$",
+              "title": "Run Id",
+              "type": "string"
+            },
+            "scope": {
+              "$ref": "#/$defs/CanvasResultScope"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "scope",
+            "handle",
+            "run_id",
+            "result_digest",
+            "input_digest",
+            "source_version",
+            "request_fingerprint"
+          ],
+          "title": "ReviewBinding",
+          "type": "object"
+        },
+        "ReviewProposal": {
+          "additionalProperties": false,
+          "properties": {
+            "binding": {
+              "$ref": "#/$defs/ReviewBinding"
+            },
+            "review_id": {
+              "title": "Review Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "review_id",
+            "binding"
+          ],
+          "title": "ReviewProposal",
+          "type": "object"
+        },
+        "ReviewView": {
+          "additionalProperties": false,
+          "properties": {
+            "proposal": {
+              "$ref": "#/$defs/ReviewProposal"
+            },
+            "state": {
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "cancelled"
+              ],
+              "title": "State",
+              "type": "string"
+            },
+            "work_item_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Work Item Id"
+            }
+          },
+          "required": [
+            "proposal",
+            "state"
+          ],
+          "title": "ReviewView",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "replay": {
+          "default": false,
+          "title": "Replay",
+          "type": "boolean"
+        },
+        "review": {
+          "$ref": "#/$defs/ReviewView"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "review",
+        "server_time_ms"
+      ],
+      "title": "ReviewResult",
+      "type": "object"
+    },
+    "reviews.list": {
+      "$defs": {
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CanvasResultScope": {
+          "additionalProperties": false,
+          "description": "Trusted server binding; knowing these references grants no access.",
+          "properties": {
+            "application": {
+              "$ref": "#/$defs/CanvasApplicationRef"
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "application"
+          ],
+          "title": "CanvasResultScope",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ReviewBinding": {
+          "additionalProperties": false,
+          "properties": {
+            "handle": {
+              "maxLength": 1024,
+              "minLength": 1,
+              "title": "Handle",
+              "type": "string"
+            },
+            "input_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Input Digest",
+              "type": "string"
+            },
+            "request_fingerprint": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Request Fingerprint",
+              "type": "string"
+            },
+            "result_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Result Digest",
+              "type": "string"
+            },
+            "run_id": {
+              "pattern": "^[0-9a-f-]{36}$",
+              "title": "Run Id",
+              "type": "string"
+            },
+            "scope": {
+              "$ref": "#/$defs/CanvasResultScope"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "scope",
+            "handle",
+            "run_id",
+            "result_digest",
+            "input_digest",
+            "source_version",
+            "request_fingerprint"
+          ],
+          "title": "ReviewBinding",
+          "type": "object"
+        },
+        "ReviewProposal": {
+          "additionalProperties": false,
+          "properties": {
+            "binding": {
+              "$ref": "#/$defs/ReviewBinding"
+            },
+            "review_id": {
+              "title": "Review Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "review_id",
+            "binding"
+          ],
+          "title": "ReviewProposal",
+          "type": "object"
+        },
+        "ReviewView": {
+          "additionalProperties": false,
+          "properties": {
+            "proposal": {
+              "$ref": "#/$defs/ReviewProposal"
+            },
+            "state": {
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "cancelled"
+              ],
+              "title": "State",
+              "type": "string"
+            },
+            "work_item_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Work Item Id"
+            }
+          },
+          "required": [
+            "proposal",
+            "state"
+          ],
+          "title": "ReviewView",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Next Cursor"
+        },
+        "reviews": {
+          "items": {
+            "$ref": "#/$defs/ReviewView"
+          },
+          "maxItems": 100,
+          "title": "Reviews",
+          "type": "array"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reviews",
+        "server_time_ms"
+      ],
+      "title": "ReviewPage",
+      "type": "object"
+    },
+    "runs.get": {
+      "$defs": {
+        "ArtifactRef": {
+          "additionalProperties": false,
+          "properties": {
+            "digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Digest",
+              "type": "string"
+            },
+            "handle": {
+              "title": "Handle",
+              "type": "string"
+            },
+            "run_id": {
+              "title": "Run Id",
+              "type": "string"
+            },
+            "size": {
+              "maximum": 67108864,
+              "minimum": 0,
+              "title": "Size",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "handle",
+            "run_id",
+            "digest",
+            "size"
+          ],
+          "title": "ArtifactRef",
+          "type": "object"
+        },
+        "AttemptView": {
+          "additionalProperties": false,
+          "properties": {
+            "epoch": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Epoch",
+              "type": "integer"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "lease_deadline_ms": {
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Lease Deadline Ms",
+              "type": "string"
+            },
+            "owner_id": {
+              "title": "Owner Id",
+              "type": "string"
+            },
+            "state": {
+              "enum": [
+                "running",
+                "lost",
+                "aborted",
+                "succeeded",
+                "failed",
+                "cancelled"
+              ],
+              "title": "State",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "owner_id",
+            "epoch",
+            "state",
+            "lease_deadline_ms"
+          ],
+          "title": "AttemptView",
+          "type": "object"
+        },
+        "CanvasApplicationRef": {
+          "additionalProperties": false,
+          "description": "Pinned application subject, not app registration or generation proof.",
+          "properties": {
+            "app_id": {
+              "title": "App Id",
+              "type": "string"
+            },
+            "revision_id": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Revision Id",
+              "type": "string"
+            },
+            "workspace_id": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "app_id",
+            "revision_id"
+          ],
+          "title": "CanvasApplicationRef",
+          "type": "object"
+        },
+        "CapabilityId": {
+          "title": "CapabilityId",
+          "type": "string"
+        },
+        "CapabilityRef": {
+          "additionalProperties": false,
+          "properties": {
+            "capability_id": {
+              "$ref": "#/$defs/CapabilityId"
+            },
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            }
+          },
+          "required": [
+            "package_revision",
+            "capability_id"
+          ],
+          "title": "CapabilityRef",
+          "type": "object"
+        },
+        "DeploymentId": {
+          "format": "uuid",
+          "title": "DeploymentId",
+          "type": "string"
+        },
+        "DeploymentRevisionId": {
+          "title": "DeploymentRevisionId",
+          "type": "string"
+        },
+        "DeploymentRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "deployment_id": {
+              "$ref": "#/$defs/DeploymentId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/DeploymentRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "deployment_id",
+            "revision_id"
+          ],
+          "title": "DeploymentRevisionRef",
+          "type": "object"
+        },
+        "ExecutionSnapshot": {
+          "additionalProperties": false,
+          "description": "Trusted control-plane registration; this type is not compiler admission.",
+          "properties": {
+            "action_id": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Action Id",
+              "type": "string"
+            },
+            "canvas_application": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CanvasApplicationRef"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "capability": {
+              "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_schema_digest": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Capability Schema Digest",
+              "type": "string"
+            },
+            "data_binding": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/InvoiceBinding"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "deployment": {
+              "$ref": "#/$defs/DeploymentRevisionRef"
+            },
+            "output_provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "policy": {
+              "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+            },
+            "runtime_kind": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Runtime Kind",
+              "type": "string"
+            },
+            "runtime_plan": {
+              "$ref": "#/$defs/RuntimePlanRef"
+            },
+            "worker": {
+              "$ref": "#/$defs/WorkerProfileRevisionRef"
+            }
+          },
+          "required": [
+            "deployment",
+            "capability",
+            "runtime_plan",
+            "worker",
+            "policy",
+            "output_provider",
+            "runtime_kind",
+            "capability_schema_digest",
+            "action_id"
+          ],
+          "title": "ExecutionSnapshot",
+          "type": "object"
+        },
+        "InvoiceBinding": {
+          "additionalProperties": false,
+          "description": "Trusted immutable deployment binding; source version is an operator claim.",
+          "properties": {
+            "effect": {
+              "const": "read",
+              "default": "read",
+              "title": "Effect",
+              "type": "string"
+            },
+            "limits": {
+              "$ref": "#/$defs/InvoiceLimits"
+            },
+            "operation": {
+              "const": "invoices.overdue/v1",
+              "default": "invoices.overdue/v1",
+              "title": "Operation",
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/ProviderProfileRevisionRef"
+            },
+            "source_version": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "title": "Source Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "source_version"
+          ],
+          "title": "InvoiceBinding",
+          "type": "object"
+        },
+        "InvoiceLimits": {
+          "additionalProperties": false,
+          "properties": {
+            "max_bytes": {
+              "default": 4194304,
+              "maximum": 16777216,
+              "minimum": 1,
+              "title": "Max Bytes",
+              "type": "integer"
+            },
+            "max_rows": {
+              "default": 10000,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Max Rows",
+              "type": "integer"
+            },
+            "timeout_ms": {
+              "default": 5000,
+              "maximum": 30000,
+              "minimum": 1,
+              "title": "Timeout Ms",
+              "type": "integer"
+            }
+          },
+          "title": "InvoiceLimits",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "PackageId": {
+          "format": "uuid",
+          "title": "PackageId",
+          "type": "string"
+        },
+        "PackageRevisionId": {
+          "title": "PackageRevisionId",
+          "type": "string"
+        },
+        "PackageRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_id": {
+              "$ref": "#/$defs/PackageId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PackageRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "package_id",
+            "revision_id"
+          ],
+          "title": "PackageRevisionRef",
+          "type": "object"
+        },
+        "PlanDigest": {
+          "title": "PlanDigest",
+          "type": "string"
+        },
+        "PolicyId": {
+          "format": "uuid",
+          "title": "PolicyId",
+          "type": "string"
+        },
+        "PolicyRevisionId": {
+          "title": "PolicyRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileId": {
+          "format": "uuid",
+          "title": "ProviderProfileId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionId": {
+          "title": "ProviderProfileRevisionId",
+          "type": "string"
+        },
+        "ProviderProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "provider_profile_id": {
+              "$ref": "#/$defs/ProviderProfileId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/ProviderProfileRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "provider_profile_id",
+            "revision_id"
+          ],
+          "title": "ProviderProfileRevisionRef",
+          "type": "object"
+        },
+        "RunView": {
+          "additionalProperties": false,
+          "properties": {
+            "artifacts": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/ArtifactRef"
+              },
+              "maxItems": 100,
+              "title": "Artifacts",
+              "type": "array"
+            },
+            "attempts": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/AttemptView"
+              },
+              "maxItems": 100,
+              "title": "Attempts",
+              "type": "array"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "result": {
+              "$ref": "#/$defs/JsonValue",
+              "default": null
+            },
+            "snapshot": {
+              "$ref": "#/$defs/ExecutionSnapshot"
+            },
+            "state": {
+              "enum": [
+                "pending",
+                "running",
+                "succeeded",
+                "failed",
+                "cancelled",
+                "blocked"
+              ],
+              "title": "State",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "snapshot",
+            "state"
+          ],
+          "title": "RunView",
+          "type": "object"
+        },
+        "RuntimePlanRef": {
+          "additionalProperties": false,
+          "properties": {
+            "package_revision": {
+              "$ref": "#/$defs/PackageRevisionRef"
+            },
+            "plan_digest": {
+              "$ref": "#/$defs/PlanDigest"
+            }
+          },
+          "required": [
+            "package_revision",
+            "plan_digest"
+          ],
+          "title": "RuntimePlanRef",
+          "type": "object"
+        },
+        "WorkerProfileId": {
+          "format": "uuid",
+          "title": "WorkerProfileId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionId": {
+          "title": "WorkerProfileRevisionId",
+          "type": "string"
+        },
+        "WorkerProfileRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "revision_id": {
+              "$ref": "#/$defs/WorkerProfileRevisionId"
+            },
+            "worker_profile_id": {
+              "$ref": "#/$defs/WorkerProfileId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "worker_profile_id",
+            "revision_id"
+          ],
+          "title": "WorkerProfileRevisionRef",
+          "type": "object"
+        },
+        "WorkspaceId": {
+          "format": "uuid",
+          "title": "WorkspaceId",
+          "type": "string"
+        },
+        "WorkspacePolicyRevisionRef": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_id": {
+              "$ref": "#/$defs/PolicyId"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/PolicyRevisionId"
+            },
+            "workspace_id": {
+              "$ref": "#/$defs/WorkspaceId"
+            }
+          },
+          "required": [
+            "workspace_id",
+            "policy_id",
+            "revision_id"
+          ],
+          "title": "WorkspacePolicyRevisionRef",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "run": {
+          "$ref": "#/$defs/RunView"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run",
+        "server_time_ms"
+      ],
+      "title": "RunResult",
+      "type": "object"
+    },
+    "runs.logs": {
+      "$defs": {
+        "LogLine": {
+          "additionalProperties": false,
+          "properties": {
+            "offset": {
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            },
+            "text": {
+              "maxLength": 8192,
+              "title": "Text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "offset",
+            "text"
+          ],
+          "title": "LogLine",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "lines": {
+          "items": {
+            "$ref": "#/$defs/LogLine"
+          },
+          "maxItems": 100,
+          "title": "Lines",
+          "type": "array"
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Next Cursor"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "server_time_ms": {
+          "pattern": "^[0-9]{1,20}$",
+          "title": "Server Time Ms",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "lines",
+        "server_time_ms"
+      ],
+      "title": "LogPage",
+      "type": "object"
+    }
+  }
+}

@@ -16,6 +16,7 @@ test('Managed client requires secure origin, explicit auth and a verified publis
         if (req.url === '/config') return res.end(JSON.stringify({version, auth_enabled: auth}));
         if (denied) {res.statusCode = 403; return res.end('{"detail":"synthetic denial"}');}
         if (unavailable) {res.statusCode = 503; return res.end('{}');}
+        if (req.url.endsWith('/files/payload.json')) return res.end('{"value":7}');
         if (req.method === 'POST') {
             let body = ''; req.on('data', chunk => body += chunk);
             return req.on('end', () => {assert.deepEqual(JSON.parse(body), {queue_name: 'package-a', payload: {value: 7}}); res.end('{"id":"server-owned-id","state":"PENDING"}');});
@@ -29,6 +30,8 @@ test('Managed client requires secure origin, explicit auth and a verified publis
         await client.connect();
         assert.deepEqual(await client.list('package-a'), {items: [], total: 0});
         assert.equal((await client.seed('package-a', {value: 7})).id, 'server-owned-id');
+        const attachment = await client.download('server-owned-id','payload.json');
+        assert.ok(Buffer.isBuffer(attachment)); assert.equal(attachment.toString(), '{"value":7}');
         denied = true;
         await assert.rejects(client.list('package-a'), /denied \(403\).*No local fallback/);
         denied = false; unavailable = true;

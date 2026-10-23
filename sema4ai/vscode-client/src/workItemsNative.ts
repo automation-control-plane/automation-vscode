@@ -7,9 +7,10 @@ import { resolveInterpreter } from "./activities";
 import { getSelectedRobot } from "./viewsSelection";
 import { SEMA4AI_LIST_ACTIONS_INTERNAL } from "./robocorpCommands";
 import { WorkItemsRuntimeClient } from "./workItemsRuntimeClient";
+import { ManagedWorkItemsView } from "./managedWorkItemsView";
 
 export const OPEN_NATIVE_WORK_ITEMS = "automation.workItems.open";
-type Mode = "file" | "sqlite" | "managed";
+type Mode = "file" | "sqlite" | "published" | "managed";
 interface Item { id: string; payload?: Record<string, unknown>; files?: string[]; revision?: string; state?: string; }
 interface Request { op: string; mode: Mode; id?: string; queue?: string; name?: string; payload?: unknown; revision?: string; parameters?: unknown; }
 interface LocalResult { receipts?: ({id: string; [key: string]: unknown})[]; items?: Item[]; id?: string; env?: Record<string, string>; parameters?: string; content?: string; }
@@ -39,6 +40,7 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
         const panel = vscode.window.createWebviewPanel("automation.workItems", "Work Items: " + path.basename(path.dirname(key)),
             vscode.ViewColumn.Active, { enableScripts: true, localResourceRoots: [] });
         panels.set(key, {panel, refresh, select: id => {mode = "file"; selectId = id; void refresh().catch(() => undefined);}});
+        const managed = new ManagedWorkItemsView(context, key, message => panel.webview.postMessage(message));
         const nonce = randomBytes(24).toString("hex");
         panel.webview.html = editorHtml(nonce);
         let mode: Mode = "file", queue = "input", busy = Promise.resolve();
@@ -75,7 +77,8 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
             });
         }
         async function refresh(): Promise<void> {
-            if (mode === "managed") {
+            if (mode === "managed") {await managed.refresh(); return;}
+            if (mode === "published") {
                 if (!runtime) {
                     await panel.webview.postMessage({ type: "unsupported", message: "Connect an authenticated published Runtime. Runtime 1.0.4 supports item and attachment management. Managed execution, retry, cancellation and review require a compatible Runtime capability; local modes remain separate." });
                     return;
@@ -119,8 +122,12 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
                     if (!vscode.workspace.isTrusted) throw Error("Workspace trust is required for Work Items.");
                     if (!message || typeof message.op !== "string") throw Error("Invalid editor request.");
                     await panel.webview.postMessage({ type: "loading" });
+                    if (message.op.startsWith("managed.")) {
+                        if (mode !== "managed") throw Error("Select canonical Managed Runtime mode first.");
+                        await managed.handle(message); return;
+                    }
                     if (message.op === "mode") {
-                        if (!["file", "sqlite", "managed"].includes(message.mode)) throw Error("Unknown Work Items mode.");
+                        if (!["file", "sqlite", "published", "managed"].includes(message.mode)) throw Error("Unknown Work Items mode.");
                         mode = message.mode; queue = message.queue || "input";
                     } else if (message.op === "refresh") { /* refresh below */ }
                     else if (message.op === "connect") {
@@ -149,7 +156,7 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
                             await local({op: "receipt", mode: "file", id: message.id, state: "CANCELLED", session: session.id});
                         }
                     } else {
-                        if (mode === "managed") {
+                        if (mode === "published") {
                             if (!runtime) throw Error("Connect an authenticated Runtime first.");
                             if (message.op === "create") {
                                 const payload = message.payload;
@@ -232,8 +239,9 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
 }
 
 function editorHtml(nonce: string): string {
-    const script = fs.readFileSync(path.join(__dirname, "../../resources/work-items/editor.js"), "utf8");
+    const script = fs.readFileSync(path.join(__dirname, "../../resources/work-items/editor.js"), "utf8") + "\n" +
+        fs.readFileSync(path.join(__dirname, "../../resources/work-items/managed-editor.js"), "utf8");
     return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}';"><style nonce="${nonce}">
     body{font:var(--vscode-font-size) var(--vscode-font-family);color:var(--vscode-foreground);padding:20px;max-width:1100px}select,input,textarea,button{font:inherit;color:var(--vscode-input-foreground);background:var(--vscode-input-background);border:1px solid var(--vscode-input-border);padding:7px;margin:4px}button{cursor:pointer;background:var(--vscode-button-background);color:var(--vscode-button-foreground)}textarea{display:block;box-sizing:border-box;width:100%;min-height:160px;font-family:var(--vscode-editor-font-family)}#status{white-space:pre-wrap;padding:10px}#items button{display:block;text-align:left;width:100%}.layout{display:grid;grid-template-columns:1fr 2fr;gap:20px}pre{white-space:pre-wrap;overflow-wrap:anywhere}#files button{display:inline-block}.error{color:var(--vscode-errorForeground)}@media(max-width:700px){.layout{display:block}}
-    </style></head><body><h1>Work Items</h1><p id="package"></p><label>Mode <select id="mode"><option value="file">Local test files</option><option value="sqlite">SDK SQLite queue</option><option value="managed">Managed Runtime</option></select></label><label>Queue <input id="queue" value="input" maxlength="80"></label><button id="refresh">Refresh</button><button id="recover">Recover expired SQLite claims…</button><button id="connect">Connect / reconnect Runtime…</button><p id="authority"></p><div id="status" role="status" aria-live="polite">Loading package…</div><div class="layout"><section><h2>Inputs and outputs</h2><button id="new">New input</button><div id="items"></div><h2>Local execution receipts</h2><div id="receipts"></div></section><section><h2 id="selection">New input</h2><label>Name <input id="name" value="input"></label><div id="payload-fields"></div><label>Payload (JSON object; field editor updates this preview)<textarea id="payload">{\n  "value": 7\n}</textarea></label><p id="validation"></p><details><summary>Required payload field types (local package)</summary><p>Map required top-level field names to string, integer, number, boolean, object, array or null. Extra fields are permitted; this is not full JSON Schema. Outputs use their own payload shape.</p><textarea id="contract">{}</textarea><button id="contract-save">Save field types</button></details><button id="create">Create input</button><button id="save">Save payload</button><button id="replay">Replay as new input</button><h3>Attachments</h3><div id="files"></div><button id="attach">Add attachment…</button><h3>Action parameters (separate from Work Item payload)</h3><textarea id="parameters">{}</textarea><button id="run">Run selected input</button><button id="debug">Debug selected input</button><h3>State, error and lineage</h3><pre id="details"></pre></section></div><script nonce="${nonce}">${script}</script></body></html>`;
+    </style></head><body><h1>Work Items</h1><p id="package"></p><label>Mode <select id="mode"><option value="file">Local test files</option><option value="sqlite">SDK SQLite queue</option><option value="published">Runtime 1.0.4 local storage (authenticated)</option><option value="managed">Managed Runtime (canonical)</option></select></label><label id="local-queue-label">Queue <input id="queue" value="input" maxlength="80"></label><button id="refresh">Refresh</button><button id="recover">Recover expired SQLite claims…</button><button id="connect">Connect / reconnect Runtime…</button><p id="authority"></p><div id="status" role="status" aria-live="polite">Loading package…</div><div id="local-root" class="layout"><section><h2>Inputs and outputs</h2><button id="new">New input</button><div id="items"></div><h2>Local execution receipts</h2><div id="receipts"></div></section><section><h2 id="selection">New input</h2><label>Name <input id="name" value="input"></label><div id="payload-fields"></div><label>Payload (JSON object; field editor updates this preview)<textarea id="payload">{\n  "value": 7\n}</textarea></label><p id="validation"></p><details><summary>Required payload field types (local package)</summary><p>Map required top-level field names to string, integer, number, boolean, object, array or null. Extra fields are permitted; this is not full JSON Schema. Outputs use their own payload shape.</p><textarea id="contract">{}</textarea><button id="contract-save">Save field types</button></details><button id="create">Create input</button><button id="save">Save payload</button><button id="replay">Replay as new input</button><h3>Attachments</h3><div id="files"></div><button id="attach">Add attachment…</button><h3>Action parameters (separate from Work Item payload)</h3><textarea id="parameters">{}</textarea><button id="run">Run selected input</button><button id="debug">Debug selected input</button><h3>State, error and lineage</h3><pre id="details"></pre></section></div><div id="managed-root" hidden><p id="managed-status" role="status"></p><p id="managed-identity"></p><h2>Authorized queues</h2><div id="managed-queues"></div><button id="managed-refresh">Refresh managed state</button><button id="managed-more-queues">More queues</button><h2>Items and review proposals</h2><div class="layout"><section><div id="managed-items"></div><button id="managed-more-items">More items</button><h3>Reviews</h3><div id="managed-reviews"></div><button id="managed-more-reviews">More reviews</button></section><section><h3>Selected business item / exact review binding</h3><div id="managed-summary"></div><details><summary>Exact Runtime record and binding</summary><pre id="managed-details"></pre></details><label>New managed payload<textarea id="managed-payload">{}</textarea></label><button id="managed-snapshot">Load admitted snapshot…</button><button id="managed-enqueue">Enqueue with pinned snapshot</button><details><summary>Pinned execution snapshot</summary><pre id="managed-snapshot-view"></pre></details><label>Intervention reason<input id="managed-reason" maxlength="1024"></label><label>Reconciliation receipt (when required)<input id="managed-reconciliation" maxlength="128"></label><button id="managed-retry">Retry</button><button id="managed-cancel">Cancel item</button><button id="managed-approve">Approve exact review</button><button id="managed-reject">Reject exact review</button><details><summary>Authorized worker lifecycle (explicit operations)</summary><label>Lease seconds<input id="managed-lease" type="number" min="1" max="3600" value="60"></label><button id="managed-claim">Claim next item</button><button id="managed-renew">Renew actual claim</button><label>Business outcome<select id="managed-outcome"><option value="done">Done</option><option value="business_failed">Business failure</option><option value="application_failed">Application failure</option></select></label><button id="managed-complete">Complete with actual Run evidence</button></details><h3>Actual Runs / Attempts / result / artifacts</h3><div id="managed-runs"></div><div id="managed-attempts"></div><details><summary>Run result, admission and provenance</summary><pre id="managed-run-details"></pre></details><div id="managed-artifacts"></div><pre id="managed-logs"></pre><button id="managed-more-logs">More logs</button></section></div><h2>Retained uncertain requests</h2><p>These are client request receipts, not Runtime queue state. Reconcile the exact key; do not create a replacement after a timeout.</p><div id="managed-pending"></div></div><script nonce="${nonce}">${script}</script></body></html>`;
 }

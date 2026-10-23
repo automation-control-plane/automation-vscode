@@ -1,11 +1,14 @@
 import * as http from "http";
 import * as https from "https";
 
-/** Published 1.0.4 REST surface only. Canonical durable lifecycle remains server-owned. */
-export class WorkItemsRuntimeClient {
+export class RuntimeHTTPError extends Error {
+    constructor(message: string, readonly status: number, readonly code?: string) {super(message);}
+}
+
+/** Authenticated origin transport. No redirects, retries, fallback or raw errors. */
+export class RuntimeTransport {
     readonly endpoint: string;
-    private verified = false;
-    constructor(endpoint: string, private readonly token: string) {
+    constructor(endpoint: string, private readonly token: string, private readonly maxBytes = 4 * 1024 * 1024) {
         const url = new URL(endpoint);
         if (url.username || url.password || url.search || url.hash || url.pathname !== "/") throw Error("Use a Runtime origin without credentials, path or query.");
         const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
@@ -13,7 +16,7 @@ export class WorkItemsRuntimeClient {
         if (!token || /[\r\n]/.test(token)) throw Error("An explicit Runtime API token is required.");
         this.endpoint = url.origin;
     }
-    private request(method: string, route: string, body?: Buffer, contentType = "application/json"): Promise<unknown> {
+    protected request(method: string, route: string, body?: Buffer, contentType = "application/json", binary = false): Promise<unknown> {
         return new Promise((resolve, reject) => {
             const request = (this.endpoint.startsWith("https:") ? https : http).request(this.endpoint + route,
                 { method, headers: { Authorization: "Bearer " + this.token, ...(body ? { "Content-Type": contentType, "Content-Length": body.length } : {}) } },
@@ -22,19 +25,24 @@ export class WorkItemsRuntimeClient {
                     const chunks: Buffer[] = [];
                     response.on("data", chunk => {
                         size += chunk.length;
-                        if (size > 4 * 1024 * 1024) { request.destroy(); reject(Error("Runtime response exceeds the editor limit.")); }
+                        if (size > this.maxBytes) { request.destroy(); reject(Error("Runtime response exceeds the editor limit.")); }
                         else chunks.push(Buffer.from(chunk));
                     });
                     response.on("end", () => {
                         const status = response.statusCode || 0;
                         if (status < 200 || status >= 300) {
                             // No redirect following, raw response/error/token logging or guessed retries.
-                            reject(Error(status === 401 || status === 403 ? `Runtime access denied (${status}). No local fallback.` :
-                                status === 503 ? "Runtime Work Items unavailable (503). Update/reinstall the compatible Runtime; no local fallback." : `Runtime request failed (${status}).`));
+                            let code: string | undefined;
+                            try {
+                                const value = JSON.parse(Buffer.concat(chunks).toString("utf8"))?.error?.code;
+                                if (["not_authenticated", "forbidden", "not_found", "stale_claim", "changed_input", "approval_required", "blocked_uncertain_effect", "unsupported_operation", "unconfigured", "storage_unavailable", "request_too_large", "invalid_request"].includes(value)) code = value;
+                            } catch { /* Legacy auth errors can be plain text. */ }
+                            reject(new RuntimeHTTPError(status === 401 || status === 403 ? `Runtime access denied (${status}). No local fallback.` :
+                                status === 503 ? "Runtime Work Items unavailable (503). No local fallback." : `Runtime request failed (${status}${code ? ": " + code : ""}).`, status, code));
                             return;
                         }
                         const bytes = Buffer.concat(chunks);
-                        if (!String(response.headers["content-type"]).includes("application/json")) {resolve(bytes); return;}
+                        if (binary || !String(response.headers["content-type"]).includes("application/json")) {resolve(bytes); return;}
                         try { resolve(JSON.parse(bytes.toString("utf8"))); } catch {reject(Error("Invalid Runtime JSON response."));}
                     });
                     response.on("error", () => reject(Error("Runtime response was interrupted.")));
@@ -44,6 +52,11 @@ export class WorkItemsRuntimeClient {
             request.end(body);
         });
     }
+}
+
+/** Published 1.0.4 local REST storage; never a managed lifecycle fallback. */
+export class WorkItemsRuntimeClient extends RuntimeTransport {
+    private verified = false;
     async connect(): Promise<{version: string; auth_enabled: boolean}> {
         this.verified = false;
         const config = await this.request("GET", "/config") as { version: string; auth_enabled: boolean };
@@ -73,6 +86,6 @@ export class WorkItemsRuntimeClient {
     }
     async download(id: string, name: string): Promise<Buffer> {
         this.requireVerified();
-        return this.request("GET", `/api/work-items/${encodeURIComponent(id)}/files/${encodeURIComponent(name)}`) as Promise<Buffer>;
+        return this.request("GET", `/api/work-items/${encodeURIComponent(id)}/files/${encodeURIComponent(name)}`, undefined, "application/json", true) as Promise<Buffer>;
     }
 }
