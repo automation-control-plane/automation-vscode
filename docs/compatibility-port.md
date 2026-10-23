@@ -6,7 +6,7 @@ published by this work. Apache-2.0 and upstream attribution remain in place.
 
 ## Owned default workflow update: 2.20.4
 
-The next private candidate hides vendor Studio publishing, Control Room, vendor gallery and vendor support destinations by default. Local Action ZIP build/metadata, Runtime, run/debug and Work Items remain. Retained third party compatibility requires explicit `sema4ai.legacyVendorIntegrations.enabled`; it is not an owned cloud implementation. See the [supported operations, exact gaps and desktop follow-up](evidence/owned-ui-20261023/README.md). The Python Environments storage synchronization and Action resource-tree visibility are also adapted. New-candidate GUI and executable qualification are recorded separately; full feature scope remains open.
+Private candidate **2.20.4** hides vendor Studio publishing, Control Room, vendor gallery and vendor support destinations by default. Local Action ZIP build/metadata, Runtime, run/debug and Work Items remain. Retained third party compatibility requires explicit `sema4ai.legacyVendorIntegrations.enabled`; it is not an owned cloud implementation. See the [supported operations, exact gaps and desktop follow-up](evidence/owned-ui-20261023/README.md). The Python Environments storage synchronization and Action resource-tree visibility are also adapted. Final installed executable qualification passed all 11 stages plus actual LSP Work Items input/output. Exact-candidate desktop GUI acceptance remains pending. Task-only duplicate repodata cleanup restored about 4.4 GB; full feature scope remains open.
 
 ## Earlier qualified checkpoint (2026-10-23)
 
