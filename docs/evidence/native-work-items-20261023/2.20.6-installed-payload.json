@@ -1,0 +1,8 @@
+{
+  "source_sha": "55daabf45244c73a27682ef36a1f643a0afb7489",
+  "vsix_sha256": "7a2fa7c2d35a8967a57c6a886d36e5ef6198e0bc594cf9038bee67e34f85766b",
+  "installed_payload_files_matching": 717,
+  "source_files_matching": 716,
+  "zip_entries": 719,
+  "installed_root": "/workspace/port-acceptance/native-work-items/installed-2.20.6/extensions/automation-control-plane.automation-vscode-2.20.6"
+}

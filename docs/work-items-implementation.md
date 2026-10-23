@@ -14,6 +14,14 @@ Owner directive: [PR1 comment6366927805](https://github.com/automation-control-p
 | Managed item→Run→Attempt, lease, retry/dead-letter, cancel, review/approval, artifacts/logs | Actions #132/#327 sole integrator | PR328 candidate6f26e4a is unreleased | Published and inspected candidate Work Items router lacks these contracts | Canonical authenticated capability/schema contract missing | Integrator handoff [#327 comment6367182477](https://github.com/joshyorko/actions/issues/327#issuecomment-6367182477); implement client against returned contract |
 | Invalid payload, denied scope, isolation, restart/cancel/retry/lineage negatives | Extension writer + server integrator | PR1 pending | Existing home/unknown-listener regressions | New mode coverage absent | Boundary tests + real SDK/API negatives, then installed desktop scenarios |
 
+## Current checkpoint: 2.20.6
+
+Source `55daabf45244c73a27682ef36a1f643a0afb7489`, pushed and remotely verified. Private VSIX Library `libfile_7e551ff032d481919a0a4722fdca43b3`, SHA256 `7a2fa7c2d35a8967a57c6a886d36e5ef6198e0bc594cf9038bee67e34f85766b`.
+
+Fixture/instruction ZIP: `libfile_2038f6a2a5f881919475965163654e2f`. Official Code CLI installed exact bytes; all 717 installed payload files match and 716 source payload files match. Final source: 28 Node passes, seven real SDK passes, 56 Python passes / one legacy skip. Final installed code passed eight Action/Robot File/SQLite run/debug cells, actual authenticated published Runtime enqueue/list/upload/download with403/422 negatives, and real Runtime restart16291→16341. GUI editor acceptance is pending; these do not replace it.
+
+Canonical managed handoff is now available at Actions commit `1520f348c31b68a8faf5a3f813bea6cf5146897b`: `docs/program/actions-next-managed-work-items-132.md`, `docs/contracts/work-items/managed-v1.json`, source `managed_work_items/contracts.py` and `api.py`. Runtime floor1.1.0a13, fenced SDK0.5.0a1, protocol `actions.managed-work-items/v1`. The router factory is **not mounted on ordinary startup** and the real SQL/auth service integration is still integrator-owned. Extension integration proceeds against that exact contract, separately from published1.0.4 local CRUD; no automatic fallback.
+
 ## Implementation order
 
 1. Preserve and push final 2.20.5 proof. Build package-scoped local SDK service with strict Action ownership/version checks, supported FileAdapter/SQLiteAdapter APIs, attachment validation, no SQL or authority duplication.

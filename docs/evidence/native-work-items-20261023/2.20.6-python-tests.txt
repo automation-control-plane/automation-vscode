@@ -1,0 +1,3 @@
+..............................................s..........                [100%]
+56 passed, 1 skipped in 23.00s
+Robocorp Log (html): /workspace/automation-vscode/sema4ai/output/log.html
