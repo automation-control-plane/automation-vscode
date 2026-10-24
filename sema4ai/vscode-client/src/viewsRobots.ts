@@ -10,6 +10,7 @@ import path = require("path");
 import { getDataSourceCaption, getDataSourceTooltip, listAllActionPackages } from "./robo/actionPackage";
 import { langServer } from "./extension";
 import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
+import {getLanguageServerStartup} from "./languageServerStartup";
 
 let _globalSentMetric: boolean = false;
 
@@ -135,6 +136,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
      * where RobotEntry.type === RobotEntryType.Error).
      */
     async getValidCachedOrComputeChildren(element?: RobotEntry): Promise<RobotEntry[]> {
+        if (getLanguageServerStartup().status !== "ready") return [];
         if (element === undefined) {
             if (this.lastRoot !== undefined) {
                 let ret: RobotEntry[] = this.lastRoot.filter((e) => {
@@ -167,6 +169,11 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
      * cache (if element === undefined).
      */
     async getChildren(element?: RobotEntry): Promise<RobotEntry[]> {
+        const startup = getLanguageServerStartup();
+        if (startup.status !== "ready") {
+            return element ? [] : [{label: startup.title, tooltip: startup.message, iconPath: startup.status === "failed" ? "error" : "sync",
+                type: RobotEntryType.Error, uri: undefined, robot: undefined, parent: undefined}];
+        }
         let ret = await this.computeChildren(element);
         if (!legacyVendorIntegrationsEnabled()) {
             ret = ret.filter(entry => entry.type !== RobotEntryType.UploadRobot &&

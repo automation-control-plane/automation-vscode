@@ -13,7 +13,7 @@
         "url": "https://github.com/automation-control-plane/automation-vscode.git"
     },
     "license": "Apache-2.0",
-    "version": "2.20.11",
+    "version": "2.20.12",
     "icon": "images/automation-icon.png",
     "engines": {
         "vscode": "^1.101.0"
@@ -27,7 +27,7 @@
         "compile": "cd vscode-client && tsc -p ./ && cd ..",
         "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
         "pretest": "cd vscode-client && tsc -p ./ && cd ..",
-        "test": "node --test tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js tests/runtime_restart.test.js tests/resources_tree.test.js tests/owned_workflow.test.js tests/work_items_editor.test.js tests/work_items_editor_state.test.js tests/work_items_runtime_client.test.js tests/managed_work_items_client.test.js tests/managed_work_items_view.test.js tests/managed_work_items_editor.test.js tests/work_items_form.test.js tests/work_item_proposals.test.js tests/runbook_workspace.test.js tests/runtime_reconnect.test.js tests/legacy_surfaces.test.js tests/inspector_shell.test.js tests/inspector_host_context.test.js tests/runbook_forms.test.js tests/runbook_host.test.js tests/action_inputs_editor.test.js tests/action_inputs_editor_host.test.js tests/action_inputs_editor_ui.test.js",
+        "test": "node --test tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js tests/runtime_restart.test.js tests/resources_tree.test.js tests/owned_workflow.test.js tests/work_items_editor.test.js tests/work_items_editor_state.test.js tests/work_items_runtime_client.test.js tests/managed_work_items_client.test.js tests/managed_work_items_view.test.js tests/managed_work_items_editor.test.js tests/work_items_form.test.js tests/work_item_proposals.test.js tests/runbook_workspace.test.js tests/runtime_reconnect.test.js tests/legacy_surfaces.test.js tests/inspector_shell.test.js tests/inspector_host_context.test.js tests/runbook_forms.test.js tests/runbook_host.test.js tests/language_server_startup.test.js tests/action_inputs_editor.test.js tests/action_inputs_editor_host.test.js tests/action_inputs_editor_ui.test.js",
         "test:host": "node ./vscode-client/out/tests/runTests.js",
         "prettier": "npx prettier -c vscode-client/**/*.ts",
         "prettier-fix": "npx prettier -w vscode-client/**/*.ts",

@@ -15,11 +15,17 @@ class EventEmitter {
     dispose() {this.listeners = [];}
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));
+const READY_STARTUP = {status:'ready',title:'Automation is ready',message:'Language services are available.'};
+const STARTING_STARTUP = {status:'starting',title:'Starting Automation',message:'Preparing the language server Python environment.'};
+const FAILED_STARTUP = {status:'failed',title:'Automation could not start',
+    message:'Language server bootstrap could not download its Python environment because network access was blocked. Review diagnostic logs and your tooling settings before retrying.',reason:'network'};
 
-function host({trusted = true, duplicateActions = false} = {}) {
+function host({trusted = true, duplicateActions = false, startup = READY_STARTUP} = {}) {
     const requests = [], effects = [], posted = [], registrations = new Map(), opened = [], receivers = [];
+    const providerRootCalls = [], providerCalls = [];
     const selectionChanged = new EventEmitter();
     const treeChanged = new EventEmitter();
+    const startupChanged = new EventEmitter();
     const packageInfo = (directory, kind, name) => ({directory, packageType:kind, name,
         filePath:path.join(directory,kind === 'action' ? 'package.yaml' : 'robot.yaml'),
         yamlContents:kind === 'action' ? {dependencies:{pypi:['actions-work-items=0.4.4']}} : {tasks:{consume:{}}}});
@@ -37,7 +43,8 @@ function host({trusted = true, duplicateActions = false} = {}) {
     class RobotsTreeDataProvider {
         onDidChangeTreeData = treeChanged.event;
         async getValidCachedOrComputeChildren(root) {
-            if (!root) return roots;
+            providerCalls.push(root?.robot?.filePath || null);
+            if (!root) {providerRootCalls.push(null);return roots;}
             return childResolver ? childResolver(root, childrenFor) : childrenFor(root);
         }
     }
@@ -61,6 +68,7 @@ function host({trusted = true, duplicateActions = false} = {}) {
     };
     const dependencies = {
         vscode,
+        './channel':{logError() {}},
         './viewsCommon':{RobotEntryType:{Action:'Action',Task:'Task'},
             treeViewIdToTreeDataProvider:new Map([['packages-tree',provider]]),treeViewIdToTreeView:new Map([['packages-tree',packageTree]])},
         './viewsRobots':{RobotsTreeDataProvider},
@@ -69,6 +77,7 @@ function host({trusted = true, duplicateActions = false} = {}) {
         './robocorpViews':{TREE_VIEW_SEMA4AI_TASK_PACKAGES_TREE:'packages-tree'},
         './activities':{resolveInterpreter:async manifest=>{effects.push(['resolve',manifest]);return {success:true,result:{pythonExe:'/verified/python'}};}},
         './runtimePaths':{runtimeHomes:()=>({actions:'/isolated/actions',robots:'/isolated/robots'})},
+        './languageServerStartup':{getLanguageServerStartup:()=>startup,onLanguageServerStartupChanged:startupChanged.event},
         './output/outViewRunIntegration':{globalOutputViewState},
         './actionServer':{getRuntimeStatus:async directory=>{effects.push(['runtime-status',directory.fsPath]);return runtimeStatus;},
             reconnectActionServer:async directory=>{effects.push(['runtime-reconnect',directory.fsPath]);return true;}},
@@ -86,7 +95,8 @@ function host({trusted = true, duplicateActions = false} = {}) {
     const open = async(route='packages')=>{await registrations.get('automation.runbook.open')(route);await tick();};
     const send = async message=>{assert.equal(receivers.length,1);await receivers[0](message);await tick();};
     const state = ()=>posted.filter(message=>message.type==='state').at(-1);
-    return {open,send,state,requests,effects,posted,opened,infos,roots,childrenFor,
+    return {open,send,state,requests,effects,posted,opened,infos,roots,childrenFor,providerRootCalls,providerCalls,
+        setStartup:async value=>{startup=value;startupChanged.fire(value);await tick();},
         setSelection:async index=>{selected=roots[index];selectionChanged.fire(selected);await tick();},
         removeSelected:()=>{roots=roots.filter(root=>root!==selected);},
         deferChildren:fn=>{childResolver=fn;},setRuntime:value=>{runtimeStatus=value;},
@@ -215,6 +225,85 @@ test('A package switch during pre-action refresh cannot redirect a previously cl
     assert.match(h.state().error,/selected|selection|changed|package/i);
 });
 
+for (const startup of [STARTING_STARTUP,FAILED_STARTUP]) {
+    test(`${startup.status} bootstrap does not query package providers on any Runbook route`,async()=>{
+        const h=host({startup});
+        for(const route of ['packages','environments','runs','inspectors','settings','work-items']) {
+            await h.open(route);await h.send({op:'refresh'});
+            assert.deepEqual(h.state().startup,startup);
+            assert.deepEqual(h.state().packages,[]);
+            assert.deepEqual(h.state().runnable,[]);
+        }
+        assert.deepEqual(h.providerRootCalls,[]);
+        assert.deepEqual(h.providerCalls,[]);
+        assert.deepEqual(h.businessRequests(),[]);
+        assert.deepEqual(h.effects,[]);
+    });
+
+    test(`${startup.status} bootstrap rejects forged package actions and package selection`,async()=>{
+        const h=host({startup});await h.open();
+        for(const action of ['create-action','create-robot','create-agent','configure','dependencies','terminal',
+            'check-environment','rebuild','runtime-start','runtime-reconnect','runtime-open','work-items',
+            'run','debug','action-inputs','source','export','metadata','locators','web-inspector',
+            'windows-inspector','image-inspector','java-inspector','recorder','reveal']) {
+            await h.send({op:'action',action,target:'/workspace/action-a/package.yaml::stale'});
+        }
+        await h.send({op:'selectPackage',target:h.infos[1].filePath});
+        assert.deepEqual(h.businessRequests(),[]);
+        assert.deepEqual(h.effects,[]);
+        assert.deepEqual(h.opened,[]);
+        assert.deepEqual(h.providerCalls,[]);
+    });
+}
+
+test('Failed bootstrap can become ready and discover packages through a normal refresh',async()=>{
+    const h=host({startup:FAILED_STARTUP});await h.open();
+    assert.deepEqual(h.providerRootCalls,[]);
+    await h.setStartup(READY_STARTUP);await h.send({op:'refresh'});
+    assert.deepEqual(h.state().startup,READY_STARTUP);
+    assert.ok(h.providerRootCalls.length>0);
+    assert.deepEqual(h.state().packages.map(pkg=>pkg.kind),['Action','Robot']);
+    assert.equal(h.state().runnable[0].name,'consume');
+    assert.deepEqual(h.businessRequests(),[]);
+    assert.deepEqual(h.effects,[]);
+});
+
+test('A previously discovered runnable cannot launch after bootstrap fails',async()=>{
+    const h=host();await h.open();const target=h.state().runnable[0].id;
+    h.providerCalls.length=0;h.providerRootCalls.length=0;h.requests.length=0;h.effects.length=0;
+    await h.setStartup(FAILED_STARTUP);
+    for(const action of ['run','debug','action-inputs','terminal','runtime-start','work-items']) {
+        await h.send({op:'action',action,target});
+    }
+    assert.deepEqual(h.state().startup,FAILED_STARTUP);
+    assert.deepEqual(h.state().runnable,[]);
+    assert.deepEqual(h.businessRequests(),[]);
+    assert.deepEqual(h.effects,[]);
+    assert.deepEqual(h.providerCalls,[]);
+});
+
+test('Failed bootstrap permits diagnostics and native Settings; explicit retry only reloads the window',async()=>{
+    const h=host({startup:FAILED_STARTUP});await h.open();
+    await h.send({op:'action',action:'diagnostics'});
+    await h.send({op:'action',action:'native-settings'});
+    assert.deepEqual(h.businessRequests(),[
+        ['sema4ai.showOutput'],['workbench.action.openSettings','@ext:automation-control-plane.automation-vscode'],
+    ]);
+    await h.send({op:'action',action:'retry-startup',command:'sema4ai.createRobot',args:['ignored']});
+    assert.deepEqual(h.businessRequests().at(-1),['workbench.action.reloadWindow']);
+    assert.equal(h.businessRequests().length,3);
+    assert.deepEqual(h.providerCalls,[]);
+    assert.deepEqual(h.effects,[]);
+});
+
+for(const startup of [STARTING_STARTUP,READY_STARTUP]) {
+    test(`Startup retry does not reload while bootstrap is ${startup.status}`,async()=>{
+        const h=host({startup});await h.open();h.requests.length=0;
+        await h.send({op:'action',action:'retry-startup'});
+        assert.deepEqual(h.businessRequests(),[]);
+    });
+}
+
 function workspaceDOM() {
     const messages=[],receivers=[],nodes=[];let saved;
     function element(tag){const node={tag,children:[],textContent:'',attributes:{},className:'',disabled:false,
@@ -264,4 +353,36 @@ test('Host paths and result labels remain inert text, and package search changes
     assert.equal(packages.length,1);packages[0].onclick();
     assert.deepEqual(dom.messages.at(-1),{op:'selectPackage',target:h.infos[1].filePath});
     assert.equal(dom.messages.some(message=>message.op==='action'),false);
+});
+
+test('Bootstrap failure DOM explains the network cause without raw command IDs and exposes only explicit recovery controls',async()=>{
+    const h=host();await h.open();const dom=workspaceDOM();
+    const state={...h.state(),startup:FAILED_STARTUP,
+        error:"command 'sema4ai.localListRobots.internal' not found"};
+    dom.receive(state);
+    const text=dom.all().map(node=>node.textContent).join('\n');
+    assert.ok(text.includes(FAILED_STARTUP.title));
+    assert.match(text,/bootstrap/i);assert.match(text,/network/i);
+    assert.doesNotMatch(text,/sema4ai\.localListRobots\.internal|command .*not found/);
+    assert.equal(dom.all().some(node=>node.tag==='button'&&!node.disabled&&['Run','Debug','Prepare Work Items','Create a package'].includes(node.textContent)),false);
+    assert.deepEqual(dom.messages,[{op:'refresh'}],'rendering failure must not automatically retry or run');
+    for(const [label,action] of [['Retry startup','retry-startup'],['Diagnostic logs','diagnostics'],['Open Settings','native-settings']]) {
+        const button=dom.all().find(node=>node.tag==='button'&&node.textContent===label);
+        assert.ok(button,label);assert.equal(button.disabled,false,label);button.onclick();
+        assert.deepEqual(dom.messages.at(-1),{op:'action',action});
+    }
+});
+
+test('Starting bootstrap DOM has no retry or package execution controls; ready state restores real runnables',async()=>{
+    const h=host();await h.open();const dom=workspaceDOM();
+    dom.receive({...h.state(),startup:STARTING_STARTUP});
+    assert.ok(dom.all().some(node=>node.textContent===STARTING_STARTUP.title));
+    assert.equal(dom.all().some(node=>node.tag==='button'&&node.textContent==='Retry startup'),false);
+    assert.equal(dom.all().some(node=>node.tag==='button'&&!node.disabled&&['Run','Debug','Prepare Work Items','Create a package'].includes(node.textContent)),false);
+    assert.deepEqual(dom.messages,[{op:'refresh'}]);
+    dom.receive({...h.state(),startup:READY_STARTUP});
+    assert.ok(dom.button('Run'));
+    assert.equal(dom.all().some(node=>node.textContent===STARTING_STARTUP.title),false);
+    dom.button('Run').onclick();
+    assert.deepEqual(dom.messages.at(-1),{op:'action',action:'run',target:h.state().runnable[0].id});
 });

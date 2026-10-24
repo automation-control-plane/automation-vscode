@@ -27,10 +27,23 @@
     const journey = el('nav','journey'); journey.setAttribute('aria-label','Runbook workflow');
     for (const [label,route] of [['Prepare','packages'],['Run','runs'],['Inspect','inspectors']]) {
       const node = nav(label,route); node.prepend(icon(route === 'packages' ? 'circle-large-outline' : route === 'runs' ? 'play-circle' : 'search'));
+      node.disabled = !!state.startup && state.startup.status !== 'ready';
       if (state.route === route || (route === 'packages' && state.route === 'environments')) {node.classList.add('current');node.setAttribute('aria-current','step');}
       journey.append(node);
     }
     header.append(journey); app.append(header);
+    if (state.startup && state.startup.status !== 'ready') {
+      const startup=state.startup;
+      const status=note(startup.title,startup.message,startup.status==='failed'?'error':'info');
+      status.setAttribute('role',startup.status==='failed'?'alert':'status');
+      app.append(status);
+      const controls=actions();
+      if(startup.status==='failed') controls.append(button('Retry startup','retry-startup',{primary:true,icon:'refresh',reason:'Reload Window to retry startup. Existing environments and files are preserved.'}));
+      controls.append(button('Diagnostic logs','diagnostics',{icon:'output'}),button('Open Settings','native-settings',{icon:'settings-gear'}));
+      app.append(controls);
+      if(startup.status==='failed') app.append(el('p','muted','Retry reloads this window. Correct the reported startup problem first; existing environments and files are preserved.'));
+      if(state.route!=='settings') return;
+    }
     if (state.error) app.append(note('Could not complete the operation',state.error,'error'));
     if (!state.trusted) app.append(note('Workspace trust required','Browsing is safe. Trust this workspace before resolving Python, running a package or opening an Inspector.'));
     if (state.busy) app.append(note('Working…','The requested operation is in progress. Existing package data is unchanged until its operation confirms success.'));

@@ -180,6 +180,7 @@ import { installWorkspaceWatcher } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 import { connectWorkspace, disconnectWorkspace } from "./vault";
 import { CACHE_KEY_LAST_WORKED, getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
+import {beginLanguageServerStartup, completeLanguageServerStartup, failLanguageServerStartup, getLanguageServerStartup} from "./languageServerStartup";
 import { registerDebugger } from "./debugger";
 import { clearRCCEnvironments, clearRobocorpCodeCaches, computeEnvsToCollect } from "./clear";
 import { Mutex } from "./mutex";
@@ -270,6 +271,8 @@ const serverOptions: ServerOptions = async function () {
             throw new Error("Unable to get language server python info.");
         }
     } catch (error) {
+        failLanguageServerStartup(error, "environment");
+        C.errorMessage = getLanguageServerStartup().message;
         onNoPython();
         logError("Error getting Python", error, "INIT_PYTHON_ERR");
         throw error;
@@ -337,11 +340,14 @@ const serverOptions: ServerOptions = async function () {
 async function notifyOfInitializationErrorShowOutputTab(msg?: string) {
     OUTPUT_CHANNEL.show();
     if (!msg) {
-        msg = "Unable to activate Automation extension. Please see: Output > Automation for more details.";
+        msg = getLanguageServerStartup().status === "failed" ? getLanguageServerStartup().message :
+            "Automation language services are not ready. See Output > Automation for startup details.";
     }
-    window.showErrorMessage(msg);
-    const selection = await window.showErrorMessage(msg, "Show Output > Automation");
-    if (selection) {
+    const choices = getLanguageServerStartup().status === "failed" ? ["Show Output > Automation", "Retry startup"] : ["Show Output > Automation"];
+    const selection = await window.showErrorMessage(msg, ...choices);
+    if (selection === "Retry startup") {
+        await commands.executeCommand("workbench.action.reloadWindow");
+    } else if (selection === "Show Output > Automation") {
         OUTPUT_CHANNEL.show();
     }
 }
@@ -577,10 +583,12 @@ async function clearEnvsAndRestart(progress: vscode.Progress<{ message?: string;
     let okToRestartRFLS = false;
     try {
         await langServerMutex.dispatch(async () => {
+            beginLanguageServerStartup();
+            C.useErrorStubs = true;
+            C.errorMessage = getLanguageServerStartup().message;
             let result = await clearEnvsLocked(progress);
             if (!result) {
-                // Something didn't work out...
-                return;
+                throw new Error("Environment maintenance did not complete. See Automation diagnostics.");
             }
             okToRestartRFLS = result["okToRestartRFLS"];
         });
@@ -596,6 +604,8 @@ async function clearEnvsAndRestart(progress: vscode.Progress<{ message?: string;
         OUTPUT_CHANNEL.appendLine(msg);
     } catch (err) {
         allOk = false;
+        failLanguageServerStartup(err);
+        C.errorMessage = getLanguageServerStartup().message;
         const msg = "Error restarting Automation";
         notifyOfInitializationErrorShowOutputTab(msg);
         logError(msg, err, "INIT_RESTART_ROBOCORP_CODE");
@@ -603,6 +613,8 @@ async function clearEnvsAndRestart(progress: vscode.Progress<{ message?: string;
         if (allOk) {
             window.showInformationMessage("RCC Environments cleared and Automation restarted.");
             C.useErrorStubs = false;
+            C.errorMessage = undefined;
+            completeLanguageServerStartup();
         } else {
             C.useErrorStubs = true;
         }
@@ -707,6 +719,7 @@ function checkDeprecatedRobocorpCoreExtension() {
 }
 
 export async function activate(context: ExtensionContext) {
+    beginLanguageServerStartup();
     initializeRuntimeOwnership(context.workspaceState);
     GLOBAL_STATE = context.globalState;
     let timing = new Timing();
@@ -717,6 +730,8 @@ export async function activate(context: ExtensionContext) {
     registerLinkProviders(context);
 
     C = new CommandRegistry(context);
+    C.useErrorStubs = true;
+    C.errorMessage = getLanguageServerStartup().message;
 
     try {
         return await langServerMutex.dispatch(async () => {
@@ -725,8 +740,10 @@ export async function activate(context: ExtensionContext) {
             return ret;
         });
     } catch (error) {
+        failLanguageServerStartup(error, "activation");
         logError("Error initializing Automation extension", error, "INIT_ROBOCORP_CODE_ERROR");
         C.useErrorStubs = true;
+        C.errorMessage = getLanguageServerStartup().message;
         notifyOfInitializationErrorShowOutputTab();
     }
 }
@@ -936,6 +953,7 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
                     version +
                     ") is not compatible with this version of Automation. Robot Framework Language Server 1.7.0 or newer is required. Please update to proceed. ";
                 OUTPUT_CHANNEL.appendLine(msg);
+                failLanguageServerStartup(new Error(msg), "activation");
                 C.useErrorStubs = true;
                 notifyOfInitializationErrorShowOutputTab(msg);
                 return;
@@ -1024,13 +1042,20 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
         // may not be available.
         OUTPUT_CHANNEL.appendLine("Waiting for Automation (python) language server to finish activating...");
         await langServer.onReady();
+        C.useErrorStubs = false;
+        C.errorMessage = undefined;
+        completeLanguageServerStartup();
         // If it started properly, mark that it worked.
         GLOBAL_STATE.update(CACHE_KEY_LAST_WORKED, true);
         OUTPUT_CHANNEL.appendLine(
             "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Automation Language Server."
         );
     } catch (error) {
-        logError("Error initializing Robocorp code.", error, "ERROR_INITIALIZING_ROBOCORP_CODE_LANG_SERVER");
+        failLanguageServerStartup(error);
+        C.useErrorStubs = true;
+        C.errorMessage = getLanguageServerStartup().message;
+        logError("Error initializing Automation language services.", error, "ERROR_INITIALIZING_ROBOCORP_CODE_LANG_SERVER");
+        return;
     }
 
     // Note: start the async ones below but don't await on them (the extension should be considered initialized

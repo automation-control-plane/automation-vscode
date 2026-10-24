@@ -10,7 +10,7 @@ export const RUNBOOK_ROUTES = [
     { id: "settings", label: "Settings", icon: "settings-gear" },
 ] as const;
 export type RunbookRoute = typeof RUNBOOK_ROUTES[number]["id"];
-export const RUNBOOK_ACTIONS = ["create-action", "create-robot", "create-agent", "configure", "dependencies", "terminal", "check-environment", "rebuild", "runtime-start", "runtime-reconnect", "runtime-open", "work-items", "run", "debug", "action-inputs", "source", "logs", "diagnostics", "native-settings", "report-issue", "profile-import", "profile-switch", "export", "metadata", "locators", "web-inspector", "windows-inspector", "image-inspector", "java-inspector", "recorder", "reveal", "oauth-settings", "open-run", "edit-setting"] as const;
+export const RUNBOOK_ACTIONS = ["create-action", "create-robot", "create-agent", "configure", "dependencies", "terminal", "check-environment", "rebuild", "runtime-start", "runtime-reconnect", "runtime-open", "work-items", "run", "debug", "action-inputs", "source", "logs", "diagnostics", "native-settings", "report-issue", "profile-import", "profile-switch", "export", "metadata", "locators", "web-inspector", "windows-inspector", "image-inspector", "java-inspector", "recorder", "reveal", "oauth-settings", "open-run", "edit-setting", "retry-startup"] as const;
 export type RunbookAction = typeof RUNBOOK_ACTIONS[number];
 export type RunbookRequest =
     | {op: "refresh"}

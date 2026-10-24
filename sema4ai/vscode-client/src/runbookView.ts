@@ -12,6 +12,8 @@ import {resolveInterpreter} from "./activities";
 import {runtimeHomes} from "./runtimePaths";
 import {globalOutputViewState} from "./output/outViewRunIntegration";
 import {getRuntimeStatus, reconnectActionServer} from "./actionServer";
+import {getLanguageServerStartup, onLanguageServerStartupChanged} from "./languageServerStartup";
+import {logError} from "./channel";
 
 const OPEN = "automation.runbook.open";
 const SETTINGS: [string, string, string][] = [
@@ -65,7 +67,7 @@ export function registerRunbookWorkspace(context: vscode.ExtensionContext): void
     context.subscriptions.push(navTree, changed, vscode.commands.registerCommand(OPEN, async (requested: unknown = "packages") => {
         if (isRunbookRoute(requested)) route = requested;
         changed.fire();
-        if (route === "work-items" && getSelectedRobot()?.robot?.packageType !== "agent") {
+        if (getLanguageServerStartup().status === "ready" && route === "work-items" && getSelectedRobot()?.robot?.packageType !== "agent") {
             await vscode.commands.executeCommand("automation.workItems.open");
             return;
         }
@@ -97,6 +99,7 @@ export function registerRunbookWorkspace(context: vscode.ExtensionContext): void
         await refresh();
     }));
     context.subscriptions.push(onSelectedRobotChanged(() => {void refresh();}));
+    context.subscriptions.push(onLanguageServerStartupChanged(() => {void refresh();}));
     if (provider instanceof RobotsTreeDataProvider) context.subscriptions.push(provider.onDidChangeTreeData(() => {void refresh();}));
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(() => {if (panel) void post();}));
 
@@ -111,6 +114,10 @@ export function registerRunbookWorkspace(context: vscode.ExtensionContext): void
     async function refresh() {
         if (!panel) return;
         const epoch = ++refreshEpoch;
+        if (getLanguageServerStartup().status !== "ready") {
+            roots = []; targets.clear(); error = "";
+            await post(); return;
+        }
         try {
             const discovered = provider instanceof RobotsTreeDataProvider ? await provider.getValidCachedOrComputeChildren() : [];
             if (epoch !== refreshEpoch || !panel) return;
@@ -118,7 +125,9 @@ export function registerRunbookWorkspace(context: vscode.ExtensionContext): void
             await post();
         } catch (cause) {
             if (epoch !== refreshEpoch || !panel) return;
-            error = cause instanceof Error ? cause.message : "Package discovery failed. Refresh or open diagnostic logs.";
+            logError("Package discovery failed.", cause, "RUNBOOK_DISCOVERY_ERROR");
+            if (getLanguageServerStartup().status !== "ready") {roots = []; targets.clear(); error = ""; await post(); return;}
+            error = "Package discovery failed. Open diagnostic logs for the original error, then refresh Packages.";
             await panel?.webview.postMessage({type: "error", message: error});
         }
     }
@@ -126,7 +135,8 @@ export function registerRunbookWorkspace(context: vscode.ExtensionContext): void
         if (!panel) return;
         const epoch = ++renderEpoch;
         const selectedRoute = route;
-        const selected = getSelectedRobot();
+        const startup = getLanguageServerStartup();
+        const selected = startup.status === "ready" ? getSelectedRobot() : undefined;
         const metadata = selected?.robot;
         const localTargets = new Map<string, RobotEntry>();
         let runnable: {id: string; name: string; kind: string; source: string}[] = [];
@@ -144,12 +154,13 @@ export function registerRunbookWorkspace(context: vscode.ExtensionContext): void
         let homeError: string | undefined;
         try {homes = runtimeHomes(vscode.workspace.getConfiguration("sema4ai").get<string>("home", ""));} catch (cause) {homeError = String(cause);}
         const runtime = route === "environments" && metadata?.packageType === "action" ? await getRuntimeStatus(vscode.Uri.file(metadata.directory)) : undefined;
-        if (epoch !== renderEpoch || route !== selectedRoute || getSelectedRobot()?.robot?.filePath !== metadata?.filePath || !panel) return;
+        if (epoch !== renderEpoch || route !== selectedRoute || getLanguageServerStartup() !== startup ||
+            (startup.status === "ready" && getSelectedRobot()?.robot?.filePath !== metadata?.filePath) || !panel) return;
         targets = localTargets;
         const runs = globalOutputViewState?.uniqueRunIds.map(id => ({id, label: globalOutputViewState.runIdToContents.get(id)?.label || id})).reverse() || [];
         await panel.webview.postMessage({type: "state", route, routes: RUNBOOK_ROUTES, title: title(),
             packages: roots.filter(root => root.robot).map(root => describePackage(root.robot)),
-            selected: metadata ? describePackage(metadata) : undefined, runnable, busy, error,
+            selected: metadata ? describePackage(metadata) : undefined, runnable, busy, error, startup,
             environment: metadata ? environments.get(metadata.filePath) || {status: "Not checked", message: "Check explicitly to resolve or build this package's Python environment."} : undefined,
             homes, homeError, runtime, runs, platform: process.platform, trusted: vscode.workspace.isTrusted,
             settings: SETTINGS.filter(([key]) => key !== "sema4ai.vaultTokenTimeoutInMinutes" || vscode.workspace.getConfiguration().get("sema4ai.legacyVendorIntegrations.enabled", false))
@@ -158,15 +169,21 @@ export function registerRunbookWorkspace(context: vscode.ExtensionContext): void
     async function act(action: RunbookAction, target?: string, admittedPackage?: string) {
         const command = (id: string, ...args: unknown[]) => vscode.commands.executeCommand(id, ...args);
         switch (action) {
-            case "create-action": await command("sema4ai.createActionPackage"); return;
-            case "create-robot": await command("sema4ai.createRobot"); return;
-            case "create-agent": await command("sema4ai.createAgentPackage"); return;
+            case "retry-startup":
+                if (getLanguageServerStartup().status === "failed") await command("workbench.action.reloadWindow");
+                return;
             case "native-settings": await command("workbench.action.openSettings", "@ext:automation-control-plane.automation-vscode"); return;
             case "edit-setting": if (!SETTINGS.some(([key]) => key === target)) throw Error("Unknown setting."); await command("workbench.action.openSettings", "@id:" + target); return;
             case "diagnostics": await command("sema4ai.showOutput"); return;
             case "logs": await command("sema4ai.python.view.output.focus"); return;
             case "open-run": if (!target || !globalOutputViewState?.runIdToContents.has(target)) throw Error("This run log is no longer retained."); await globalOutputViewState.setCurrentRunId(target); await command("sema4ai.python.view.output.focus"); return;
             case "report-issue": await command("sema4ai.submitIssue"); return;
+        }
+        if (getLanguageServerStartup().status !== "ready") throw Error(getLanguageServerStartup().message);
+        switch (action) {
+            case "create-action": await command("sema4ai.createActionPackage"); return;
+            case "create-robot": await command("sema4ai.createRobot"); return;
+            case "create-agent": await command("sema4ai.createAgentPackage"); return;
             case "profile-import": await command("sema4ai.profileImport"); return;
             case "profile-switch": await command("sema4ai.profileSwitch"); return;
             case "oauth-settings": await command("sema4ai.oauth2.open_settings"); return;
