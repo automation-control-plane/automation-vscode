@@ -120,6 +120,12 @@ body[data-automation-surface] #root code { font-family: var(--automation-code-fo
 .automation-inspector-tabs button { border: 0; border-bottom: 2px solid transparent; color: var(--automation-muted); background: transparent; border-radius: 0; padding: 13px 12px; min-height: 48px; display: flex; align-items: center; gap: 8px; }
 .automation-inspector-tabs button[aria-selected="true"] { color: var(--automation-accent); border-bottom-color: var(--automation-accent); font-weight: 600; }
 .automation-inspector-tabs button:hover { color: var(--automation-text); background: var(--automation-surface); }
+.automation-inspector-error { margin: 16px 24px; padding: 12px 16px; border: 1px solid var(--automation-danger); border-left-width: 3px; border-radius: 4px; color: var(--automation-text); background: var(--automation-surface); }
+.automation-inspector-error[hidden] { display: none; }
+.automation-inspector-error h2 { font-size: 14px; margin: 0 0 8px; color: var(--automation-danger); }
+.automation-inspector-error p { margin: 0 0 8px; line-height: 1.5; }
+.automation-inspector-error summary { cursor: pointer; }
+.automation-inspector-error pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 200px; overflow: auto; font-size: 12px; }
 
 /* Frozen Inspector frame: header / optional info / divider / content. The
  * source shell replaces only its header and the misleading Robot path row.

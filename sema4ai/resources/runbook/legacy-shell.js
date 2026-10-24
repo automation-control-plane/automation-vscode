@@ -35,6 +35,13 @@
             directory: typeof value.directory === 'string' ? value.directory : '',
         };
     }
+    function webInspectorFailure(previous, message) {
+        if (message?.type !== 'event' || message.event?.type !== 'browserState') return previous;
+        const event = message.event;
+        if (event.status === 'failure' && typeof event.message === 'string' && event.message) return event.message.slice(0, 16384);
+        if (event.status === 'success' && event.data === 'opened') return undefined;
+        return previous;
+    }
     function outputMessage(state, message) {
         if (!message || message.type !== 'request') return state;
         if (message.command === 'setContents' && typeof message.runId === 'string') {
@@ -46,7 +53,7 @@
         }
         return state;
     }
-    if (typeof module === 'object' && module.exports) module.exports = { inspectorRouteEvent, nextInspectorRoute, rgbChannels, packageContext, outputMessage };
+    if (typeof module === 'object' && module.exports) module.exports = { inspectorRouteEvent, nextInspectorRoute, rgbChannels, packageContext, outputMessage, webInspectorFailure };
     if (!global || !global.document) return;
 
     function initialize() {
@@ -94,11 +101,18 @@
             setText('automation-inspector-kind', pkg.kind);
             setText('automation-inspector-path', pkg.directory);
             let lastRoute;
+            let browserFailure;
+            const renderBrowserFailure = () => {
+                const banner = document.getElementById('automation-inspector-error');
+                if (banner) banner.hidden = !browserFailure || lastRoute !== '/web-inspector/';
+                setText('automation-inspector-error-message', browserFailure || '');
+            };
             const syncRoute = (requested) => {
                 const hashRoute = global.location.hash.slice(1).split('?')[0];
                 const route = Object.hasOwn(routes, requested) ? requested : Object.hasOwn(routes, hashRoute) ? hashRoute : context.startRoute;
                 if (!Object.hasOwn(routes, route) || route === lastRoute) return;
                 lastRoute = route;
+                renderBrowserFailure();
                 document.body.dataset.inspectorRoute = route;
                 setText('automation-inspector-title', routes[route].title);
                 setText('automation-inspector-description', routes[route].description);
@@ -130,6 +144,8 @@
             }
             global.addEventListener('message', ({ data }) => {
                 if (data?.type === 'event' && data.event?.type === 'gotoInspectorApp' && data.event.status === 'success') syncRoute(data.event.data);
+                browserFailure = webInspectorFailure(browserFailure, data);
+                renderBrowserFailure();
             });
             global.addEventListener('hashchange', () => syncRoute());
             global.addEventListener('popstate', () => syncRoute());

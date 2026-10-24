@@ -16,3 +16,8 @@
   <button type="button" role="tab" data-inspector-route="/image-inspector/"><span class="codicon codicon-file-media" aria-hidden="true"></span>Image</button>
   <button type="button" role="tab" data-inspector-route="/java-inspector/"><span class="codicon codicon-coffee" aria-hidden="true"></span>Java</button>
 </nav>
+<section id="automation-inspector-error" class="automation-inspector-error" role="alert" hidden>
+  <h2>Web Inspector could not start</h2>
+  <p>Web Inspector needs the Chromium build required by its Playwright environment. Review the error below and Automation diagnostic logs. Correct the browser prerequisite or reported connection problem, then choose <strong>Start</strong> again. No automatic restart is scheduled.</p>
+  <details open><summary>Engine error</summary><pre id="automation-inspector-error-message"></pre></details>
+</section>

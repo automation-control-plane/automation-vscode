@@ -1,0 +1,83 @@
+✔ Inspector refuses ambiguous empty context, reuses the same package and replaces a different package without auto-picking (37.150405ms)
+✖ Browser engine failure retains its original error and resets picking; Image closed stays unchanged (2.815637ms)
+✖ Failed browser configuration never launches; failed Start response is shown instead of dropped (2.325115ms)
+✖ Browser failure survives closed/initializing and unrelated routes until an actual opened state (2.044635ms)
+✔ Inspector navigation emits only an existing route event, never starts a picker (1.168975ms)
+✔ the Inspector context distinguishes Actions and Robot Tasks without inferred success or credentials (0.194486ms)
+✔ Inspector keyboard navigation reaches every real route and wraps without invoking inspection (0.162454ms)
+✔ high-contrast color bridging reads rendered RGB channels without accepting arbitrary CSS (0.422771ms)
+✔ Output shell follows the selected log identity and never equates stream closure with success (0.307886ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 6
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 154.473809
+
+✖ failing tests:
+
+test at tests/inspector_host_context.test.js:76:1
+✖ Browser engine failure retains its original error and resets picking; Image closed stays unchanged (2.815637ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      {
+        data: 'closed',
+        status: 'success',
+        type: 'browserState'
+      },
+  -   {
+  -     data: 'closed',
+  -     message: 'Executable chromium-1169 missing; download ECONNREFUSED <script>inert</script>',
+  -     status: 'failure',
+  -     type: 'browserState'
+  -   }
+    ]
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/inspector_host_context.test.js:80:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { type: 'browserState', status: 'success', data: 'closed' } ],
+    expected: [ { type: 'browserState', status: 'success', data: 'closed' }, { type: 'browserState', status: 'failure', message: 'Executable chromium-1169 missing; download ECONNREFUSED <script>inert</script>', data: 'closed' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/inspector_host_context.test.js:88:1
+✖ Failed browser configuration never launches; failed Start response is shown instead of dropped (2.325115ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'webInspectorConfigureBrowser',
+  +   'webInspectorStartPick'
+    ]
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/inspector_host_context.test.js:94:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'webInspectorConfigureBrowser', 'webInspectorStartPick' ],
+    expected: [ 'webInspectorConfigureBrowser' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/inspector_shell.test.js:4:1
+✖ Browser failure survives closed/initializing and unrelated routes until an actual opened state (2.044635ms)
+  TypeError: webInspectorFailure is not a function
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/inspector_shell.test.js:8:15)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)

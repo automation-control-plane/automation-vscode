@@ -11,7 +11,7 @@ source links are retained without modifying a byte of either template.
   presentation. It overrides the engines' public `--color-*` theme tokens; it
   never targets generated styled-components class names.
 - `inspector-shell.html`, `output-shell.html`: owned context and navigation.
-- `legacy-shell.js`: existing-route navigation and selected-log context. The
+- `legacy-shell.js`: existing-route navigation, selected-log context and persistent Web Inspector diagnostics. The
   shell never starts a picker, runs a package or turns a closed log stream into
   successful execution. All actual operations remain engine/host-owned.
 - `vscode-client/src/legacySurface.ts`: injects maintained source into document
@@ -55,3 +55,13 @@ adapter contract and render every Inspector route, empty/active logs, dialogs,
 light/dark/high-contrast and narrow layouts in the installed extension. Actual
 native screenshots and host interaction evidence are the visual gate; these
 unit tests alone do not establish visual fidelity or platform acceptance.
+
+## Inspector failures
+
+The maintained shell renders existing `browserState` failure messages as inert
+text with browser prerequisite and explicit Start guidance. Ordinary closed or
+initializing states do not erase the failure; a real opened state clears it.
+Navigation hides the banner outside Web and restores it on return. No template
+bytes or generated engine selectors changed, and the shell does not start/retry
+a picker. The Python worker reports the original creation exception, closes its
+thread-owned Playwright resources, and waits for a new explicit Start.

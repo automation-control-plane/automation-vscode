@@ -68,7 +68,29 @@ def _cache(callback, func):
     return new_func
 
 
-clear_all_callback = Callback()
+class _ThreadLocalCallbacks(threading.local):
+    """Teardown must run on the same thread as its cached Playwright objects."""
+
+    def __init__(self):
+        self.callbacks = Callback()
+
+    def register(self, callback):
+        self.callbacks.register(callback)
+
+    def unregister(self, callback):
+        self.callbacks.unregister(callback)
+
+    def __call__(self, *args, **kwargs):
+        self.callbacks(*args, **kwargs)
+
+    def __len__(self):
+        return len(self.callbacks)
+
+    def clear(self):
+        self.callbacks.clear()
+
+
+clear_all_callback = _ThreadLocalCallbacks()
 
 
 def session_cache(func):

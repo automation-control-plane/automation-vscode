@@ -1,6 +1,43 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
+test('Browser failure survives closed/initializing and unrelated routes until an actual opened state',()=>{
+    const {webInspectorFailure}=require('../resources/runbook/legacy-shell.js');
+    const event=(status,data,message)=>({type:'event',event:{type:'browserState',status,data,message}});
+    const error='Chromium1169 download failed: ECONNREFUSED <script>inert</script>';
+    let state=webInspectorFailure(undefined,event('failure','closed',error));assert.equal(state,error);
+    for(const message of [event('success','closed'),event('success','initializing'),inspectorEvent('/image-inspector/'),{type:'event',event:{type:'snippingToolState',status:'success',data:'opened'}}]) {
+        state=webInspectorFailure(state,message);assert.equal(state,error);
+    }
+    assert.equal(webInspectorFailure(state,event('success','opened')),undefined);
+    assert.equal(webInspectorFailure(state,event('failure','closed','x'.repeat(17000))).length,16384);
+    function inspectorEvent(route){return {type:'event',event:{type:'gotoInspectorApp',status:'success',data:route}};}
+});
+
+test('Maintained Inspector shell renders the engine error as persistent inert text with prerequisite guidance',()=>{
+    const fs=require('node:fs'),vm=require('node:vm');
+    const markup=fs.readFileSync('resources/runbook/inspector-shell.html','utf8');
+    const ids=new Set([...markup.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
+    const nodes=new Map([...ids].map(id=>[id,{hidden:true,textContent:'',set innerHTML(_){assert.fail('Engine errors must remain inert text');}}]));
+    nodes.set('automation-surface-context',{textContent:JSON.stringify({startRoute:'/web-inspector/',packageName:'Synthetic',packageType:'action'})});
+    const receivers=[];
+    const document={readyState:'complete',getElementById:id=>nodes.get(id),querySelectorAll:()=>[],
+        createElement:()=>({style:{},remove(){}}),body:{dataset:{automationSurface:'inspector'},classList:{contains:()=>false},style:{removeProperty(){}}}};
+    const window={document,location:{hash:'#/web-inspector/'},addEventListener:(name,callback)=>{if(name==='message')receivers.push(callback);}};
+    vm.runInNewContext(fs.readFileSync('resources/runbook/legacy-shell.js','utf8'),{window,MutationObserver:class{observe(){}}});
+    const send=event=>receivers.forEach(callback=>callback({data:{type:'event',event}}));
+    const banner=nodes.get('automation-inspector-error'),message=nodes.get('automation-inspector-error-message');
+    assert.equal(banner.hidden,true);
+    const error='Chromium1169 failed: ECONNREFUSED <script>inert</script>';
+    send({type:'browserState',status:'failure',message:error,data:'closed'});
+    assert.equal(banner.hidden,false);assert.equal(message.textContent,error);
+    send({type:'browserState',status:'success',data:'closed'});assert.equal(banner.hidden,false);
+    send({type:'gotoInspectorApp',status:'success',data:'/image-inspector/'});assert.equal(banner.hidden,true);
+    send({type:'gotoInspectorApp',status:'success',data:'/web-inspector/'});assert.equal(banner.hidden,false);
+    send({type:'browserState',status:'success',data:'opened'});assert.equal(banner.hidden,true);assert.equal(message.textContent,'');
+    assert.match(markup,/role="alert"/);assert.match(markup,/Playwright environment/);assert.match(markup,/choose <strong>Start/);
+});
+
 test('Inspector navigation emits only an existing route event, never starts a picker', () => {
     const { inspectorRouteEvent } = require('../resources/runbook/legacy-shell.js');
     for (const route of ['/locators-manager/', '/web-inspector/', '/windows-inspector/', '/image-inspector/', '/java-inspector/']) {

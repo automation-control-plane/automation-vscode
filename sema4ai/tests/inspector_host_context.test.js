@@ -8,6 +8,8 @@ let selected;
 const panels = [];
 const notices = [];
 const requests = [];
+const notifications = new Map();
+let requestResult = async () => ({ success: true });
 const disposable = () => ({ dispose() {} });
 const vscode = {
     ViewColumn: { Active: 1 },
@@ -22,7 +24,7 @@ const vscode = {
                 reveal() { this.revealed++; },
                 onDidDispose(fn) { onDispose = fn; return disposable(); },
                 dispose() { this.disposed = true; onDispose?.(); },
-                webview: { html: '', cspSource: 'https://safe.example', asWebviewUri: uri => uri, onDidReceiveMessage: () => disposable(), postMessage: async message => panel.messages.push(message) },
+                webview: { html: '', cspSource: 'https://safe.example', asWebviewUri: uri => uri, onDidReceiveMessage: fn => { panel.receive=fn; return disposable(); }, postMessage: async message => panel.messages.push(message) },
             };
             panels.push(panel);
             return panel;
@@ -35,7 +37,7 @@ Module._load = function (name, parent, main) {
         if (name === '../viewsSelection') return { getSelectedRobot: () => selected };
         if (name === '../files') return { verifyFileExists: () => false, getExtensionRelativeFile: relative => path.resolve(extensionRoot, 'vscode-client/out', relative) };
         if (name === '../channel') return { OUTPUT_CHANNEL: { appendLine() {} }, buildErrorStr: String, logError() {} };
-        if (name === '../extension') return { langServer: { onNotification: disposable, sendRequest: async (name, args) => { requests.push({ name, args }); return { success: true }; } } };
+        if (name === '../extension') return { langServer: { onNotification: (name, fn) => { notifications.set(name,fn); return disposable(); }, sendRequest: async (name, args) => { requests.push({ name, args }); return requestResult(name,args); } } };
     }
     return originalLoad.call(this, name, parent, main);
 };
@@ -69,4 +71,32 @@ test('Inspector refuses ambiguous empty context, reuses the same package and rep
     assert.equal(readContext(panels.at(-1)).packageType, 'robot');
     assert.equal(readContext(panels.at(-1)).directory, '/synthetic/robot');
     assert.deepEqual(requests, [{ name: 'killInspectors', args: { inspector: null } }], 'Only explicit old-panel disposal cleans up its inspectors.');
+});
+
+test('Browser engine failure retains its original error and resets picking; Image closed stays unchanged',async()=>{
+    const panel=panels.at(-1);panel.messages.length=0;
+    const error='Executable chromium-1169 missing; download ECONNREFUSED <script>inert</script>';
+    notifications.get('$/webInspectorState')({state:'closed',error});
+    assert.deepEqual(panel.messages.map(message=>message.event),[
+        {type:'browserState',status:'success',data:'closed'},
+        {type:'browserState',status:'failure',message:error,data:'closed'},
+    ]);
+    notifications.get('$/imageInspectorState')({state:'closed'});
+    assert.deepEqual(panel.messages.at(-1).event,{type:'snippingToolState',status:'success',data:'closed'});
+});
+
+test('Failed browser configuration never launches; failed Start response is shown instead of dropped',async()=>{
+    const panel=panels.at(-1);
+    for(const failingRequest of ['webInspectorConfigureBrowser','webInspectorStartPick']){
+        requests.length=0;panel.messages.length=0;
+        requestResult=async name=>name===failingRequest?{success:false,message:'Original '+name+' error'}:{success:true};
+        await panel.receive({id:'start',type:'request',app:'webInspector',command:{type:'startPicking',url:'http://127.0.0.1/owned'}});
+        assert.deepEqual(requests.map(r=>r.name),failingRequest==='webInspectorConfigureBrowser'?['webInspectorConfigureBrowser']:['webInspectorConfigureBrowser','webInspectorStartPick']);
+        assert.equal(panel.messages.at(-1).event.status,'failure');
+        assert.equal(panel.messages.at(-1).event.message,'Original '+failingRequest+' error');
+    }
+    requestResult=async()=>undefined;requests.length=0;panel.messages.length=0;
+    await panel.receive({id:'start',type:'request',app:'webInspector',command:{type:'startPicking'}});
+    assert.equal(requests.length,2,'Existing void acknowledgements remain compatible');
+    assert.equal(panel.messages.length,0,'Only actual engine state reports readiness');
 });

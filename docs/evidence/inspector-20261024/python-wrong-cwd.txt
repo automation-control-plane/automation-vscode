@@ -1,0 +1,2 @@
+
+Poetry could not find a pyproject.toml file in /workspace/automation-vscode or its parents

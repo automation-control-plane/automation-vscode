@@ -109,6 +109,14 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
         packageName: packageName || path.basename(directory), packageType, cspSource: panel.webview.cspSource,
     });
 
+    const reportWebFailure = (message: string, resetState = true) => {
+        OUTPUT_CHANNEL.appendLine(`[Web] > Inspector failed: ${message}`);
+        if (resetState) panel.webview.postMessage({id: generateID(), type: IMessageType.EVENT,
+            event: {type: "browserState", status: "success", data: "closed"}});
+        panel.webview.postMessage({id: generateID(), type: IMessageType.EVENT,
+            event: {type: "browserState", status: "failure", data: "closed", message: message.slice(0, 16384)}});
+    };
+
     // Web Inspector - Create listeners for BE (Python) messages
     context.subscriptions.push(
         langServer.onNotification("$/webPick", (values) => {
@@ -141,6 +149,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
             };
             // this is an event - postMessage will update the useLocator hook
             panel.webview.postMessage(response);
+            if (typeof state.error === "string" && state.error) reportWebFailure(state.error, false);
         })
     );
     context.subscriptions.push(
@@ -350,16 +359,21 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                             OUTPUT_CHANNEL.appendLine(
                                 `[Web] > Requesting: Configure Browser: ${JSON.stringify(command)}`
                             );
-                            await sendRequest("webInspectorConfigureBrowser", {
+                            const configured = await sendRequest("webInspectorConfigureBrowser", {
                                 width: command["viewportWidth"],
                                 height: command["viewportHeight"],
                                 url: command["url"],
                             });
+                            if (configured?.success === false) {
+                                reportWebFailure(configured.message || "Browser configuration failed. See Automation diagnostic logs.");
+                                break;
+                            }
                             // start picking
                             OUTPUT_CHANNEL.appendLine(`[Web] > Requesting: Start Picking: ${JSON.stringify(command)}`);
-                            await sendRequest("webInspectorStartPick", {
+                            const started = await sendRequest("webInspectorStartPick", {
                                 url_if_new: command["url"],
                             });
+                            if (started?.success === false) reportWebFailure(started.message || "Browser startup failed. See Automation diagnostic logs.");
                         } else if (command["type"] === "stopPicking") {
                             OUTPUT_CHANNEL.appendLine(`[Web] > Requesting: Stop Picking: ${JSON.stringify(command)}`);
                             await sendRequest("webInspectorStopPick");

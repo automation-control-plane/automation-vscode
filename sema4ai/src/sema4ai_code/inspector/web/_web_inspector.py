@@ -175,17 +175,21 @@ class WebInspector:
                 page = robocorp_browser.page()
                 self._page = page
             except Exception as e:
-                log.error(f"Exception raised while constructing browser page:", e)
-                # shut down the current thread
+                log.exception("Exception raised while constructing browser page")
+                self._picking = False
+                self._pick_async_code_evaluate_worked = False
+                self._on_picked.clear()
+                if endpoint is not None:
+                    endpoint.notify(
+                        "$/webInspectorState", {"state": STATE_CLOSED, "error": str(e)}
+                    )
+                # No page exists to close. close_browser() would call browser()
+                # and can trigger a second installation/launch while handling
+                # the first failure. Finish this worker; only an explicit Start
+                # may create its replacement and retry the prerequisite.
                 if isinstance(self._current_thread, _WebInspectorThread):
-                    # make sure we close the browser first - skip notification because we reignite
-                    self.close_browser(skip_notify=True)
-                    # shutdown the thread
                     self._current_thread.shutdown()
-                # # make sure we notify the necessary entities that we want to reignite the thread
-                if self._endpoint is not None:
-                    self._endpoint.notify("$/webReigniteThread", self._configuration)
-                return None
+                raise
 
             if endpoint is not None:
                 endpoint.notify("$/webInspectorState", {"state": STATE_OPENED})
