@@ -36,6 +36,19 @@ test('Maintained Inspector shell renders the engine error as persistent inert te
     send({type:'gotoInspectorApp',status:'success',data:'/web-inspector/'});assert.equal(banner.hidden,false);
     send({type:'browserState',status:'success',data:'opened'});assert.equal(banner.hidden,true);assert.equal(message.textContent,'');
     assert.match(markup,/role="alert"/);assert.match(markup,/Playwright environment/);assert.match(markup,/choose <strong>Start/);
+    assert.match(markup,/Chromium sandboxing is required/);
+    const result=nodes.get('automation-inspector-validation');
+    const validation={id:'one',state:'pending',locator:{strategy:'css',value:'<img onerror=alert(1)>',url:'http://127.0.0.1/owned'}};
+    const update=state=>receivers.forEach(callback=>callback({data:{type:'automation.webValidation',validation:{...validation,...state}}}));
+    update({});assert.equal(result.hidden,false);assert.equal(nodes.get('automation-validation-summary').textContent,'Checking strategy…');
+    update({state:'complete',matches:0});assert.equal(nodes.get('automation-validation-summary').textContent,'No matching elements');
+    assert.equal(nodes.get('automation-validation-locator').textContent,'css: <img onerror=alert(1)>');
+    send({type:'gotoInspectorApp',status:'success',data:'/image-inspector/'});assert.equal(result.hidden,true);
+    send({type:'gotoInspectorApp',status:'success',data:'/web-inspector/'});assert.equal(result.hidden,false);
+    update({state:'failed',message:'Selector failed <script>inert</script>'});
+    assert.equal(nodes.get('automation-validation-summary').textContent,'Validation failed');
+    assert.equal(nodes.get('automation-validation-message').textContent,'Selector failed <script>inert</script>');
+    send({type:'urlChange',status:'success',data:'http://127.0.0.1/another'});assert.equal(result.hidden,true);
 });
 
 test('Inspector navigation emits only an existing route event, never starts a picker', () => {
@@ -80,4 +93,35 @@ test('Output shell follows the selected log identity and never equates stream cl
     assert.equal(outputMessage(selected, { type: 'request', command: 'updateLabel', runId: 'run-a', label: 'First (finished)' }), selected);
     assert.deepEqual(outputMessage(selected, { type: 'request', command: 'updateLabel', runId: 'run-b', label: 'Second (finished)' }), { runId: 'run-b', label: 'Second (finished)' });
     assert.equal(outputMessage(selected, { type: 'request', command: 'appendContents', runId: 'run-b', appendContents: 'log' }), selected);
+});
+
+test('Validation result remains labelled and ignores out-of-order replies; navigation clears its current-page claim',()=>{
+    const {webValidation}=require('../resources/runbook/legacy-shell.js');
+    const message=(id,state,rest={})=>({type:'automation.webValidation',validation:{id,state,locator:{strategy:'id',value:'owned',url:'http://127.0.0.1/fixture'},...rest}});
+    let state=webValidation(undefined,message('a','pending'));
+    state=webValidation(state,message('b','pending'));
+    assert.equal(webValidation(state,message('a','complete',{matches:1})),state);
+    state=webValidation(state,message('b','complete',{matches:0}));
+    assert.equal(state.matches,0);assert.equal(state.locator.value,'owned');
+    assert.equal(webValidation(state,{type:'event',event:{type:'gotoInspectorApp',status:'success',data:'/image-inspector/'}}),state);
+    assert.equal(webValidation(state,{type:'event',event:{type:'urlChange',status:'success',data:'http://127.0.0.1/new'}}),undefined);
+    assert.equal(webValidation(state,{type:'event',event:{type:'browserState',status:'success',data:'closed'}}),undefined);
+});
+
+test('Validation retains its pending identity when its own command opens or navigates the browser',()=>{
+    const {webValidation}=require('../resources/runbook/legacy-shell.js');
+    const pending={type:'automation.webValidation',validation:{id:'opening',state:'pending',locator:{strategy:'id',value:'probe',url:'http://127.0.0.1/requested'}}};
+    for(const reply of [{state:'complete',matches:1},{state:'failed',message:'Sandbox unavailable'}]){
+        let state=webValidation(undefined,pending);
+        for(const event of [
+            {type:'browserState',status:'success',data:'initializing'},
+            {type:'browserState',status:'success',data:'opened'},
+            {type:'urlChange',status:'success',data:pending.validation.locator.url},
+            {type:'urlChange',status:'success',data:pending.validation.locator.url+'/'},
+            {type:'urlChange',status:'success',data:'http://127.0.0.1/redirected'},
+            {type:'browserState',status:'success',data:'closed'},
+        ]) state=webValidation(state,{type:'event',event});
+        state=webValidation(state,{type:'automation.webValidation',validation:{...pending.validation,...reply}});
+        assert.equal(state.state,reply.state);
+    }
 });

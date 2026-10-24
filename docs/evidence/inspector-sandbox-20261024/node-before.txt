@@ -1,0 +1,40 @@
+✔ Inspector refuses ambiguous empty context, reuses the same package and replaces a different package without auto-picking (30.927302ms)
+✔ Browser engine failure retains its original error and resets picking; Image closed stays unchanged (0.822405ms)
+✔ Failed browser configuration never launches; failed Start response is shown instead of dropped (0.806832ms)
+✖ Web validation settles with a durable labelled result, preserves zero matches and reports transport failures (0.690937ms)
+✔ Browser failure survives closed/initializing and unrelated routes until an actual opened state (2.51283ms)
+✔ Maintained Inspector shell renders the engine error as persistent inert text with prerequisite guidance (3.829101ms)
+✔ Inspector navigation emits only an existing route event, never starts a picker (1.028806ms)
+✔ the Inspector context distinguishes Actions and Robot Tasks without inferred success or credentials (0.336254ms)
+✔ Inspector keyboard navigation reaches every real route and wraps without invoking inspection (0.290378ms)
+✔ high-contrast color bridging reads rendered RGB channels without accepting arbitrary CSS (0.49779ms)
+✔ Output shell follows the selected log identity and never equates stream closure with success (0.260571ms)
+✖ Validation result remains labelled and ignores out-of-order replies; navigation clears its current-page claim (0.520189ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 10
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 135.107743
+
+✖ failing tests:
+
+test at tests/inspector_host_context.test.js:104:1
+✖ Web validation settles with a durable labelled result, preserves zero matches and reports transport failures (0.690937ms)
+  TypeError: Cannot read properties of undefined (reading 'state')
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/inspector_host_context.test.js:120:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/inspector_shell.test.js:85:1
+✖ Validation result remains labelled and ignores out-of-order replies; navigation clears its current-page claim (0.520189ms)
+  TypeError: webValidation is not a function
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/inspector_shell.test.js:88:15)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

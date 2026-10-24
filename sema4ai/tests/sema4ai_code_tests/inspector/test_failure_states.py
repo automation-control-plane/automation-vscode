@@ -215,3 +215,86 @@ def test_web_rpc_invalid_or_error_response_fails_closed(response):
     assert result["message"]
     if response and "error" in response:
         assert result["message"] == "RPC failed"
+
+
+@pytest.mark.parametrize('engine', ['chromium', 'chrome', 'msedge', 'firefox', 'webkit'])
+def test_inspector_launch_options_enable_chromium_sandbox(monkeypatch, engine):
+    from sema4ai_code.playwright.robocorp_browser import _context
+    from sema4ai_code.playwright.robocorp_browser._caches import clear_all_callback
+    from types import SimpleNamespace
+    clear_all_callback()
+    monkeypatch.delenv('AUTOMATION_BROWSER_EXECUTABLE', raising=False)
+    calls = []
+    monkeypatch.setattr(_context, '_browser_type', lambda: SimpleNamespace(launch=lambda **kw: calls.append(kw)))
+    try:
+        _context._browser_config().browser_engine = engine
+        _context._browser_launcher()(headless=True)
+        assert calls[0].get('chromium_sandbox') is (True if engine in ('chromium', 'chrome', 'msedge') else None)
+    finally:
+        clear_all_callback()
+
+
+def test_launch_failure_does_not_download_or_retry_sandbox_error(monkeypatch):
+    from playwright.sync_api import Error
+    from sema4ai_code.playwright.robocorp_browser import _context
+    from sema4ai_code.playwright.robocorp_browser._caches import clear_all_callback
+    clear_all_callback()
+    attempts, installs = [], []
+    error = Error('The SUID sandbox helper binary was found, but is not configured correctly')
+    def launch(**kwargs):
+        attempts.append(kwargs)
+        raise error
+    monkeypatch.setattr(_context, '_browser_launcher', lambda: launch)
+    monkeypatch.setattr(_context, 'install_browser', lambda *args: installs.append(args))
+    try:
+        with pytest.raises(Error) as caught:
+            _context.browser()
+        assert caught.value is error
+        assert installs == []
+        assert len(attempts) == 1
+    finally:
+        clear_all_callback()
+
+
+def test_missing_managed_browser_still_installs_once(monkeypatch):
+    from playwright.sync_api import Error
+    from sema4ai_code.playwright.robocorp_browser import _context
+    from sema4ai_code.playwright.robocorp_browser._caches import clear_all_callback
+    from types import SimpleNamespace
+    clear_all_callback()
+    monkeypatch.delenv('AUTOMATION_BROWSER_EXECUTABLE', raising=False)
+    attempts, installs = [], []
+    expected = SimpleNamespace(close=lambda: None)
+    def launch(**kwargs):
+        attempts.append(kwargs)
+        if len(attempts) == 1:
+            raise Error("Executable doesn't exist at /synthetic/playwright/chrome")
+        return expected
+    monkeypatch.setattr(_context, '_browser_launcher', lambda: launch)
+    monkeypatch.setattr(_context, 'install_browser', lambda *args: installs.append(args))
+    try:
+        assert _context.browser() is expected
+        assert len(installs) == 1
+        assert len(attempts) == 2
+    finally:
+        clear_all_callback()
+
+
+@pytest.mark.parametrize('override', ['environment', 'keyword'])
+def test_missing_explicit_browser_does_not_install_a_substitute(monkeypatch, override):
+    from playwright.sync_api import Error
+    from sema4ai_code.playwright.robocorp_browser import _context
+    from sema4ai_code.playwright.robocorp_browser._caches import clear_all_callback
+    clear_all_callback()
+    monkeypatch.delenv('AUTOMATION_BROWSER_EXECUTABLE', raising=False)
+    if override == 'environment':
+        monkeypatch.setenv('AUTOMATION_BROWSER_EXECUTABLE', '/synthetic/operator/browser')
+    def launch(**kwargs):
+        raise Error("Executable doesn't exist at /synthetic/operator/browser")
+    monkeypatch.setattr(_context, '_browser_launcher', lambda: launch)
+    monkeypatch.setattr(_context, 'install_browser', lambda *args: pytest.fail('Explicit paths must not trigger substitute installs'))
+    try:
+        with pytest.raises(Error, match="Executable doesn't exist"):
+            _context.browser(**({'executable_path':'/synthetic/operator/browser'} if override == 'keyword' else {}))
+    finally:
+        clear_all_callback()

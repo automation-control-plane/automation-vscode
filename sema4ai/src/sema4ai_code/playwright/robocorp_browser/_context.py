@@ -139,6 +139,11 @@ def _get_auto_headless_state() -> bool:
 @session_cache
 def browser_type_launch_args() -> dict:
     launch_options = {}
+    engine, _ = ENGINE_TO_ARGS[_browser_config().browser_engine]
+    if engine == "chromium":
+        # Playwright otherwise adds --no-sandbox, including for headed browsers.
+        # Unsupported hosts must surface the launch error, never downgrade.
+        launch_options["chromium_sandbox"] = True
 
     # RPA_HEADLESS_MODE can be used to force whether running headless.
     rpa_headless_mode = os.environ.get("RPA_HEADLESS_MODE")
@@ -221,8 +226,15 @@ def browser(**kwargs) -> Iterator[Browser]:
     launcher = _browser_launcher()
     try:
         browser = launcher(**kwargs)
-    except Error:
-        if config.install is None:
+    except Error as error:
+        # Installing a browser cannot repair OS sandbox permissions or other
+        # launch failures. Only provision a missing Playwright-managed binary.
+        if (
+            config.install is None
+            and "Executable doesn't exist at" in str(error)
+            and not kwargs.get("executable_path")
+            and not os.environ.get("AUTOMATION_BROWSER_EXECUTABLE")
+        ):
             log.exception(
                 "Unable to launch browser.\nPLAYWRIGHT_BROWSERS_PATH: %s\nInstalling browsers now.",
                 os.environ.get("PLAYWRIGHT_BROWSERS_PATH"),

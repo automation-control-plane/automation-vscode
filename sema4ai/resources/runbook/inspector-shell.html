@@ -19,5 +19,13 @@
 <section id="automation-inspector-error" class="automation-inspector-error" role="alert" hidden>
   <h2>Web Inspector could not start</h2>
   <p>Web Inspector needs the Chromium build required by its Playwright environment. Review the error below and Automation diagnostic logs. Correct the browser prerequisite or reported connection problem, then choose <strong>Start</strong> again. No automatic restart is scheduled.</p>
+  <p>Chromium sandboxing is required. If the engine reports an unavailable sandbox, use a supported browser installation and host that provides it, then retry. Automation does not disable the sandbox or change system permissions.</p>
   <details open><summary>Engine error</summary><pre id="automation-inspector-error-message"></pre></details>
+</section>
+<section id="automation-inspector-validation" class="automation-inspector-validation" role="status" aria-live="polite" hidden>
+  <div class="automation-surface-eyebrow">Last strategy validation</div>
+  <strong id="automation-validation-summary"></strong>
+  <code id="automation-validation-locator"></code>
+  <span id="automation-validation-url"></span>
+  <p id="automation-validation-message"></p>
 </section>

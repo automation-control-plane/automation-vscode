@@ -164,3 +164,20 @@ body.vscode-high-contrast-light[data-automation-surface] #root button { outline:
   body[data-automation-surface="inspector"] #root > div { padding: 16px !important; }
   .automation-output-header { padding: 7px 10px; }
 }
+
+.automation-inspector-validation {
+  margin: 0 16px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--automation-border);
+  border-left: 3px solid var(--automation-accent);
+  border-radius: 4px;
+  background: var(--automation-surface);
+  font-size: 12px;
+}
+.automation-inspector-validation[hidden] { display: none; }
+.automation-inspector-validation strong,
+.automation-inspector-validation code,
+.automation-inspector-validation span { display: block; margin-top: 4px; overflow-wrap: anywhere; }
+.automation-inspector-validation span { color: var(--vscode-descriptionForeground); }
+.automation-inspector-validation p { white-space: pre-wrap; max-height: 160px; overflow: auto; }
+.automation-inspector-validation p:empty { display: none; }

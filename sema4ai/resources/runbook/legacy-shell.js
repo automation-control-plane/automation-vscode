@@ -42,6 +42,30 @@
         if (event.status === 'success' && event.data === 'opened') return undefined;
         return previous;
     }
+    function webValidation(previous, message) {
+        if (message?.type === 'event' && message.event?.status === 'success') {
+            if (message.event.type === 'urlChange') {
+                // Validation can navigate, normalize its URL or follow redirects.
+                // These events carry no request identity, so they cannot cancel
+                // the pending operation. Its result is labelled with the requested
+                // page; subsequent navigation invalidates a completed result.
+                return previous?.state === 'pending' ? previous : undefined;
+            }
+            if (message.event.type === 'browserState' && ['closed', 'initializing', 'opened'].includes(message.event.data)) {
+                // Opening (or failing to open) a browser may belong to Validate.
+                // Its response must still settle the pending result or error.
+                return previous?.state === 'pending' ? previous : undefined;
+            }
+        }
+        if (message?.type !== 'automation.webValidation') return previous;
+        const next = message.validation;
+        if (!next || typeof next.id !== 'string' || !next.locator ||
+            !['strategy', 'value', 'url'].every(key => typeof next.locator[key] === 'string')) return previous;
+        if (next.state === 'pending') return next;
+        if (next.id !== previous?.id || !['complete', 'failed'].includes(next.state)) return previous;
+        if (next.state === 'complete' && (!Number.isSafeInteger(next.matches) || next.matches < 0)) return previous;
+        return next;
+    }
     function outputMessage(state, message) {
         if (!message || message.type !== 'request') return state;
         if (message.command === 'setContents' && typeof message.runId === 'string') {
@@ -53,7 +77,7 @@
         }
         return state;
     }
-    if (typeof module === 'object' && module.exports) module.exports = { inspectorRouteEvent, nextInspectorRoute, rgbChannels, packageContext, outputMessage, webInspectorFailure };
+    if (typeof module === 'object' && module.exports) module.exports = { inspectorRouteEvent, nextInspectorRoute, rgbChannels, packageContext, outputMessage, webInspectorFailure, webValidation };
     if (!global || !global.document) return;
 
     function initialize() {
@@ -102,10 +126,22 @@
             setText('automation-inspector-path', pkg.directory);
             let lastRoute;
             let browserFailure;
+            let validation;
             const renderBrowserFailure = () => {
                 const banner = document.getElementById('automation-inspector-error');
                 if (banner) banner.hidden = !browserFailure || lastRoute !== '/web-inspector/';
                 setText('automation-inspector-error-message', browserFailure || '');
+            };
+            const renderValidation = () => {
+                const banner = document.getElementById('automation-inspector-validation');
+                if (banner) banner.hidden = !validation || lastRoute !== '/web-inspector/';
+                const summary = !validation ? '' : validation.state === 'pending' ? 'Checking strategy…' :
+                    validation.state === 'failed' ? 'Validation failed' : validation.matches === 0 ? 'No matching elements' :
+                    validation.matches === 1 ? '1 matching element' : `${validation.matches} matching elements`;
+                setText('automation-validation-summary', summary);
+                setText('automation-validation-locator', validation ? `${validation.locator.strategy}: ${validation.locator.value}` : '');
+                setText('automation-validation-url', validation?.locator.url ? `Requested page: ${validation.locator.url}` : '');
+                setText('automation-validation-message', validation?.state === 'failed' ? validation.message || 'See Automation diagnostic logs.' : '');
             };
             const syncRoute = (requested) => {
                 const hashRoute = global.location.hash.slice(1).split('?')[0];
@@ -113,6 +149,7 @@
                 if (!Object.hasOwn(routes, route) || route === lastRoute) return;
                 lastRoute = route;
                 renderBrowserFailure();
+                renderValidation();
                 document.body.dataset.inspectorRoute = route;
                 setText('automation-inspector-title', routes[route].title);
                 setText('automation-inspector-description', routes[route].description);
@@ -146,6 +183,8 @@
                 if (data?.type === 'event' && data.event?.type === 'gotoInspectorApp' && data.event.status === 'success') syncRoute(data.event.data);
                 browserFailure = webInspectorFailure(browserFailure, data);
                 renderBrowserFailure();
+                validation = webValidation(validation, data);
+                renderValidation();
             });
             global.addEventListener('hashchange', () => syncRoute());
             global.addEventListener('popstate', () => syncRoute());

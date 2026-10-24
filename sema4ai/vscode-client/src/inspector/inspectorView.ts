@@ -294,7 +294,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
             status: actionResult.success ? "success" : "failure",
             message: actionResult.message,
             data:
-                dataType && actionResult.result
+                dataType && actionResult.result !== undefined && actionResult.result !== null
                     ? {
                           type: dataType,
                           value: actionResult.result,
@@ -379,13 +379,33 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                             await sendRequest("webInspectorStopPick");
                         } else if (command["type"] === "validate") {
                             OUTPUT_CHANNEL.appendLine(`[Web] > Requesting: Validate: ${JSON.stringify(command)}`);
-                            const actionResult = await sendRequest("webInspectorValidateLocator", {
+                            const browserLocator = command["locator"] as BrowserLocator;
+                            const locator = {
+                                strategy: browserLocator.strategy,
+                                value: browserLocator.value,
+                                url: command["url"] || browserLocator.source || "",
+                            };
+                            const reportValidation = (state: string, result?: ActionResult<number>) => panel.webview.postMessage({
+                                type: "automation.webValidation",
+                                validation: {id: message.id, state, locator, matches: result?.result, message: result?.message},
+                            });
+                            reportValidation("pending");
+                            const reply = await sendRequest("webInspectorValidateLocator", {
                                 locator: command["locator"],
                                 url: command["url"],
                             });
+                            // Validation uses the inherited RPC envelope. A transport
+                            // exception instead returns a direct failure ActionResult.
+                            let actionResult: ActionResult<number> = reply?.result?.success !== undefined ? reply.result : reply;
+                            if (!actionResult || typeof actionResult.success !== "boolean" ||
+                                (actionResult.success && (!Number.isSafeInteger(actionResult.result) || actionResult.result < 0))) {
+                                actionResult = {success: false, message: "Web Inspector returned no valid match count. See Automation diagnostic logs.", result: undefined};
+                            }
+                            OUTPUT_CHANNEL.appendLine(`[Web] > Validation result: ${JSON.stringify(actionResult)}`);
                             panel.webview.postMessage(
-                                buildProtocolResponseFromActionResponse(message, actionResult.result, "locatorMatches")
+                                buildProtocolResponseFromActionResponse(message, actionResult, "locatorMatches")
                             );
+                            reportValidation(actionResult.success ? "complete" : "failed", actionResult);
                         } else if (command["type"] === "killMe") {
                             await sendRequest("killInspectors", { inspector: LocatorType.Browser });
                         }

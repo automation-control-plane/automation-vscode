@@ -100,3 +100,30 @@ test('Failed browser configuration never launches; failed Start response is show
     assert.equal(requests.length,2,'Existing void acknowledgements remain compatible');
     assert.equal(panel.messages.length,0,'Only actual engine state reports readiness');
 });
+
+test('Web validation settles with a durable labelled result, preserves zero matches and reports transport failures',async()=>{
+    const panel=panels.at(-1);
+    const locator={strategy:'css',value:'#synthetic',source:'http://127.0.0.1/owned'};
+    const cases=[
+        [{result:{success:true,result:1}},'complete',1],
+        [{result:{success:true,result:0}},'complete',0],
+        [{result:{success:false,message:'Invalid selector'}},'failed',undefined],
+        [{success:false,message:'Transport failed'},'failed',undefined],
+        [undefined,'failed',undefined],
+        [{result:{success:true,result:'many'}},'failed',undefined],
+    ];
+    for(const [reply,state,matches] of cases){
+        panel.messages.length=0;
+        requestResult=async()=>reply;
+        await panel.receive({id:'validate-1',type:'request',app:'webInspector',command:{type:'validate',locator,url:locator.source}});
+        const events=panel.messages.filter(m=>m.type==='automation.webValidation').map(m=>m.validation);
+        assert.equal(events[0].state,'pending');
+        assert.equal(events[1].state,state);
+        assert.equal(events[1].matches,matches);
+        assert.deepEqual(events[1].locator,{strategy:locator.strategy,value:locator.value,url:locator.source});
+        const response=panel.messages.find(m=>m.type==='response');
+        assert.equal(response.id,'validate-1');
+        assert.equal(response.status,state==='complete'?'success':'failure');
+        if(state==='complete') assert.equal(response.data.value,matches);
+    }
+});
