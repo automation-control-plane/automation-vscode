@@ -177,12 +177,14 @@ test('Runbook result and context follow selected receipt, never another input su
     assert.equal(e.get('result-data').children.length,0);
 });
 
-test('Reserved local queue items name the actual reserved identity and cannot be launched again',()=>{
+for (const state of ['IN_PROGRESS', 'RESERVED']) test(`${state} local queue items identify the SDK claim and cannot be launched again`,()=>{
     const e=editor();
-    e.receive({type:'state',mode:'sqlite',selectId:'reserved-123',items:[{id:'reserved-123',queue_name:'input',state:'RESERVED',payload:{value:7},files:[]}],receipts:[]});
+    e.receive({type:'state',mode:'sqlite',selectId:'reserved-123',items:[{id:'reserved-123',queue_name:'input',state,payload:{value:7},files:[]}],receipts:[]});
     assert.equal(e.get('run').disabled,true);assert.equal(e.get('debug').disabled,true);
+    assert.equal(e.get('selection-state').textContent,'In progress');
     assert.match(e.get('selection-note').textContent,/reserved-123/);
     assert.match(e.get('selection-note').textContent,/SDK/);
+    assert.match(e.get('selection-note').textContent,/30 minutes/);
 });
 
 test('Runbook presentation state is restored without losing dirty input fields',()=>{

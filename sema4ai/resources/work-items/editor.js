@@ -76,7 +76,7 @@ function title(item) {
     return (isOutput(item) ? 'Output' : 'Input') + (preview(item) ? ' · ' + preview(item).slice(0, 60) : '');
 }
 function status(item) {
-    return ({LOCAL_FIXTURE:'Ready',PENDING:'Waiting',COMPLETED:'Completed',FAILED:'Failed',RESERVED:'In progress',INVALID:'Invalid input'}[item?.state] || item?.state || 'Stored');
+    return ({LOCAL_FIXTURE:'Ready',PENDING:'Waiting',COMPLETED:'Completed',FAILED:'Failed',IN_PROGRESS:'In progress',RESERVED:'In progress',INVALID:'Invalid input'}[item?.state] || item?.state || 'Stored');
 }
 function actionButton(label, fn, className = 'quiet') {
     const button = document.createElement('button'); button.textContent = label; button.className = className; button.onclick = fn; return button;
@@ -245,7 +245,7 @@ function updateControls() {
     if (stored && selected.state === 'COMPLETED' && mode === 'sqlite') for (const id of ['run','debug']) byId(id).hidden = true;
     byId('name-label').hidden = stored || mode === 'published';
     byId('selection-state').textContent = output ? 'Read-only output' : stored ? status(selected) : replaySource ? 'Replay draft' : 'Draft';
-    byId('selection-note').textContent = mode === 'sqlite' && selected?.state === 'RESERVED' ? 'Item ' + selected.id + ' is reserved by the SDK. Do not run it again. Refresh to check its claim; interrupted claims can be recovered only after the SDK orphan timeout (default 30 minutes).' : output ? 'Replay to create an editable input. This output stays unchanged.' :
+    byId('selection-note').textContent = mode === 'sqlite' && ['IN_PROGRESS','RESERVED'].includes(selected?.state) ? 'Item ' + selected.id + ' is in progress under an SDK claim. Do not run it again. Refresh to check its claim; interrupted claims can be recovered only after the SDK orphan timeout (default 30 minutes).' : output ? 'Replay to create an editable input. This output stays unchanged.' :
         stored && mode === 'sqlite' ? 'Saved in the queue. Replay to change fields; execution uses the oldest waiting input.' :
         replaySource ? 'Edit this copy, then create it. Attachments are copied when you save.' : '';
     byId('selection-note').hidden = !byId('selection-note').textContent;
