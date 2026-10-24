@@ -12,7 +12,7 @@ Both packages retain the original `consume` workload and add `copy_attachment`.
 The Robot manifest exposes **Copy Work Item Attachment**. The Action is discovered
 as `copy_attachment`.
 
-1. In the existing isolated VS Code profile with the exact 2.20.9 VSIX, open the
+1. In an isolated VS Code profile with the exact VSIX named in the accompanying qualification manifest, open the
    copied package and its native Work Items editor. Preserve the separate
    `ACTIONS_HOME` and `ROBOTS_HOME` settings and verified RCC18.19.7.
 2. Choose **Local inputs**. Create an input using the form: field `value`, type

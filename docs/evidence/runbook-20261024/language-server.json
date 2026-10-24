@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_1c0bc041/bin/python3",
+    "-u",
+    "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11/src/sema4ai_code/__main__.py"
+  ],
+  "scope": "Packaged Python language-server stdio; not VS Code Extension Host activation",
+  "packages": [
+    "Published compatibility smoke",
+    "robot-package"
+  ],
+  "interpreters": {
+    "actions": {
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_1c0bc041/bin/python3",
+      "ROBOCORP_HOME": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home",
+      "RCC_VERSION": "v18.19.7"
+    },
+    "robots": {
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_1c0bc041/bin/python3",
+      "ROBOCORP_HOME": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home",
+      "RCC_VERSION": "v18.19.7"
+    }
+  }
+}

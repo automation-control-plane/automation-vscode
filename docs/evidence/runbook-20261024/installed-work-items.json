@@ -1,0 +1,428 @@
+{
+  "source_sha": "aec537ebaadbf80aa95f22bf4a466fb514be2683",
+  "extension": "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11",
+  "workload": "copy_attachment",
+  "scope": "Real CLI/DAP; desktop editor acceptance is separate",
+  "checks": [
+    {
+      "kind": "action",
+      "mode": "file",
+      "debug": false,
+      "queue": "attachment-run",
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/action/work_items_actions.py",
+        "-a",
+        "copy_attachment",
+        "--json-input",
+        "/tmp/automation-release-20261024/work-items-attachments/action/devdata/automation-work-items/executions/348b15d3e30b45f4b3ddac38eb391f07/action-parameters.json"
+      ],
+      "exit": 0,
+      "output": [
+        {
+          "payload": {
+            "observed": 7
+          },
+          "files": {
+            "copied-proof.txt": "copied-proof.txt"
+          }
+        }
+      ],
+      "input_id": "devdata/work-items-in/smoke-64dee7cd949d/work-items.json#0",
+      "output_id": "devdata/work-items-out/native-348b15d3e30b45f4b3ddac38eb391f07/work-items.json#0",
+      "receipt_id": "348b15d3e30b45f4b3ddac38eb391f07",
+      "lineage": "Local execution receipt links input to output file; FileAdapter has no durable parent_id",
+      "attachment_name": "copied-proof.txt",
+      "attachment_bytes": 47,
+      "attachment_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+      "replay_id": "devdata/work-items-in/attachment-replay-2d35d0e4f377/work-items.json#0",
+      "replay_source": "devdata/work-items-out/native-348b15d3e30b45f4b3ddac38eb391f07/work-items.json#0",
+      "original_attachment_unchanged": true
+    },
+    {
+      "kind": "action",
+      "mode": "file",
+      "debug": true,
+      "queue": "attachment-debug",
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "adapter": "debugpy",
+      "source": "/tmp/automation-release-20261024/work-items-attachments/action/work_items_actions.py",
+      "line": 29,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0,
+      "output": [
+        {
+          "payload": {
+            "observed": 7
+          },
+          "files": {
+            "copied-proof.txt": "copied-proof.txt"
+          }
+        }
+      ],
+      "input_id": "devdata/work-items-in/smoke-1cc29fb90ef7/work-items.json#0",
+      "output_id": "devdata/work-items-out/native-32927a95fc974077859675a1c45f736c/work-items.json#0",
+      "receipt_id": "32927a95fc974077859675a1c45f736c",
+      "lineage": "Local execution receipt links input to output file; FileAdapter has no durable parent_id",
+      "attachment_name": "copied-proof.txt",
+      "attachment_bytes": 47,
+      "attachment_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+      "replay_id": "devdata/work-items-in/attachment-replay-9d9c7615730a/work-items.json#0",
+      "replay_source": "devdata/work-items-out/native-32927a95fc974077859675a1c45f736c/work-items.json#0",
+      "original_attachment_unchanged": true
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "debug": false,
+      "queue": "attachment-run",
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/action/work_items_actions.py",
+        "-a",
+        "copy_attachment",
+        "--json-input",
+        "/tmp/automation-release-20261024/work-items-attachments/action/devdata/automation-work-items/executions/4568ec0a4964468caa063946fb20759e/action-parameters.json"
+      ],
+      "exit": 0,
+      "input_id": "534dda4d-ecd8-44f9-8821-96ea5c671af7",
+      "input_state": "COMPLETED",
+      "output_id": "b533c71d-0478-4c9f-bef0-26745d813263",
+      "parent_id": "534dda4d-ecd8-44f9-8821-96ea5c671af7",
+      "payload": {
+        "observed": 7
+      },
+      "attachment_name": "copied-proof.txt",
+      "attachment_bytes": 47,
+      "attachment_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+      "replay_id": "a71b3c3f-00df-4113-929c-6ff49c32da9d",
+      "replay_source": "b533c71d-0478-4c9f-bef0-26745d813263",
+      "original_attachment_unchanged": true
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "debug": true,
+      "queue": "attachment-debug",
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "adapter": "debugpy",
+      "source": "/tmp/automation-release-20261024/work-items-attachments/action/work_items_actions.py",
+      "line": 29,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0,
+      "input_id": "9c2307ff-6b50-486c-84dd-27f8c04febeb",
+      "input_state": "COMPLETED",
+      "output_id": "e2346f7e-db1a-4bb8-87d0-01a673e8fd57",
+      "parent_id": "9c2307ff-6b50-486c-84dd-27f8c04febeb",
+      "payload": {
+        "observed": 7
+      },
+      "attachment_name": "copied-proof.txt",
+      "attachment_bytes": 47,
+      "attachment_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+      "replay_id": "4a8d1784-ebea-4877-b037-a84a7c52b57f",
+      "replay_source": "e2346f7e-db1a-4bb8-87d0-01a673e8fd57",
+      "original_attachment_unchanged": true
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "debug": false,
+      "queue": "attachment-run",
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "-m",
+        "robocorp.tasks",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/robot/work_items_tasks.py",
+        "-t",
+        "copy_attachment"
+      ],
+      "exit": 0,
+      "output": [
+        {
+          "payload": {
+            "observed": 7
+          },
+          "files": {
+            "copied-proof.txt": "copied-proof.txt"
+          }
+        }
+      ],
+      "input_id": "devdata/work-items-in/smoke-b9f4dbc3164d/work-items.json#0",
+      "output_id": "devdata/work-items-out/native-48db1993bb114a019b1c9bcccbd042b4/work-items.json#0",
+      "receipt_id": "48db1993bb114a019b1c9bcccbd042b4",
+      "lineage": "Local execution receipt links input to output file; FileAdapter has no durable parent_id",
+      "attachment_name": "copied-proof.txt",
+      "attachment_bytes": 47,
+      "attachment_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+      "replay_id": "devdata/work-items-in/attachment-replay-2a8fd3606efc/work-items.json#0",
+      "replay_source": "devdata/work-items-out/native-48db1993bb114a019b1c9bcccbd042b4/work-items.json#0",
+      "original_attachment_unchanged": true
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "debug": true,
+      "queue": "attachment-debug",
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "adapter": "debugpy",
+      "source": "/tmp/automation-release-20261024/work-items-attachments/robot/work_items_tasks.py",
+      "line": 19,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0,
+      "output": [
+        {
+          "payload": {
+            "observed": 7
+          },
+          "files": {
+            "copied-proof.txt": "copied-proof.txt"
+          }
+        }
+      ],
+      "input_id": "devdata/work-items-in/smoke-19df9f106fdf/work-items.json#0",
+      "output_id": "devdata/work-items-out/native-791420bf9895498f838b3af8bde1f84c/work-items.json#0",
+      "receipt_id": "791420bf9895498f838b3af8bde1f84c",
+      "lineage": "Local execution receipt links input to output file; FileAdapter has no durable parent_id",
+      "attachment_name": "copied-proof.txt",
+      "attachment_bytes": 47,
+      "attachment_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+      "replay_id": "devdata/work-items-in/attachment-replay-aab9e4ad71b7/work-items.json#0",
+      "replay_source": "devdata/work-items-out/native-791420bf9895498f838b3af8bde1f84c/work-items.json#0",
+      "original_attachment_unchanged": true
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "debug": false,
+      "queue": "attachment-run",
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "-m",
+        "robocorp.tasks",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/robot/work_items_tasks.py",
+        "-t",
+        "copy_attachment"
+      ],
+      "exit": 0,
+      "input_id": "07fa91e5-ec95-42b2-8b65-4ada7cf6e73d",
+      "input_state": "COMPLETED",
+      "output_id": "37da2343-364f-4306-a88a-7ce02e619b13",
+      "parent_id": "07fa91e5-ec95-42b2-8b65-4ada7cf6e73d",
+      "payload": {
+        "observed": 7
+      },
+      "attachment_name": "copied-proof.txt",
+      "attachment_bytes": 47,
+      "attachment_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+      "replay_id": "4869884c-b80b-48d5-a795-6861b744e86e",
+      "replay_source": "37da2343-364f-4306-a88a-7ce02e619b13",
+      "original_attachment_unchanged": true
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "debug": true,
+      "queue": "attachment-debug",
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "adapter": "debugpy",
+      "source": "/tmp/automation-release-20261024/work-items-attachments/robot/work_items_tasks.py",
+      "line": 19,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0,
+      "input_id": "ef0f18e9-7bfa-4383-8618-bea35fdfc9d6",
+      "input_state": "COMPLETED",
+      "output_id": "7dbdc338-afb8-4491-a259-bbced1b0988e",
+      "parent_id": "ef0f18e9-7bfa-4383-8618-bea35fdfc9d6",
+      "payload": {
+        "observed": 7
+      },
+      "attachment_name": "copied-proof.txt",
+      "attachment_bytes": 47,
+      "attachment_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+      "replay_id": "090168be-ba7e-4010-9d29-d19fbcec2305",
+      "replay_source": "7dbdc338-afb8-4491-a259-bbced1b0988e",
+      "original_attachment_unchanged": true
+    }
+  ],
+  "negative_checks": [
+    {
+      "kind": "action",
+      "mode": "file",
+      "case": "missing",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/action/work_items_actions.py",
+        "-a",
+        "copy_attachment",
+        "--json-input",
+        "/tmp/automation-release-20261024/work-items-attachments/action/devdata/automation-work-items/executions/cd6f899eb6c14c9b9c4f22b89b929c1f/action-parameters.json"
+      ],
+      "exit": 1,
+      "input_id": "devdata/work-items-in/missing-7eef5b1cb72f/work-items.json#0",
+      "input_state": "LOCAL_FIXTURE",
+      "output_created": false,
+      "expected_error": "No file with name: attachment-proof.txt"
+    },
+    {
+      "kind": "action",
+      "mode": "file",
+      "case": "wrong-bytes",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/action/work_items_actions.py",
+        "-a",
+        "copy_attachment",
+        "--json-input",
+        "/tmp/automation-release-20261024/work-items-attachments/action/devdata/automation-work-items/executions/48b8e5e5477146abb36fa2d9472a16d9/action-parameters.json"
+      ],
+      "exit": 1,
+      "input_id": "devdata/work-items-in/wrong-bytes-f6b5cd227534/work-items.json#0",
+      "input_state": "LOCAL_FIXTURE",
+      "output_created": false,
+      "expected_error": "Expected the supplied synthetic attachment-proof.txt bytes"
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "case": "missing",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/action/work_items_actions.py",
+        "-a",
+        "copy_attachment",
+        "--json-input",
+        "/tmp/automation-release-20261024/work-items-attachments/action/devdata/automation-work-items/executions/46a78f78e9154cf8ad14a89264ae8953/action-parameters.json"
+      ],
+      "exit": 1,
+      "input_id": "ca268ce9-47dc-4cc1-bec8-ce4919d64e39",
+      "input_state": "IN_PROGRESS",
+      "output_created": false,
+      "expected_error": "No file with name: attachment-proof.txt"
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "case": "wrong-bytes",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/action/work_items_actions.py",
+        "-a",
+        "copy_attachment",
+        "--json-input",
+        "/tmp/automation-release-20261024/work-items-attachments/action/devdata/automation-work-items/executions/f3614a12a0304e10809771855bd5daea/action-parameters.json"
+      ],
+      "exit": 1,
+      "input_id": "8a9938be-4f38-47e1-a065-515049cf1273",
+      "input_state": "IN_PROGRESS",
+      "output_created": false,
+      "expected_error": "Expected the supplied synthetic attachment-proof.txt bytes"
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "case": "missing",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "-m",
+        "robocorp.tasks",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/robot/work_items_tasks.py",
+        "-t",
+        "copy_attachment"
+      ],
+      "exit": 1,
+      "input_id": "devdata/work-items-in/missing-85b9303f49b4/work-items.json#0",
+      "input_state": "LOCAL_FIXTURE",
+      "output_created": false,
+      "expected_error": "No file with name: attachment-proof.txt"
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "case": "wrong-bytes",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "-m",
+        "robocorp.tasks",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/robot/work_items_tasks.py",
+        "-t",
+        "copy_attachment"
+      ],
+      "exit": 1,
+      "input_id": "devdata/work-items-in/wrong-bytes-748a33738231/work-items.json#0",
+      "input_state": "LOCAL_FIXTURE",
+      "output_created": false,
+      "expected_error": "Expected the supplied synthetic attachment-proof.txt bytes"
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "case": "missing",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "-m",
+        "robocorp.tasks",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/robot/work_items_tasks.py",
+        "-t",
+        "copy_attachment"
+      ],
+      "exit": 1,
+      "input_id": "1c7f3e1f-7e8a-47e9-b641-d7cb5dcb7676",
+      "input_state": "FAILED",
+      "output_created": false,
+      "expected_error": "No file with name: attachment-proof.txt"
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "case": "wrong-bytes",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "-m",
+        "robocorp.tasks",
+        "run",
+        "/tmp/automation-release-20261024/work-items-attachments/robot/work_items_tasks.py",
+        "-t",
+        "copy_attachment"
+      ],
+      "exit": 1,
+      "input_id": "fc774bd7-b0f0-4c29-b939-bd90ede1c8a0",
+      "input_state": "FAILED",
+      "output_created": false,
+      "expected_error": "Expected the supplied synthetic attachment-proof.txt bytes"
+    }
+  ]
+}

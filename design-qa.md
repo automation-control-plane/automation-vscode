@@ -32,3 +32,13 @@ Fonts/typography, spacing/layout rhythm, colors/tokens, icon/image quality and a
 2. Capture every checklist surface and primary interaction in the sole-owner desktop session.
 3. Normalize and compose reference + current screenshots; evaluate full and focused comparisons.
 4. Fix all P0/P1/P2 findings and repeat captures before changing this result to passed.
+
+## October 24 installed candidate
+
+2.20.11 source `aec537ebaadbf80aa95f22bf4a466fb514be2683` has a valid private VSIX,
+747 matching installed payload files, 116 Node / 45 Python tests, and eight real
+CLI/DAP attachment workflows. See `docs/evidence/runbook-20261024/`. These results
+do not resolve visual findings. This coding executor's Code GUI aborts before
+Extension Host because of sandbox-helper ownership and lacks a display. The parent
+supported desktop has recovered; its existing sole tester still needs the exact
+candidate for fresh native captures. No 2.20.9 screenshot qualifies this candidate.

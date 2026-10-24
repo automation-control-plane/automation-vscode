@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/workspace/port-acceptance/vscode/usr/share/code/code",
+    "--user-data-dir=/tmp/automation-native-qa-20261024/user-data",
+    "--extensions-dir=/tmp/automation-native-qa-20261024/extensions",
+    "--skip-welcome",
+    "--skip-release-notes",
+    "--new-window"
+  ],
+  "exit_code": -5,
+  "stdout": "",
+  "stderr": "[1035:1024/195734.751374:FATAL:sandbox/linux/suid/client/setuid_sandbox_host.cc:166] The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. You need to make sure that /workspace/port-acceptance/vscode/usr/share/code/chrome-sandbox is owned by root and has mode 4755.\n[1061:0100/000000.782303:ERROR:content/zygote/zygote_linux.cc:662] write: Broken pipe (32)\n",
+  "scope": "Native application startup only; no extension installed or qualified."
+}

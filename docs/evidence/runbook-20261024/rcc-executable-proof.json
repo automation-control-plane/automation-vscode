@@ -1,0 +1,32 @@
+{
+  "sha256": "f8e0394be7f47ee84d6f4cd734822b87b492a4d6102f977f6a18f29453703d48",
+  "env": {
+    "HOME": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/os-home",
+    "ROBOCORP_HOME": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home",
+    "ACTIONS_HOME": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home",
+    "ROBOTS_HOME": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home"
+  },
+  "commands": [
+    {
+      "argv": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/rcc-linux64",
+        "version"
+      ],
+      "exit": 0,
+      "stdout": "v18.19.7\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/rcc-linux64",
+        "holotree",
+        "variables",
+        "--help"
+      ],
+      "exit": 0,
+      "stdout": "Do holotree operations.\n\nUsage:\n  rcc holotree variables conda.yaml+ [flags]\n\nAliases:\n  variables, vars\n\nFlags:\n  -a, --account string         Account used for workspace. <optional>\n      --devdeps package.yaml   Include dev-dependencies from the package.yaml file in the environment (only valid when dealing with a `package.yaml` file).\n  -e, --environment string     Full path to 'env.json' development environment data file. <optional>\n  -f, --force                  Force environment creation with refresh.\n      --graceperiod int        What is grace period buffer in minutes on top of validity minutes (minimum 5 minutes). (default 5)\n  -h, --help                   help for variables\n  -j, --json                   Show environment as JSON.\n  -m, --minutes int            How many minutes the authorization should be valid for (minimum 15 minutes). (default 15)\n  -r, --robot string           Full path to 'robot.yaml' configuration file. <optional> (default \"robot.yaml\")\n  -s, --space string           Client specific name to identify this environment. (default \"user\")\n  -w, --workspace string       Optional workspace id to get authorization tokens for. <optional>\n\nGlobal Flags:\n      --anything string        freeform string value that can be set without any effect, for example CLI versioning/reference\n      --bundled                used to tell rcc, that this is bundled use (do not use, unless you know what you are doing)\n      --colorless              do not use colors in CLI UI\n      --config string          config file (default is $ROBOCORP_HOME/rcc.yaml)\n      --controller string      internal, DO NOT USE (unless you know what you are doing) (default \"user\")\n      --debug                  to get debug output where available (not for normal production use; also RCC_VERBOSITY=debug)\n      --externally-managed     mark created Python environments as EXTERNALLY-MANAGED (PEP 668)\n      --liveonly               do not create base environment from live ... DANGER! For containers only!\n      --lockless               do not use file locking ... DANGER!\n      --log-hide stringArray   hide logging output that matches given text fragment and this option can be given multiple times\n      --no-build               never allow building new environments, only use what exists already in hololib (also RCC_NO_BUILD=1)\n      --no-pyc-management      rcc wont do any .pyc file management ... DO NOT USE (unless you know what you are doing)\n      --no-retry-build         no retry in case of first environment build fails, just report error immediately\n      --no-temp-management     rcc wont do any temp directory management ... DO NOT USE (unless you know what you are doing)\n      --nocache                do not use cache for credentials and tokens, always request them from cloud\n      --numbers                put line numbers on rcc produced log output\n      --pprof string           Filename to save profiling information.\n      --robocorp               Select Robocorp toolset strategy.\n      --silent                 be less verbose on output (also RCC_VERBOSITY=silent)\n      --strict                 be more strict on environment creation and handling\n      --tag string             semantic reason/context, why are you invoking rcc (default \"transient\")\n      --timeline               print timeline at the end of run\n      --trace                  to get trace output where available (not for normal production use; also RCC_VERBOSITY=trace)\n      --unmanaged              work with unmanaged holotree spaces, DO NOT USE (unless you know what you are doing)\n      --warranty-voided        experimental, warranty voided, dangerous mode ... DO NOT USE (unless you know what you are doing)\n      --workers int            scale background workers manually (do not use, unless you know what you are doing)\n",
+      "stderr": ""
+    }
+  ],
+  "initial_unconfigured_probe": "version reported v18.19.7 but warned read-only /home/agent/.robocorp/rcc.yaml.lck; repeated with explicit task-owned environment"
+}

@@ -1,0 +1,20 @@
+{
+  "action": {
+    "executable": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+    "python": "3.12.12",
+    "packages": {
+      "actions-work-items": "0.4.4",
+      "actions-core": "1.0.3",
+      "debugpy": "1.8.22"
+    }
+  },
+  "robot": {
+    "executable": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+    "python": "3.12.12",
+    "packages": {
+      "actions-work-items": "0.4.4",
+      "robocorp-tasks": "4.1.1",
+      "debugpy": "1.8.22"
+    }
+  }
+}
