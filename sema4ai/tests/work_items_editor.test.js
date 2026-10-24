@@ -196,6 +196,33 @@ test('Runbook presentation state is restored without losing dirty input fields',
     reopened.get('create').onclick();assert.deepEqual(reopened.messages.at(-1).payload,{value:7});
 });
 
+test('Returning from debug derives Inspect from a newly completed receipt, including legacy saved views',()=>{
+    const input={id:'input-a',role:'input',payload:{value:7},files:[],revision:'a',state:'LOCAL_FIXTURE'};
+    const stateFor=state=>({type:'state',mode:'file',selectId:input.id,items:[input],receipts:[{id:'debug-1',input:input.id,state,exit_code:state==='EXITED'?0:undefined}]});
+    const first=editor();first.receive(stateFor('STARTED'));
+    assert.equal(first.get('stage-run').ariaCurrent,'step');
+    const saved=first.messages.filter(message=>message.op==='editorDraftState').at(-1).state;
+    for (const state of [saved,{...saved,receiptKey:undefined}]) {
+        const reopened=editor(state);reopened.receive(stateFor('EXITED'));
+        assert.equal(reopened.get('stage-inspect').ariaCurrent,'step');
+        assert.equal(reopened.get('stage-run').ariaCurrent,'false');
+        assert.equal(reopened.get('result-outcome').textContent,'Completed successfully');
+        assert.ok(reopened.messages.every(message=>!['run','debug'].includes(message.op)));
+    }
+});
+
+test('Restoring the same completed receipt preserves explicit Prepare and Files navigation',()=>{
+    const input={id:'input-a',role:'input',payload:{value:7},files:[],revision:'a',state:'LOCAL_FIXTURE'};
+    const state={type:'state',mode:'file',selectId:input.id,items:[input],receipts:[{id:'run-1',input:input.id,state:'EXITED',exit_code:0}]};
+    const first=editor();first.receive(state);first.get('stage-prepare').onclick();first.get('tab-files').onclick();
+    const saved=first.messages.filter(message=>message.op==='editorDraftState').at(-1).state;
+    const reopened=editor(saved);reopened.receive(state);
+    assert.equal(reopened.get('stage-prepare').ariaCurrent,'step');
+    assert.equal(reopened.get('files-view').hidden,false);
+    reopened.receive(state);
+    assert.equal(reopened.get('stage-prepare').ariaCurrent,'step');
+});
+
 test('Output record arrays are readable tables derived only from actual payload columns',()=>{
     const e=editor();const output={id:'out#0',role:'output',payload:{records:[{reference:'A-1',expected:7,actual:7},{reference:'B-2',expected:8,actual:9}]},files:[],state:'COMPLETED'};
     e.receive({type:'state',mode:'file',selectId:output.id,items:[output],receipts:[]});

@@ -13,7 +13,7 @@
   function section(title, description) { const node = el('section', 'section'); node.append(el('h2', '', title)); if (description) node.append(el('p','muted',description)); return node; }
   function actions(...nodes) { const row = el('div','actions'); row.append(...nodes); return row; }
   function note(title, text, kind = 'info') { const node = el('div','notice ' + kind); node.append(icon(kind === 'error' ? 'error' : kind === 'success' ? 'pass' : 'info'), el('div','notice-copy')); node.lastChild.append(el('strong','',title), el('p','',text)); return node; }
-  function detail(label, value, monospace = false) { const row = el('div','detail'); row.append(el('dt','',label),el('dd',monospace?'mono':'', value || 'Not configured')); return row; }
+  function detail(label, value, monospace = false) { const row = el('div','detail'); const content=el('dd',monospace?'mono':'',value || 'Not configured'); if(monospace&&value) content.title=value; row.append(el('dt','',label),content); return row; }
   function empty(title, text, ...buttons) { const node = el('div','empty'); node.append(icon('package'), el('h2','',title),el('p','muted',text), actions(...buttons)); return node; }
   function render() {
     if (!state) return;

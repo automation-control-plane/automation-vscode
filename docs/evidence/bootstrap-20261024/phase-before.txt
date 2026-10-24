@@ -1,0 +1,49 @@
+✔ Empty input -> field/value form -> create -> save/debug -> output without JSON or schema editing (37.121763ms)
+✔ Duplicate form names block submission; nested objects/arrays and own names are authored through controls (8.3921ms)
+✔ AI proposal is review/apply only; malformed proposals and mode changes cannot apply to another draft (8.683398ms)
+✔ Optional advanced JSON has faithful roundtrip and rejects malformed edits without replacing the form (4.681971ms)
+✔ Metadata refresh preserves an unsaved form draft and its original conflict revision (5.90401ms)
+✔ Closing/reopening restores unsaved name, fields and invalid values using editor state only (12.233261ms)
+✔ Closing/reopening keeps an existing-item draft bound to its original saved revision (8.634946ms)
+✔ Selection scopes results, sidebar state and genuinely read-only output controls (7.766216ms)
+✔ Replay opens an editable persistent draft; submission copies source attachments without editing the source (8.980444ms)
+✔ New draft survives navigation and queue switches; discard requires host confirmation (6.972478ms)
+✔ Runbook stage navigation never executes a workload and keeps the selected output immutable (5.558515ms)
+✔ Runbook result and context follow selected receipt, never another input success (30.137837ms)
+✔ IN_PROGRESS local queue items identify the SDK claim and cannot be launched again (2.439378ms)
+✔ RESERVED local queue items identify the SDK claim and cannot be launched again (2.090562ms)
+✔ Runbook presentation state is restored without losing dirty input fields (5.477337ms)
+✖ Returning from debug derives Inspect from a newly completed receipt, including legacy saved views (9.892872ms)
+✔ Restoring the same completed receipt preserves explicit Prepare and Files navigation (6.397029ms)
+✔ Output record arrays are readable tables derived only from actual payload columns (3.469942ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 322.688389
+
+✖ failing tests:
+
+test at tests/work_items_editor.test.js:199:1
+✖ Returning from debug derives Inspect from a newly completed receipt, including legacy saved views (9.892872ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'false' !== 'step'
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/work_items_editor.test.js:207:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'false',
+    expected: 'step',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

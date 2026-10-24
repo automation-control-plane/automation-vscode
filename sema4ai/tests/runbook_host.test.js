@@ -324,6 +324,18 @@ function workspaceDOM() {
     return {messages,receive:state=>receivers.forEach(fn=>fn({data:state})),all:()=>all(app),button:label=>all(app).find(node=>node.tag==='button'&&node.textContent===label&&node.className.includes('primary'))};
 }
 
+test('Owned navigation has a compact initial share and long package paths remain available without wrapping the context rail',async()=>{
+    const views=JSON.parse(fs.readFileSync(path.join(__dirname,'../package.json'),'utf8')).contributes.views['sem4ai-packages'];
+    assert.equal(views.find(view=>view.id==='automation-navigation').initialSize,1);
+    assert.equal(views.find(view=>view.id==='sema4ai-task-packages-tree').initialSize,4);
+    const h=host();await h.open();const dom=workspaceDOM();dom.receive(h.state());
+    const manifest=h.state().selected.manifest;
+    const pathDetail=dom.all().find(node=>node.tag==='dd'&&node.textContent===manifest);
+    assert.equal(pathDetail.title,manifest);
+    const css=fs.readFileSync(path.join(__dirname,'../resources/runbook/workspace.css'),'utf8');
+    assert.match(css,/\.context-rail \.detail dd\{[^}]*text-overflow:ellipsis/);
+});
+
 test('Workspace DOM mount only asks to refresh; explicit Run sends only the displayed target identity',async()=>{
     const h=host();await h.open();const dom=workspaceDOM();
     assert.deepEqual(dom.messages,[{op:'refresh'}]);dom.receive(h.state());

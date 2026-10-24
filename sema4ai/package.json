@@ -360,12 +360,14 @@
                 {
                     "id": "automation-navigation",
                     "name": "Workspace",
-                    "contextualTitle": "Automation"
+                    "contextualTitle": "Automation",
+                    "initialSize": 1
                 },
                 {
                     "id": "sema4ai-task-packages-tree",
                     "name": "Packages",
-                    "contextualTitle": "Packages"
+                    "contextualTitle": "Packages",
+                    "initialSize": 4
                 },
                 {
                     "id": "sema4ai-package-content-tree",

@@ -13,6 +13,7 @@ class TreeView:
         add_to_package_json=True,
         visibility=None,
         when=None,
+        initial_size=None,
     ):
         self.id = id
         self.name = name
@@ -21,6 +22,7 @@ class TreeView:
         self.add_to_package_json = add_to_package_json
         self.visibility = visibility
         self.when = when
+        self.initial_size = initial_size
 
 
 class TreeViewContainer:
@@ -55,11 +57,12 @@ TREE_VIEW_CONTAINERS = [
         title="Automation",
         icon="images/automation-outline.svg",
         tree_views=[
-            TreeView(id="automation-navigation", name="Workspace", contextual_title="Automation", menus={}),
+            TreeView(id="automation-navigation", name="Workspace", contextual_title="Automation", menus={}, initial_size=1),
             TreeView(
                 id="sema4ai-task-packages-tree",
                 name="Packages",
                 contextual_title="Packages",
+                initial_size=4,
                 menus={
                     # See: https://code.visualstudio.com/api/references/contribution-points#contributes.menus
                     # for targets
@@ -422,6 +425,8 @@ def create_tree_in_package_json(tree):
         ret["visibility"] = tree.visibility
     if tree.when is not None:
         ret["when"] = tree.when
+    if tree.initial_size is not None:
+        ret["initialSize"] = tree.initial_size
     return ret
 
 

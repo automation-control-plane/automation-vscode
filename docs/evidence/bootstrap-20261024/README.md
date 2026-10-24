@@ -34,7 +34,7 @@ language server. The containing source commit identifies this focused fix.
 - Red-first host/DOM tests: 27 tests, 18 pass / 9 expected failures on the prior
   compiled host; all 16 existing tests passed. Tree regression also failed before
   the fix because it still performed discovery. Retained logs are adjacent.
-- Final TypeScript compilation and **131 Node tests pass**, including startup
+- Final TypeScript compilation and **134 Node tests pass**, including startup
   classification, progress/failure UI, no raw command leak, no discovery/execution
   during failure, explicit reload only, ready recovery and stale package rejection.
 - **45 Python tests pass**, no skips: published tooling, Action Work Items,
@@ -53,6 +53,28 @@ poetry run pytest tests/sema4ai_code_tests/test_published_toolchain.py tests/sem
 npm run vsce:package -- --target linux-x64 --out /tmp/automation-bootstrap-20261024/automation-vscode-2.20.12-linux-x64.vsix
 ```
 
+## Debug phase and bounded layout correction
+
+Native QA additionally reported that returning from a successful Action File debug
+showed **Completed successfully / exit 0** while Run remained highlighted. Restoring
+presentation state unconditionally suppressed receipt-driven phase derivation. The
+editor now preserves the identity/state of the receipt it last displayed: a changed
+receipt moves to Run or Inspect, while deliberate navigation on the same receipt
+survives refresh/reopen. The host validates and persists that bounded presentation
+key in the existing workspace memento. No receipt, payload or execution is invented.
+Red-first tests cover reopened STARTED → EXITED, legacy editor state, unchanged
+receipt navigation, host recreation and invalid presentation keys.
+
+The native Workspace navigation view now has initialSize 1 against Packages 4.
+The official installed Code 1.143.0 contribution schema and implementation confirm
+this is a supported proportional initial size for views whose extension owns the
+container. Saved user pane sizes are not overridden; already-sized profiles may
+retain their split. Package paths in the inner context rail use single-line
+ellipsis with full text retained in the DOM and title. This is a bounded layout
+correction, not visual acceptance: the actual tester's screenshot has not been
+materialized in this executor, and fresh-profile sizing must be observed natively.
+The generator and package.json view contributions match exactly.
+
 ## Exact native retest
 
 1. Preserve the old profile/candidate and install the exact new artifact in the
@@ -67,6 +89,15 @@ npm run vsce:package -- --target linux-x64 --out /tmp/automation-bootstrap-20261
 4. With approved normal dependency access or separately labelled exact warm homes,
    confirm ready state, Action/Robot discovery and native run/debug resume. Recheck
    Work Items and the full Runbook surface checklist on exact installed bytes.
+
+5. Run and Debug the actual Action File fixture, return from the debugger after
+   exit 0 and confirm Inspect highlights alongside the completed receipt. Repeat
+   close/reopen while STARTED then after completion; manually choose Prepare/Files
+   on an unchanged completed receipt and confirm that choice survives reopen.
+6. In a fresh profile confirm six Workspace rows no longer consume half the sidebar,
+   Packages remains reachable, and long paths do not wrap down the inner rail.
+   Verify full paths on hover and existing split preservation separately. Capture
+   exact installed views; simulated DOM/style assertions are not visual QA.
 
 Canonical managed capabilities and the broader native visual gates are unchanged.
 Actions Next remains paused. Separately observed existing global fast-cache identity

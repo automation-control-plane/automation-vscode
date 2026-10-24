@@ -139,7 +139,8 @@ export function registerNativeWorkItems(context: vscode.ExtensionContext): void 
                         if (!state || state.version !== 1 || !["file", "sqlite", "published", "managed"].includes(state.mode) ||
                             typeof state.name !== "string" || typeof state.queue !== "string" || state.name.length > 80 || state.queue.length > 80 ||
                             !Array.isArray(state.drafts) || state.drafts.length > 100 || Buffer.byteLength(JSON.stringify(state)) > 4 * 1024 * 1024) throw Error("Editor draft state exceeds the supported bounds. Keep this tab open and save the input.");
-                        const allowed = ["version", "mode", "queue", "name", "activeKey", "selectedId", "revision", "dirty", "root", "error", "parameters", "managedRoot", "replaySource", "runbookView", "drafts"];
+                        const allowed = ["version", "mode", "queue", "name", "activeKey", "selectedId", "revision", "dirty", "root", "error", "parameters", "managedRoot", "replaySource", "runbookView", "receiptKey", "drafts"];
+                        if (state.receiptKey !== undefined && (typeof state.receiptKey !== "string" || state.receiptKey.length > 16384)) throw Error("Invalid execution presentation state.");
                         if (state.runbookView && (!["prepare", "run", "inspect"].includes(state.runbookView.stage) || !["inputs", "files", "result"].includes(state.runbookView.tab) || Object.keys(state.runbookView).some(name => !["stage", "tab"].includes(name)))) throw Error("Invalid Runbook presentation state.");
                         if (Object.keys(state).some(name => !allowed.includes(name))) throw Error("Invalid editor draft state.");
                         editorDrafts.set(key, state);

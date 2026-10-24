@@ -5,7 +5,7 @@ let selected, items = [], receipts = [], mode = 'file', contract = {};
 let activeDraftKey, activeRevision, payloadDirty = false, proposalTarget, editorReady = false, restoredSelection;
 let replaySource, listKind = 'input', packagePath = '', loading = false, activeQueue = 'input';
 const drafts = new Map();
-let runbookView = {stage:'prepare', tab:'inputs'}, viewSelectionId, lastReceiptKey, restoredRunbookView = false;
+let runbookView = {stage:'prepare', tab:'inputs'}, viewSelectionId, lastReceiptKey;
 const compactContext = window.matchMedia?.('(max-width:650px)');
 if (compactContext) {byId('context-extra').open = !compactContext.matches; compactContext.addEventListener('change', event => {byId('context-extra').open = !event.matches;});}
 const copyNode = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -40,7 +40,7 @@ function persistEditorState() {
         const state = {version:1, mode, queue:activeQueue, name:byId('name').value || 'input',
             activeKey:activeDraftKey, selectedId:selected?.id || restoredSelection, revision:activeRevision, dirty:payloadDirty,
             ...payloadEditor.getState(), parameters:parametersEditor.getState(), managedRoot:managedPayloadEditor.getState(),
-            replaySource:copyNode(replaySource), runbookView:{...runbookView}, drafts:[...drafts].filter(([key]) => key !== activeDraftKey)};
+            replaySource:copyNode(replaySource), runbookView:{...runbookView}, receiptKey:lastReceiptKey, drafts:[...drafts].filter(([key]) => key !== activeDraftKey)};
         api.setState?.(state); api.postMessage({op:'editorDraftState', state});
     } catch (error) {
         byId('validation').textContent = 'Unable to preserve this draft: ' + error.message + '. Keep this tab open and save the input.';
@@ -53,7 +53,8 @@ function restoreEditorState(state) {
         activeDraftKey = state.activeKey; activeRevision = state.revision; restoredSelection = state.selectedId;
         payloadDirty = !!state.dirty; replaySource = state.replaySource;
         if (state.runbookView && ['prepare','run','inspect'].includes(state.runbookView.stage) && ['inputs','files','result'].includes(state.runbookView.tab)) {
-            runbookView = {...state.runbookView}; viewSelectionId = state.selectedId; restoredRunbookView = true;
+            runbookView = {...state.runbookView}; viewSelectionId = state.selectedId;
+            lastReceiptKey = typeof state.receiptKey === 'string' ? state.receiptKey : undefined;
         }
         payloadEditor.setState(state); parametersEditor.setState(state.parameters); managedPayloadEditor.setState(state.managedRoot);
         showPayloadValue(payloadEditor, 'payload', 'validation'); showPayloadValue(parametersEditor, 'parameters', 'parameters-validation');
@@ -188,8 +189,10 @@ function renderResult() {
     const relevant = selected ? receipts.filter(receipt => receipt.input === selected.id || outputsFor(receipt).some(item => item.id === selected.id)) : [];
     const latest = relevant.at(-1);
     const receiptKey = selected?.id + ':' + latest?.id + ':' + latest?.state;
-    if (receiptKey !== lastReceiptKey && latest && !restoredRunbookView) runbookView = {stage:['STARTED','PREPARED'].includes(latest.state) ? 'run' : 'inspect',tab:'result'};
-    lastReceiptKey = receiptKey; restoredRunbookView = false;
+    // Preserve manual navigation only while the observed receipt is unchanged.
+    // Completion while this editor is closed must advance Run to Inspect on return.
+    if (receiptKey !== lastReceiptKey && latest) runbookView = {stage:['STARTED','PREPARED'].includes(latest.state) ? 'run' : 'inspect',tab:'result'};
+    lastReceiptKey = receiptKey;
     const outputItems = isOutput(selected) ? [selected] : latest ? outputsFor(latest) : [];
     const outcome = latest ? (latest.state === 'EXITED' ? latest.exit_code === 0 ? 'Completed successfully' : 'Execution failed' :
         {STARTED:'Execution in progress',PREPARED:'Ready to launch',CANCELLED:'Execution cancelled',LAUNCH_REJECTED:'Unable to launch',TERMINATED:'Session ended',STOPPED:'Session ended'}[latest.state] || latest.state) : isOutput(selected) ? 'Saved output' : 'Ready to run';
