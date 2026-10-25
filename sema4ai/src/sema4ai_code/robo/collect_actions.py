@@ -149,6 +149,7 @@ def _execute_within_user_env(
                 if result.stderr:
                     error_msg = f"Found errors while running {command_name} errors: {result.stderr}"
                     log.info(error_msg)
+                    return ActionResult.make_failure(error_msg)
                 break
     except BaseException as e:
         message = f"Unable to execute {command_name} command. Error: {e}"
@@ -243,7 +244,7 @@ def _get_actions_version(
         except Exception:
             return ActionResult.make_failure(error_msg)
     else:
-        return ActionResult.make_failure(error_msg)
+        return ActionResult.make_failure(error_msg + "\n" + (result.message or ""))
 
     return result
 
@@ -260,7 +261,7 @@ def get_metadata(pm: PluginManager, uri: str, monitor: IMonitor) -> ActionResult
     actions_library_result = _get_actions_version(pm, uri, monitor)
     if not actions_library_result.success:
         return ActionResult.make_failure(
-            actions_library_result.message or "Unable to get `sema4ai.actions` version"
+            actions_library_result.message or "Unable to get actions-core version"
         )
 
     if actions_library_result.result and actions_library_result.result > (1, 0, 1):

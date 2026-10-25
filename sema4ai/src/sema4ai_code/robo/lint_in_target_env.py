@@ -9,23 +9,27 @@ def main() -> None:
 
     try:
         try:
-            from .action_runtime import load_actions
+            from .action_runtime import ActionSDKError, load_actions
         except ImportError:
-            from action_runtime import load_actions
-        actions, _ = load_actions()
+            from action_runtime import ActionSDKError, load_actions
+        try:
+            actions, _ = load_actions()
+        except ActionSDKError as error:
+            print(json.dumps([{
+                "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}},
+                "severity": 1, "source": "Automation", "message": str(error),
+            }]))
+            return
         prefix = actions.__name__
         _lint_action = importlib.import_module(prefix + "._lint_action")
         requires_pm = True
         pm = None
         try:
-            extension_prefix = (
-                "robocorp.tasks" if prefix == "robocorp.actions" else prefix
-            )
             EPManagedParameters = importlib.import_module(
-                extension_prefix + "._customization._extension_points"
+                prefix + "._customization._extension_points"
             ).EPManagedParameters
             PluginManager = importlib.import_module(
-                extension_prefix + "._customization._plugin_manager"
+                prefix + "._customization._plugin_manager"
             ).PluginManager
             ManagedParameters = importlib.import_module(
                 prefix + "._managed_parameters"

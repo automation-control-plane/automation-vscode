@@ -517,6 +517,9 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         return []
 
     def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
+        from sema4ai_code.legacy_integrations import DISABLED, commands, enabled
+        if command in commands() and not enabled(self.config):
+            return ActionResult.make_failure(DISABLED).as_dict()
         return command_dispatcher.dispatch(self, command, arguments)
 
     @overrides(PythonLanguageServer.m_text_document__did_save)
@@ -2657,9 +2660,15 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         return self._gallery_action_packages
 
     def m_list_gallery_action_packages(self) -> ActionResultDict:
+        from sema4ai_code.legacy_integrations import DISABLED, enabled
+        if not enabled(self.config):
+            return ActionResult.make_failure(DISABLED).as_dict()
         return require_monitor(partial(self._list_gallery_action_packages))
 
     def _list_gallery_action_packages(self, monitor: IMonitor) -> ActionResultDict:
+        from sema4ai_code.legacy_integrations import DISABLED, enabled
+        if not enabled(self.config):
+            return ActionResult.make_failure(DISABLED).as_dict()
         from sema4ai_ls_core.progress_report import progress_context
 
         with progress_context(
@@ -2672,6 +2681,9 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
     def m_import_gallery_action_package(
         self, package_key: str, target_dir: str
     ) -> ActionResultDict:
+        from sema4ai_code.legacy_integrations import DISABLED, enabled
+        if not enabled(self.config):
+            return ActionResult.make_failure(DISABLED).as_dict()
         return require_monitor(
             partial(
                 self._import_gallery_action_package_threaded, package_key, target_dir
@@ -2681,6 +2693,9 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
     def _import_gallery_action_package_threaded(
         self, package_key: str, target_dir: str, monitor: IMonitor
     ) -> ActionResultDict:
+        from sema4ai_code.legacy_integrations import DISABLED, enabled
+        if not enabled(self.config):
+            return ActionResult.make_failure(DISABLED).as_dict()
         from sema4ai_ls_core.progress_report import progress_context
 
         with progress_context(

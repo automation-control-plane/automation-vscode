@@ -82,6 +82,8 @@ def test_rcc_process_routes_homes_and_supported_flags(monkeypatch, tmp_path):
         assert env["RCC_HOLOTREE_MODE"] == "private"
         assert rcc.get_robocorp_code_datadir(kind).parent == Path(env["ROBOCORP_HOME"])
     assert captured[0][1]["ROBOCORP_HOME"] != captured[1][1]["ROBOCORP_HOME"]
+    # Explicit legacy Robot compatibility retains its own credential home.
+    provider.config.update({"sema4ai.rcc.location": str(executable), "sema4ai.legacyVendorIntegrations.enabled": True})
     for args in (["cloud", "workspace"], ["config", "credentials", "--json"]):
         assert rcc._run_rcc(args).success
         assert captured[-1][1]["ROBOCORP_HOME"] == str(tmp_path / "r")
@@ -208,25 +210,6 @@ def test_oauth_callback_state_and_browser_cache_respect_actions_home(
     finally:
         _get_action_server_user_sema4_path.cache_clear()
         browsers_path.cache_clear()
-
-
-def test_legacy_project_actions_filename_does_not_shadow_api(tmp_path):
-    import importlib.metadata
-    import subprocess
-    import sys
-    from sema4ai_code.robo import action_runtime
-
-    (tmp_path / "actions.py").write_text(
-        'raise RuntimeError("user workload must not run during API selection")'
-    )
-    result = subprocess.run(
-        [sys.executable, action_runtime.__file__, "--library-version"],
-        cwd=tmp_path,
-        text=True,
-        capture_output=True,
-    )
-    assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == importlib.metadata.version("sema4ai-actions")
 
 
 def test_action_run_output_never_deletes_or_reuses_existing_data(tmp_path):

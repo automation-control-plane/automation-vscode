@@ -249,6 +249,13 @@ class Rcc:
         from sema4ai_ls_core.basic import build_subprocess_kwargs
         from sema4ai_ls_core.process import check_output_interactive
 
+        from sema4ai_code.legacy_integrations import DISABLED, enabled
+        provider = self._config_provider()
+        if any(arg in {"cloud", "credentials", "feedback"} for arg in args) and not enabled(
+            provider.config if provider is not None else None
+        ):
+            return LaunchActionResult("", False, DISABLED)
+
         if stderr is Sentinel.SENTINEL:
             stderr = subprocess.PIPE
 

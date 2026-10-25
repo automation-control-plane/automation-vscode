@@ -113,7 +113,7 @@ def _delete_old(dir_path: str, existing_dirs: list[str], max_count: int):
 def create_pm():
     # The X-Action-Context header may be provided through an environment
     # variable when launching in VSCode (and it needs to be passed on
-    # to sema4ai-actions).
+    # to Actions Core). The environment key is retained for configuration compatibility.
     x_action_context = os.environ.get("SEMA4AI_VSCODE_X_ACTION_CONTEXT")
     if not x_action_context:
         return None
@@ -173,7 +173,7 @@ def main():
     args = sys.argv[1:]
     if actions is not None:
         if actions.version_info >= [0, 7, 0]:
-            # Only available on newer versions of sema4ai-actions.
+            # Supported by published Actions Core.
             args.append("--print-result")
 
     print(

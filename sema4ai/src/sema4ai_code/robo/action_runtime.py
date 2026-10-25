@@ -1,25 +1,50 @@
-"""Select an installed Action API in the target interpreter, preferring Actions Core."""
+"""Resolve only the owned Actions Core SDK in the target interpreter.
+
+Robot task execution has its own launcher; it does not use this Action resolver.
+"""
 
 import importlib
-from importlib.metadata import PackageNotFoundError, version
+import importlib.util
+from importlib.metadata import PackageNotFoundError, distribution
+from pathlib import Path
 import sys
 
 
+class ActionSDKError(RuntimeError):
+    """An Action Package cannot load its declared owned SDK."""
+
+
+_INSTALL_HELP = (
+    "Add actions-core==1.0.3 to the Python dependencies in package.yaml and rebuild "
+    "the selected Action Package environment. Legacy vendor Action SDKs are not substitutes."
+)
+
+
 def load_actions():
-    for name in ("actions", "sema4ai.actions", "robocorp.actions"):
+    try:
+        dist = distribution("actions-core")
+    except PackageNotFoundError as error:
+        raise ActionSDKError("Actions Core is missing. " + _INSTALL_HELP) from error
+
+    # Metadata alone must not bless an unrelated actions.py on PYTHONPATH.
+    # Check before import, so a shadow workload is not executed during discovery.
+    files = {str(file): file for file in (dist.files or ())}
+    for name, relative in (("actions", "actions/__init__.py"), ("actions.cli", "actions/cli.py")):
+        recorded = files.get(relative)
+        spec = importlib.util.find_spec(name)
+        if recorded is None or spec is None or spec.origin is None or (
+            Path(spec.origin).resolve() != Path(dist.locate_file(recorded)).resolve()
+        ):
+            raise ActionSDKError(
+                f"Cannot resolve {name} from actions-core; a missing installation or "
+                "shadow module is on the interpreter path. Check PYTHONPATH and the "
+                "selected interpreter. " + _INSTALL_HELP
+            )
         try:
-            if name == "actions":
-                try:
-                    version("actions-core")
-                except PackageNotFoundError:
-                    continue
-            module = importlib.import_module(name)
-            cli = importlib.import_module(f"{name}.cli")
-            return module, cli
-        except ModuleNotFoundError as error:
-            if error.name != name and not name.startswith(f"{error.name}."):
-                raise
-    raise RuntimeError("Install actions-core==1.0.3 in the Action Package environment.")
+            importlib.import_module(name)
+        except ImportError as error:
+            raise ActionSDKError(f"Cannot load actions-core: {error}. " + _INSTALL_HELP) from error
+    return sys.modules["actions"], sys.modules["actions.cli"]
 
 
 if __name__ == "__main__":
