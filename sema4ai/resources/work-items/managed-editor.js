@@ -104,7 +104,9 @@ window.addEventListener('message', ({data}) => {
     byId('managed-artifacts').replaceChildren();
     if (managedAllowed('artifacts.read')) for (const artifact of data.run?.artifacts || []) managedButton(byId('managed-artifacts'),
         `Save artifact · ${artifact.size} bytes · ${artifact.digest}`, () => managedSend('artifact', {handle:artifact.handle}));
-    byId('managed-logs').textContent = (data.logs?.lines || []).map(line => `${line.offset}: ${line.text}`).join('\n');
+    byId('managed-logs').textContent = !data.logs ? 'Select Logs for a linked Run to load its log lines.'
+        : data.logs.lines.length ? data.logs.lines.map(line => `${line.offset}: ${line.text}`).join('\n')
+        : 'No log lines were returned for this page.';
     managedLogCursor = data.logs?.next_cursor;
     byId('managed-more-logs').disabled = !managedLogCursor;
     byId('managed-more-queues').disabled = !data.queueCursor;

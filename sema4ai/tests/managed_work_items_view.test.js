@@ -15,7 +15,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
     // This is not an installed Extension Host or managed SQL worker proof.
     const scratch=await fs.mkdtemp(path.join(os.tmpdir(),'managed-view-'));
     const secret=new Map(),state=new Map(),posted=[],calls=[],confirmations=[];
-    let inputs=[],save=path.join(scratch,'artifact.txt'),disconnect=false,denied=false,replay=false,conflict,generic=false;
+    let inputs=[],save=path.join(scratch,'artifact.txt'),disconnect=false,denied=false,replay=false,conflict,generic=false,cancelDialog=false,emptyLogs=false;
     const payload=Buffer.from('proof');
     const artifact={handle:'synthetic-artifact',run_id:I,digest:'sha256:'+crypto.createHash('sha256').update(payload).digest('hex'),size:payload.length};
     const item=response(command('items.get')).result.item;item.run_ids=[I];
@@ -37,7 +37,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
             if(c.operation==='items.get')out.result.item=item;
             if(c.operation==='reviews.list')out.result.reviews=[{proposal,state:'pending',work_item_id:null}];
             if(c.operation==='runs.get'){out.result.run.artifacts=[artifact];out.result.run.attempts=[];}
-            if(c.operation==='runs.logs')out.result.lines=[{offset:0,text:'synthetic log'}];
+            if(c.operation==='runs.logs'){out.result.lines=emptyLogs?[]:[{offset:0,text:'synthetic log'}];out.result.next_cursor=null;}
             if(c.operation==='artifacts.read')out.result={artifact,offset:0,data_base64:payload.toString('base64'),eof:true,next_cursor:null};
             if(c.operation==='items.enqueue')out.result.replay=replay;
             res.end(JSON.stringify(out));
@@ -46,7 +46,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
     await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
     const endpoint=`http://127.0.0.1:${server.address().port}`;
     const context={globalStorageUri:{fsPath:scratch},workspaceState:{get:(key,fallback)=>state.get(key)||fallback,update:async(key,value)=>state.set(key,value)},secrets:{get:async key=>secret.get(key),store:async(key,value)=>secret.set(key,value)}};
-    const vscode={window:{showInputBox:async()=>inputs.shift(),showWarningMessage:async(message,_,option)=>{confirmations.push(message);return option;},showSaveDialog:async()=>({fsPath:save})}};
+    const vscode={window:{showInputBox:async()=>inputs.shift(),showWarningMessage:async(message,_,option)=>{confirmations.push(message);return cancelDialog?undefined:option;},showSaveDialog:async()=>cancelDialog?undefined:({fsPath:save}),showOpenDialog:async()=>undefined}};
     const load=Module._load;
     Module._load=function(name,parent,main){if(name==='vscode'&&parent?.filename.endsWith('/managedWorkItemsView.js'))return vscode;return load.call(this,name,parent,main);};
     let View;try{View=require('../vscode-client/out/managedWorkItemsView').ManagedWorkItemsView;}finally{Module._load=load;}
@@ -59,6 +59,26 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         await view.handle({op:'managed.item',id:I});
         await view.handle({op:'managed.run',id:I});
         await view.handle({op:'managed.logs',id:I});assert.equal(posted.at(-1).logs.lines[0].text,'synthetic log');
+        emptyLogs=true;await view.handle({op:'managed.logs',id:I});
+        assert.deepEqual(posted.at(-1).logs.lines,[]);assert.equal(posted.at(-1).logs.run_id,I);
+        const journalFiles=async()=>fs.readdir(path.join(scratch,'managed-work-items',crypto.createHash('sha256').update('/synthetic/action/package.yaml\n'+endpoint+'\n'+W).digest('hex')));
+        async function assertCancelled(message,{preserveQueue=true}={}){
+            const prior=posted.at(-1),beforePosts=posted.length,beforeCalls=calls.length,beforeJournal=await journalFiles();
+            await view.handle(message);
+            assert.equal(posted.length,beforePosts+1,'Cancel must settle the loading state without Refresh');
+            assert.equal(posted.at(-1).type,'managed-state');assert.match(posted.at(-1).message,/cancelled/i);
+            for(const key of [...(preserveQueue?['queue']:[]),'item','logs','pending','snapshot','capabilities'])assert.deepEqual(posted.at(-1)[key],prior[key],'Cancel preserves '+key);
+            assert.equal(calls.length,beforeCalls,'Cancel must not send even a refresh request');
+            assert.deepEqual(await journalFiles(),beforeJournal,'Cancel must not create a request or receipt');
+        }
+        cancelDialog=true;
+        await assertCancelled({op:'managed.claim',lease_seconds:60});
+        assert.ok(confirmations.at(-1).includes('items.claim'),'Claim still requires explicit confirmation');
+        assert.equal(calls.some(c=>c.operation==='items.claim'),false);
+        await assertCancelled({op:'managed.snapshot'});
+        await assertCancelled({op:'managed.artifact',handle:artifact.handle});
+        for(const input of [[],[endpoint],[endpoint,W]]){inputs=input;await assertCancelled({op:'managed.connect'});}
+        cancelDialog=false;
         await view.handle({op:'managed.artifact',handle:artifact.handle});assert.equal(await fs.readFile(save,'utf8'),'proof');
         await assert.rejects(view.handle({op:'managed.artifact',handle:artifact.handle}),/EEXIST/);
         assert.equal(await fs.readFile(save,'utf8'),'proof');
@@ -75,6 +95,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         assert.equal(posted.at(-1).pending.length,1);
         await assert.rejects(view.handle({op:'managed.enqueue',payload:{value:7}}),/Reconcile/);
         view=create();await connect();assert.equal(posted.at(-1).pending[0].key,first.idempotency_key);
+        cancelDialog=true;await assertCancelled({op:'managed.reconcile',key:first.idempotency_key},{preserveQueue:false});cancelDialog=false;
         replay=true;await view.handle({op:'managed.reconcile',key:first.idempotency_key});
         const second=calls.filter(c=>c.operation==='items.enqueue').at(-1);assert.deepEqual(second,first);
         assert.equal(posted.at(-1).pending.length,0);

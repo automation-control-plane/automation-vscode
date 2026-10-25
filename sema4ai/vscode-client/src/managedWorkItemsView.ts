@@ -77,14 +77,14 @@ export class ManagedWorkItemsView {
     }
     private async connect(): Promise<void> {
         const endpoint = await vscode.window.showInputBox({prompt: "Canonical managed Runtime origin", value: this.context.workspaceState.get("managed.endpoint." + this.manifest, "http://127.0.0.1:8082"), ignoreFocusOut: true});
-        if (!endpoint) return;
+        if (!endpoint) {await this.publish("Connection cancelled. Existing connection unchanged."); return;}
         const workspace = await vscode.window.showInputBox({prompt: "Workspace UUID granted by this Runtime", value: this.context.workspaceState.get("managed.workspace." + this.manifest, ""), ignoreFocusOut: true});
-        if (!workspace) return;
+        if (!workspace) {await this.publish("Connection cancelled. Existing connection unchanged."); return;}
         const namespace = createHash("sha256").update(this.manifest + "\n" + endpoint + "\n" + workspace).digest("hex");
         const secretKey = "managed.token." + namespace;
         const stored = await this.context.secrets.get(secretKey);
         const entered = await vscode.window.showInputBox({prompt: stored ? "Managed API token; empty reuses this scope's stored token, Escape cancels" : "Managed API token", password: true, ignoreFocusOut: true});
-        if (entered === undefined) return;
+        if (entered === undefined) {await this.publish("Connection cancelled. Existing connection unchanged."); return;}
         const token = entered || stored;
         if (!token) throw Error("A managed API token is required.");
         this.client = undefined; this.clearProjection(); this.pending.clear();
@@ -114,7 +114,10 @@ export class ManagedWorkItemsView {
         const confirmed = await vscode.window.showWarningMessage(
             `${retained ? "Reconcile the exact retained" : "Execute"} ${operation} request at ${this.client.endpoint}? Queue ${command.queue?.queue_id}; key ${key}. Review the exact target/binding in the editor.`,
             {modal: true}, retained ? "Reconcile exact request" : "Execute request");
-        if (!confirmed) return;
+        if (!confirmed) {
+            await this.publish(retained ? "Reconciliation cancelled. The retained request is unchanged." : "Request cancelled. Nothing was submitted.");
+            return;
+        }
         if (!retained) await fs.promises.writeFile(path.join(this.journalDir, key + ".request.json"), JSON.stringify(command), {flag: "wx", mode: 0o600});
         const record: Journal = {key, command, state: "uncertain"}; this.pending.set(key, record);
         try {
@@ -176,7 +179,7 @@ export class ManagedWorkItemsView {
             if (op === "managed.run") this.run = result.run as Run; else this.logs = result;
         } else if (op === "managed.snapshot") {
             const source = await vscode.window.showOpenDialog({canSelectMany: false, openLabel: "Load admitted execution snapshot"});
-            if (!source?.length) return;
+            if (!source?.length) {await this.publish("Snapshot selection cancelled. Existing snapshot unchanged."); return;}
             const info = await vscode.workspace.fs.stat(source[0]);
             if (info.size > 512 * 1024) throw Error("Snapshot exceeds the protocol limit.");
             this.snapshot = JSON.parse(Buffer.from(await vscode.workspace.fs.readFile(source[0])).toString("utf8"));
@@ -209,7 +212,7 @@ export class ManagedWorkItemsView {
             const artifact = this.run?.artifacts.find(value => value.handle === message.handle);
             if (!artifact) throw Error("Select an actual artifact linked to this Run.");
             const target = await vscode.window.showSaveDialog({saveLabel: "Save verified Runtime artifact copy"});
-            if (!target) return;
+            if (!target) {await this.publish("Artifact save cancelled. No file was written."); return;}
             const temporary = target.fsPath + ".partial-" + randomUUID();
             const output = await fs.promises.open(temporary, "wx", 0o600);
             const hash = createHash("sha256"); let offset = 0, cursor: string | undefined, pages = 0;

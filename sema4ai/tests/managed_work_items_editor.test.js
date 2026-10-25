@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const vm=require('node:vm');
 const fs=require('node:fs');
 
-test('Managed editor keeps queue/review/Run identity separate and gates controls by actual grants',()=>{
+function createEditor(){
     const nodes=new Map(),messages=[],receivers=[];
     const ids=new Set([...fs.readFileSync('resources/work-items/panel.html','utf8').matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
     function element(){return {value:'',textContent:'',children:[],disabled:false,hidden:false,
@@ -12,7 +12,11 @@ test('Managed editor keeps queue/review/Run identity separate and gates controls
     const document={getElementById(id){assert.ok(ids.has(id),'Panel must contain '+id);if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},createElement:element};
     const scope={document,acquireVsCodeApi:()=>({postMessage:message=>{messages.push(JSON.parse(JSON.stringify(message)));if(message.op==='restoreEditorDraft')receivers.forEach(callback=>callback({data:{type:'editorDraftRestore'}}));}}),window:{addEventListener:(_,callback)=>receivers.push(callback)}};
     vm.runInNewContext(fs.readFileSync('resources/work-items/form.js','utf8')+'\n'+fs.readFileSync('resources/work-items/editor.js','utf8')+'\n'+fs.readFileSync('resources/work-items/managed-editor.js','utf8'),scope);
-    const get=document.getElementById;
+    return {get:document.getElementById,messages,receivers};
+}
+
+test('Managed editor keeps queue/review/Run identity separate and gates controls by actual grants',()=>{
+    const {get,messages,receivers}=createEditor();
     get('mode').value='managed';get('mode').onchange();
     assert.equal(get('local-root').hidden,true);assert.equal(get('managed-root').hidden,false);
     get('connect').onclick();assert.equal(messages.at(-1).op,'managed.connect');
@@ -53,4 +57,40 @@ test('Managed editor keeps queue/review/Run identity separate and gates controls
     assert.equal(get('managed-approve').disabled,true);assert.match(get('managed-status').textContent,/Forbidden/);
     get('mode').value='published';get('mode').onchange();get('connect').onclick();
     assert.equal(messages.at(-1).op,'connect');assert.equal(get('local-root').hidden,false);
+});
+
+test('Managed logs distinguish an unloaded result, an empty page, and literal returned lines',()=>{
+    const {get,messages,receivers}=createEditor();
+    const render=state=>receivers.forEach(receive=>receive({data:{type:'managed-state',...state}}));
+    render({});
+    assert.match(get('managed-logs').textContent,/select.*logs/i);
+    assert.equal(get('managed-more-logs').disabled,true);
+    const before=messages.length;
+    render({logs:{run_id:'run-identity',lines:[],next_cursor:null}});
+    assert.match(get('managed-logs').textContent,/no log lines.*returned/i);
+    assert.doesNotMatch(get('managed-logs').textContent,/select.*logs/i);
+    assert.equal(get('managed-more-logs').disabled,true);
+    render({logs:{run_id:'run-identity',lines:[],next_cursor:'next-page'}});
+    assert.match(get('managed-logs').textContent,/no log lines.*returned/i);
+    assert.equal(get('managed-more-logs').disabled,false,'An empty page does not imply end of pagination');
+    assert.equal(messages.length,before,'Rendering logs must not fetch or mutate');
+    get('managed-more-logs').onclick();
+    assert.deepEqual(messages.at(-1),{op:'managed.logs',id:'run-identity',cursor:'next-page'});
+    render({logs:{run_id:'run-identity',lines:[{offset:0,text:'<script>literal text</script>'}],next_cursor:null}});
+    assert.equal(get('managed-logs').textContent,'0: <script>literal text</script>');
+    assert.equal(get('managed-more-logs').disabled,true);
+    render({});
+    assert.match(get('managed-logs').textContent,/select.*logs/i,'A changed selection must not retain an earlier empty response');
+});
+
+test('A managed cancellation response clears Working without changing the payload draft',()=>{
+    const {get,receivers}=createEditor();
+    get('mode').value='managed';get('mode').onchange();
+    get('managed-payload').value='{"value":7}';get('managed-payload-apply-json').onclick();
+    for(const receive of receivers)receive({data:{type:'loading'}});
+    assert.match(get('status').textContent,/Working/);
+    for(const receive of receivers)receive({data:{type:'managed-state',message:'Request cancelled. Nothing was submitted.'}});
+    assert.equal(get('status').textContent,'');
+    assert.match(get('managed-status').textContent,/cancelled/);
+    assert.deepEqual(JSON.parse(get('managed-payload').value),{value:7});
 });
