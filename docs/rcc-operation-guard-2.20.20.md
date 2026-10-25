@@ -30,6 +30,15 @@ payload, executable receipts and candidate hashes are in the QA packet.
 Native desktop acceptance is separate. Preserve earlier artifacts; do not use
 2.20.19 screenshots to qualify 2.20.20.
 
+Installed executable checks passed: three real profile switches, three real
+`--no-build` named-space resolutions and six vendor-command refusals before
+executable lookup. All eight installed Action/Robot × File/SQLite × Run/Debug
+attachment workloads also passed, including four actual breakpoints. The first
+profile smoke fixture omitted `settings.meta.name`, so RCC correctly listed
+`default` after a successful switch; the corrected fixture follows published
+RCC source/tests. That initial harness failure is retained in the QA packet.
+No production change was needed for the profile label.
+
 All [2.20.19 release holds](owned-boundaries-2.20.19.md) remain. In particular,
 the denied hosted workflow change has not been retried or edited. No merge,
 hosted CI, publication, upstream edit or dependency resolution change is part

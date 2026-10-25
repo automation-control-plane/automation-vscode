@@ -32,14 +32,17 @@ def main():
     checks = []
     for name in ("cloud", "credentials", "feedback"):
         profile = args.output / f"{name}.yaml"
-        profile.write_text(f"name: {name}\ndescription: Synthetic operation guard regression\nsettings: {{}}\n")
+        # RCC reports settings.meta.name as the active profile name; the outer
+        # name alone only names the imported file (published RCC profile tests).
+        profile.write_text(f"name: {name}\ndescription: Synthetic operation guard regression\nsettings:\n  meta:\n    name: {name}\n")
         imported = rcc.profile_import(str(profile))
         assert imported.success, imported.message
         switched = rcc.profile_switch(name)
         assert switched.success, switched.message
         listed = rcc.profile_list()
         assert listed.success and listed.result["current"] == name, listed
-        checks.append({"operation": "profile_switch", "name": name, "current": listed.result["current"], "success": True})
+        checks.append({"operation": "profile_switch", "name": name, "current": listed.result["current"], "success": True,
+                       "import_command": imported.command_line, "switch_command": switched.command_line})
     # Reuse only an explicitly supplied, task-owned prepared cache. --no-build
     # prevents downloads; it creates a named local space, not a shared Holotree.
     os.environ["ACTIONS_HOME"] = str(args.prepared_actions_home)
@@ -49,7 +52,7 @@ def main():
         assert result.success, result.message
         values = {value["key"]: value["value"] for value in json.loads(result.result)}
         assert Path(values["PYTHON_EXE"]).resolve().is_relative_to(args.prepared_actions_home.resolve())
-        checks.append({"operation": "holotree_variables", "space": name, "success": True, "python": values["PYTHON_EXE"]})
+        checks.append({"operation": "holotree_variables", "space": name, "success": True, "python": values["PYTHON_EXE"], "command": result.command_line})
     def forbidden_lookup():
         raise AssertionError("Guard reached executable lookup")
     rcc.get_rcc_location = forbidden_lookup
