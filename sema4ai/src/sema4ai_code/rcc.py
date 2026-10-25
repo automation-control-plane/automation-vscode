@@ -47,6 +47,56 @@ ACCOUNT_NAME = "sema4ai"
 _cache_hash: LRUCache[tuple[str, str], ActionResult[str]] = LRUCache(max_size=50)
 
 
+def _rcc_command_path(args: list[str]) -> tuple[str, ...]:
+    """Classify command positions, never profile/path/space argument values.
+
+    RCC 18.19.7 root/configuration help defines these flags and aliases. Only
+    prefixes preceding the operation need parsing; leaf arguments belong to RCC.
+    Refuse an unknown prefix flag rather than guessing its arity and bypassing
+    the external-service boundary. Native callers put leaf flags after commands.
+    """
+    value_flags = {
+        "--anything", "--config", "--controller", "--log-hide", "--pprof",
+        "--tag", "--workers", "--account", "-a",
+    }
+    boolean_flags = {
+        "--bundled", "--colorless", "--debug", "--externally-managed",
+        "--help", "-h", "--version", "-v", "--liveonly", "--lockless",
+        "--no-build", "--no-pyc-management", "--no-retry-build",
+        "--no-temp-management", "--nocache", "--numbers", "--robocorp",
+        "--silent", "--strict", "--timeline", "--trace", "--unmanaged",
+        "--warranty-voided",
+    }
+    commands: list[str] = []
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if not isinstance(token, str):
+            raise ValueError("RCC command arguments must be strings.")
+        flag, equals, _ = token.partition("=")
+        if flag in value_flags:
+            if not equals:
+                index += 1
+                if index >= len(args):
+                    raise ValueError(f"RCC command flag {flag} requires a value.")
+        elif flag in boolean_flags:
+            pass
+        elif token.startswith("-"):
+            raise ValueError(f"Unrecognized RCC command prefix flag {flag}; put the command before its options.")
+        else:
+            if not commands:
+                token = {
+                    "conf": "configuration", "config": "configuration",
+                    "configure": "configuration", "c": "cloud",
+                    "robocorp": "cloud", "f": "feedback",
+                }.get(token, token)
+            commands.append(token)
+            if commands[0] != "configuration" or len(commands) == 2:
+                return tuple(commands)
+        index += 1
+    return tuple(commands)
+
+
 def download_rcc(
     location: str,
     force: bool = False,
@@ -251,7 +301,12 @@ class Rcc:
 
         from sema4ai_code.legacy_integrations import DISABLED, enabled
         provider = self._config_provider()
-        if any(arg in {"cloud", "credentials", "feedback"} for arg in args) and not enabled(
+        try:
+            command_path = _rcc_command_path(args)
+        except ValueError as error:
+            return LaunchActionResult("", False, str(error))
+        external = command_path[:1] in (("cloud",), ("feedback",)) or command_path == ("configuration", "credentials")
+        if external and not enabled(
             provider.config if provider is not None else None
         ):
             return LaunchActionResult("", False, DISABLED)
@@ -273,7 +328,7 @@ class Rcc:
             # Keep credential lookup and the corresponding cloud calls together.
             kind = (
                 "robots"
-                if args[:1] == ["cloud"] or args[:2] == ["config", "credentials"]
+                if command_path[:1] == ("cloud",) or command_path == ("configuration", "credentials")
                 else "actions"
             )
         env.update(runtime_environment(kind, self.get_robocorp_home_from_settings()))
