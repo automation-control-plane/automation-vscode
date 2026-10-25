@@ -4,6 +4,12 @@ import { RuntimeHTTPError, RuntimeTransport } from "./workItemsRuntimeClient";
 
 const contract = JSON.parse(fs.readFileSync(path.join(__dirname, "../../resources/work-items/managed-v1.json"), "utf8"));
 export const MANAGED_VERSION = "actions.managed-work-items/v1";
+// Queue modes describe the admitted policy; they never confer an operation grant.
+export const MANAGED_QUEUE_MODES = ["reviewed", "producer", "consumer", "optional", "required-input"] as const;
+export type ManagedQueueMode = typeof MANAGED_QUEUE_MODES[number];
+export type ManagedCapabilityMode = ManagedQueueMode | "none";
+export type ManagedCapabilityAuthority = "legacy-action" | "package-revision";
+export type ManagedSnapshot = Record<string, unknown> & {capability_authority?: ManagedCapabilityAuthority};
 export const MANAGED_PERMISSIONS: Record<string, string> = {
     "queues.list": "work_items.read", "items.list": "work_items.read", "items.get": "work_items.read",
     "items.enqueue": "work_items.enqueue", "items.claim": "work_items.claim", "items.renew": "work_items.claim",
@@ -13,7 +19,7 @@ export const MANAGED_PERMISSIONS: Record<string, string> = {
 };
 export interface ManagedCapabilities {
     schema_version: string; runtime_version: string; sdk_version: string; workspace_id: string;
-    operations: string[]; permissions: string[]; backend: "sqlite" | "postgresql"; time_authority: "database"; modes: string[];
+    operations: string[]; permissions: string[]; backend: "sqlite" | "postgresql"; time_authority: "database"; modes: ManagedCapabilityMode[];
 }
 export interface QueueRef { workspace_id: string; deployment: {workspace_id: string; deployment_id: string; revision_id: string}; queue_id: string; }
 export interface ManagedCommand { schema_version: string; operation: string; queue?: QueueRef; workspace_id?: string; [key: string]: unknown; }
@@ -117,7 +123,7 @@ export class ManagedWorkItemsClient extends RuntimeTransport {
         const value = await this.request("GET", "/api/managed-work-items/v1/capabilities?workspace_id=" + encodeURIComponent(this.workspace)) as ManagedCapabilities;
         const allowed = ["schema_version", "runtime_version", "sdk_version", "workspace_id", "operations", "permissions", "backend", "time_authority", "modes"];
         if (!value || Object.keys(value).some(key => !allowed.includes(key)) || value.schema_version !== MANAGED_VERSION || value.workspace_id !== this.workspace || value.time_authority !== "database" || !["sqlite", "postgresql"].includes(value.backend)) throw Error("Invalid managed capability scope or authority.");
-        if (!Array.isArray(value.operations) || !Array.isArray(value.permissions) || !Array.isArray(value.modes) || !value.modes.every(mode => ["reviewed", "producer", "consumer", "optional", "none"].includes(mode))) throw Error("Invalid managed capability set.");
+        if (!Array.isArray(value.operations) || !Array.isArray(value.permissions) || !Array.isArray(value.modes) || !value.modes.every(mode => [...MANAGED_QUEUE_MODES, "none"].includes(mode))) throw Error("Invalid managed capability set.");
         if (new Set(value.operations).size !== value.operations.length || new Set(value.permissions).size !== value.permissions.length || value.operations.some(operation => !MANAGED_PERMISSIONS[operation] || !value.permissions.includes(MANAGED_PERMISSIONS[operation])) || value.permissions.some(permission => !Object.values(MANAGED_PERMISSIONS).includes(permission))) throw Error("Managed operation lacks an explicit known grant.");
         if (!atLeast(value.runtime_version, contract.minimum_runtime) || !atLeast(value.sdk_version, contract.minimum_sdk)) throw Error("Runtime or fenced SDK is below the managed protocol floor.");
         this.admitted = value;
@@ -153,7 +159,10 @@ export class ManagedWorkItemsClient extends RuntimeTransport {
                 if (!uuid(entry.id) || stable(entry.snapshot.deployment) !== stable(entry.queue.deployment) || (entry.claim && (stable(entry.claim.queue) !== stable(entry.queue) || entry.claim.item_id !== entry.id)) || ((entry.claim === null) !== (entry.lease_deadline_ms === null))) throw Error("Managed item identity/admission/claim mismatch.");
             };
             const result: any = value.result;
-            for (const queue of result.queues || []) sameQueue(queue.queue);
+            for (const queue of result.queues || []) {
+                sameQueue(queue.queue);
+                if (!available.modes.includes(queue.mode)) throw Error("Managed queue mode was not advertised by this Runtime.");
+            }
             for (const entry of result.items || []) item(entry);
             if (result.item) item(result.item);
             if (command.item_id && result.item?.id && result.item.id !== command.item_id) throw Error("Managed response changed the requested item.");

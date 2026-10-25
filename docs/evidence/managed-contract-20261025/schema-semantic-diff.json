@@ -1,0 +1,148 @@
+[
+  [
+    "$.commands.$defs.ExecutionSnapshot.properties.capability_authority",
+    "<absent>",
+    {
+      "default": "legacy-action",
+      "enum": [
+        "legacy-action",
+        "package-revision"
+      ],
+      "title": "Capability Authority",
+      "type": "string"
+    }
+  ],
+  [
+    "$.results.items.cancel.$defs.ExecutionSnapshot.properties.capability_authority",
+    "<absent>",
+    {
+      "default": "legacy-action",
+      "enum": [
+        "legacy-action",
+        "package-revision"
+      ],
+      "title": "Capability Authority",
+      "type": "string"
+    }
+  ],
+  [
+    "$.results.items.claim.$defs.ExecutionSnapshot.properties.capability_authority",
+    "<absent>",
+    {
+      "default": "legacy-action",
+      "enum": [
+        "legacy-action",
+        "package-revision"
+      ],
+      "title": "Capability Authority",
+      "type": "string"
+    }
+  ],
+  [
+    "$.results.items.complete.$defs.ExecutionSnapshot.properties.capability_authority",
+    "<absent>",
+    {
+      "default": "legacy-action",
+      "enum": [
+        "legacy-action",
+        "package-revision"
+      ],
+      "title": "Capability Authority",
+      "type": "string"
+    }
+  ],
+  [
+    "$.results.items.enqueue.$defs.ExecutionSnapshot.properties.capability_authority",
+    "<absent>",
+    {
+      "default": "legacy-action",
+      "enum": [
+        "legacy-action",
+        "package-revision"
+      ],
+      "title": "Capability Authority",
+      "type": "string"
+    }
+  ],
+  [
+    "$.results.items.get.$defs.ExecutionSnapshot.properties.capability_authority",
+    "<absent>",
+    {
+      "default": "legacy-action",
+      "enum": [
+        "legacy-action",
+        "package-revision"
+      ],
+      "title": "Capability Authority",
+      "type": "string"
+    }
+  ],
+  [
+    "$.results.items.list.$defs.ExecutionSnapshot.properties.capability_authority",
+    "<absent>",
+    {
+      "default": "legacy-action",
+      "enum": [
+        "legacy-action",
+        "package-revision"
+      ],
+      "title": "Capability Authority",
+      "type": "string"
+    }
+  ],
+  [
+    "$.results.items.renew.$defs.ExecutionSnapshot.properties.capability_authority",
+    "<absent>",
+    {
+      "default": "legacy-action",
+      "enum": [
+        "legacy-action",
+        "package-revision"
+      ],
+      "title": "Capability Authority",
+      "type": "string"
+    }
+  ],
+  [
+    "$.results.items.retry.$defs.ExecutionSnapshot.properties.capability_authority",
+    "<absent>",
+    {
+      "default": "legacy-action",
+      "enum": [
+        "legacy-action",
+        "package-revision"
+      ],
+      "title": "Capability Authority",
+      "type": "string"
+    }
+  ],
+  [
+    "$.results.queues.list.$defs.QueueView.properties.mode.enum",
+    [
+      "reviewed",
+      "producer",
+      "consumer",
+      "optional"
+    ],
+    [
+      "reviewed",
+      "producer",
+      "consumer",
+      "optional",
+      "required-input"
+    ]
+  ],
+  [
+    "$.results.runs.get.$defs.ExecutionSnapshot.properties.capability_authority",
+    "<absent>",
+    {
+      "default": "legacy-action",
+      "enum": [
+        "legacy-action",
+        "package-revision"
+      ],
+      "title": "Capability Authority",
+      "type": "string"
+    }
+  ]
+]

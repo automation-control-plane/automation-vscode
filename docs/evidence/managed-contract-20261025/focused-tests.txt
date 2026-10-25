@@ -1,0 +1,16 @@
+✔ Canonical generated commands reject extra authority, invalid lease/size and non-finite JSON (31.192072ms)
+✔ Negotiates canonical managed capabilities and all14 typed operations with no legacy requests or automatic retry (212.530885ms)
+✔ Pinned candidate schema has reviewed Git bytes and exactly the current generated queue vocabulary (3.051034ms)
+✔ Snapshot authority accepts only reviewed values and never inserts the legacy default into commands (6.669591ms)
+✔ Current required-input candidate negotiates without granting mutations and rejects semantic drift (107.035099ms)
+✔ Managed editor keeps queue/review/Run identity separate and gates controls by actual grants (62.30754ms)
+✔ Native managed controller preserves exact targets, grants, artifacts and uncertain request identity across reconnect (163.976432ms)
+✔ Managed client requires secure origin, explicit auth and a verified published contract (47.415417ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 480.508119

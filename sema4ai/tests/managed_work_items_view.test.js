@@ -15,7 +15,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
     // This is not an installed Extension Host or managed SQL worker proof.
     const scratch=await fs.mkdtemp(path.join(os.tmpdir(),'managed-view-'));
     const secret=new Map(),state=new Map(),posted=[],calls=[],confirmations=[];
-    let inputs=[],save=path.join(scratch,'artifact.txt'),disconnect=false,denied=false,replay=false,conflict;
+    let inputs=[],save=path.join(scratch,'artifact.txt'),disconnect=false,denied=false,replay=false,conflict,generic=false;
     const payload=Buffer.from('proof');
     const artifact={handle:'synthetic-artifact',run_id:I,digest:'sha256:'+crypto.createHash('sha256').update(payload).digest('hex'),size:payload.length};
     const item=response(command('items.get')).result.item;item.run_ids=[I];
@@ -25,14 +25,14 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         res.setHeader('Content-Type','application/json');
         assert.equal(req.headers.authorization,'Bearer synthetic-token');
         if(req.url.endsWith('/schema'))return res.end(JSON.stringify(contract));
-        if(req.url.includes('/capabilities?'))return res.end(JSON.stringify({schema_version:MANAGED_VERSION,runtime_version:'1.1.0a13',sdk_version:'0.5.0a1',workspace_id:W,operations:Object.keys(MANAGED_PERMISSIONS),permissions,backend:'sqlite',time_authority:'database',modes:['reviewed','producer']}));
+        if(req.url.includes('/capabilities?'))return res.end(JSON.stringify({schema_version:MANAGED_VERSION,runtime_version:'1.1.0a13',sdk_version:'0.5.0a1',workspace_id:W,operations:generic?['queues.list','items.list','items.get']:Object.keys(MANAGED_PERMISSIONS),permissions:generic?['work_items.read']:permissions,backend:'sqlite',time_authority:'database',modes:generic?['required-input']:['reviewed','producer']}));
         let raw='';req.on('data',chunk=>raw+=chunk);req.on('end',()=>{
             const c=JSON.parse(raw);calls.push(c);
             if(denied){res.statusCode=403;return res.end(JSON.stringify({schema_version:MANAGED_VERSION,error:{code:'forbidden'}}));}
             if(conflict&&c.operation==='items.retry'){res.statusCode=409;return res.end(JSON.stringify({schema_version:MANAGED_VERSION,error:{code:conflict}}));}
             if(disconnect&&c.operation==='items.enqueue'){disconnect=false;req.socket.destroy();return;}
             const out=response(c);
-            if(c.operation==='queues.list')out.result.queues=[{queue,label:'Authorized synthetic queue',mode:'producer',permissions,counts:{PENDING:1}}];
+            if(c.operation==='queues.list')out.result.queues=[{queue,label:'Authorized synthetic queue',mode:generic?'required-input':'producer',permissions:generic?['work_items.read']:permissions,counts:{PENDING:1}}];
             if(c.operation==='items.list')out.result.items=[item];
             if(c.operation==='items.get')out.result.item=item;
             if(c.operation==='reviews.list')out.result.reviews=[{proposal,state:'pending',work_item_id:null}];
@@ -84,6 +84,15 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         assert.equal(posted.at(-1).pending.length,0);
         conflict='blocked_uncertain_effect';await assert.rejects(view.handle({op:'managed.retry',reason:'explicit test'}),/blocked_uncertain_effect/);
         assert.equal(posted.at(-1).pending.length,1);conflict=undefined;
+        generic=true;item.claim=null;item.lease_deadline_ms=null;item.snapshot.capability_authority='package-revision';
+        view=create();await connect();const genericStart=calls.length;
+        await view.handle({op:'managed.queue',queue:JSON.stringify(queue)});
+        await view.handle({op:'managed.item',id:I});
+        assert.equal(posted.at(-1).queue.mode,'required-input');assert.equal(posted.at(-1).snapshot.capability_authority,'package-revision');
+        assert.deepEqual(posted.at(-1).reviews,[]);
+        for(const op of ['managed.enqueue','managed.claim']) await assert.rejects(view.handle({op,payload:{value:7},lease_seconds:60}),/not granted/);
+        await assert.rejects(view.handle({op:'managed.retry',reason:'no epoch'}),/terminal Work Item epoch/);
+        assert.deepEqual(calls.slice(genericStart).map(c=>c.operation),['items.list','items.get']);
         denied=true;await assert.rejects(view.handle({op:'managed.item',id:I}),/denied/);
         assert.equal(posted.at(-1).capabilities,undefined);assert.deepEqual(posted.at(-1).items,[]);
         assert.ok(!JSON.stringify(posted).includes('synthetic-token'));

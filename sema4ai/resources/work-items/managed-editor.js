@@ -1,5 +1,15 @@
 /* Canonical Runtime projections; the host retains targets, bindings and keys. */
 let managedState = {}, managedLogCursor;
+function managedModeLabel(mode) {
+    const labels={'reviewed':'Reviewed input','producer':'Producer','consumer':'Consumer','optional':'Optional input','required-input':'Input required','none':'No Work Item input'};
+    return Object.hasOwn(labels,mode) ? labels[mode] : 'Unknown policy';
+}
+function managedAuthorityLabel(snapshot) {
+    if (!snapshot) return 'No snapshot loaded';
+    // Display the backend default without inserting it into the snapshot or journal.
+    const authority=snapshot.capability_authority;
+    return authority===undefined || authority==='legacy-action' ? 'Legacy action' : authority==='package-revision' ? 'Package revision' : 'Unknown authority — not admitted';
+}
 const managedPayloadEditor=new WorkItemForms.Editor(byId('managed-payload-fields'),{onChange:editor=>{showPayloadValue(editor,'managed-payload','managed-payload-validation');persistEditorState();}});
 byId('managed-payload-apply-json').onclick=()=>{try{managedPayloadEditor.setJSON(byId('managed-payload').value);}catch(error){byId('managed-payload-validation').textContent=error.message;}};
 function managedSend(op, extra = {}) {api.postMessage({op: 'managed.' + op, ...extra});}
@@ -36,9 +46,12 @@ window.addEventListener('message', ({data}) => {
     byId('managed-snapshot').disabled = !data.queue || !data.capabilities;
     byId('managed-snapshot').title = byId('managed-snapshot').disabled ? 'Connect and select an authorized queue first.' : 'Load an admitted snapshot; this does not execute it.'; byId('managed-status').textContent = data.message || (data.capabilities ? 'Connected. Runtime authority and live permissions govern every operation.' : 'Not connected.');
     byId('managed-identity').textContent = data.capabilities ? `${data.endpoint} · Workspace ${data.workspace} · Runtime ${data.capabilities.runtime_version} · SDK ${data.capabilities.sdk_version} · ${data.capabilities.backend} · database time\nModes: ${data.capabilities.modes.join(', ')}\nGrants: ${data.capabilities.permissions.join(', ')}` : '';
+    byId('managed-queue-policy').textContent = data.queue ? data.queue.mode==='required-input'
+        ? 'Input required. This policy needs an existing input for execution. Enqueue and claim are separate, explicitly granted operations; selecting this queue does not run it.'
+        : managedModeLabel(data.queue.mode) + '. Only live Runtime operations and queue grants enable controls.' : '';
     byId('managed-queues').replaceChildren();
     for (const queue of data.queues || []) {
-        const button=managedButton(byId('managed-queues'), queue.label, () => {navigateRunbook('inspect','result');managedSend('queue', {queue:JSON.stringify(queue.queue)});}, queue.mode + ' · ' + Object.entries(queue.counts).map(([name,count])=>name + ' ' + count).join(' · '));
+        const button=managedButton(byId('managed-queues'), queue.label, () => {navigateRunbook('inspect','result');managedSend('queue', {queue:JSON.stringify(queue.queue)});}, managedModeLabel(queue.mode) + ' · ' + Object.entries(queue.counts).map(([name,count])=>name + ' ' + count).join(' · '));
         button.ariaCurrent=String(JSON.stringify(queue.queue)===JSON.stringify(data.queue?.queue));
     }
     byId('managed-queues-empty').hidden=!!data.queues?.length;
@@ -58,7 +71,7 @@ window.addEventListener('message', ({data}) => {
     byId('managed-summary').replaceChildren();
     const summary = data.item ? {Item:data.item.id,'Business state':data.item.business_state,'Queue state':data.item.queue_state,
         Deliveries:data.item.delivery_count,'Parent input':data.item.parent_id,'Protected input':data.item.protected_input_digest,
-        'Deployment revision':data.item.snapshot?.deployment?.revision_id,'Claim owner':data.item.claim?.owner_id,'Claim epoch':data.item.claim?.epoch,'Lease deadline (database ms)':data.item.lease_deadline_ms} :
+        'Deployment revision':data.item.snapshot?.deployment?.revision_id,'Capability authority':managedAuthorityLabel(data.item.snapshot),'Claim owner':data.item.claim?.owner_id,'Claim epoch':data.item.claim?.epoch,'Lease deadline (database ms)':data.item.lease_deadline_ms} :
         data.review ? {Review:data.review.proposal.review_id,State:data.review.state,'Existing Run':data.review.proposal.binding.run_id,
             'Exact result digest':data.review.proposal.binding.result_digest,'Source version':data.review.proposal.binding.source_version,'Approved Work Item':data.review.work_item_id} : {};
     for (const [label,value] of Object.entries(summary)) if (value !== undefined && value !== null) {const row=document.createElement('p');row.textContent=label+': '+value;byId('managed-summary').append(row);}
@@ -66,7 +79,8 @@ window.addEventListener('message', ({data}) => {
     byId('managed-selected-payload').replaceChildren();
     if(data.item?.payload) renderDataTable(data.item.payload,byId('managed-selected-payload'));
     byId('managed-snapshot-view').textContent = JSON.stringify(data.snapshot || {}, null, 2);
-    byId('managed-enqueue').disabled = !managedAllowed('items.enqueue') || !data.snapshot || data.queue?.mode === 'reviewed';
+    byId('managed-snapshot-authority').textContent = 'Capability authority: ' + managedAuthorityLabel(data.snapshot);
+    byId('managed-enqueue').disabled = !data.queue || !managedAllowed('items.enqueue') || !data.snapshot || data.queue.mode === 'reviewed';
     byId('managed-enqueue').title=byId('managed-enqueue').disabled ? data.queue?.mode==='reviewed' ? 'Reviewed queues require an exact review decision.' : !data.snapshot ? 'Load an admitted execution snapshot first.' : 'The selected queue has not granted enqueue.' : 'Enqueue this input with the admitted snapshot.';
     byId('managed-claim').disabled = !data.queue || !managedAllowed('items.claim');
     byId('managed-renew').disabled = !data.item?.claim || !managedAllowed('items.renew');

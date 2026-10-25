@@ -346,6 +346,15 @@
           "capability": {
             "$ref": "#/$defs/CapabilityRef"
           },
+          "capability_authority": {
+            "default": "legacy-action",
+            "enum": [
+              "legacy-action",
+              "package-revision"
+            ],
+            "title": "Capability Authority",
+            "type": "string"
+          },
           "capability_schema_digest": {
             "pattern": "^sha256:[0-9a-f]{64}$",
             "title": "Capability Schema Digest",
@@ -1212,6 +1221,15 @@
             "capability": {
               "$ref": "#/$defs/CapabilityRef"
             },
+            "capability_authority": {
+              "default": "legacy-action",
+              "enum": [
+                "legacy-action",
+                "package-revision"
+              ],
+              "title": "Capability Authority",
+              "type": "string"
+            },
             "capability_schema_digest": {
               "pattern": "^sha256:[0-9a-f]{64}$",
               "title": "Capability Schema Digest",
@@ -1798,6 +1816,15 @@
             },
             "capability": {
               "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_authority": {
+              "default": "legacy-action",
+              "enum": [
+                "legacy-action",
+                "package-revision"
+              ],
+              "title": "Capability Authority",
+              "type": "string"
             },
             "capability_schema_digest": {
               "pattern": "^sha256:[0-9a-f]{64}$",
@@ -2412,6 +2439,15 @@
             "capability": {
               "$ref": "#/$defs/CapabilityRef"
             },
+            "capability_authority": {
+              "default": "legacy-action",
+              "enum": [
+                "legacy-action",
+                "package-revision"
+              ],
+              "title": "Capability Authority",
+              "type": "string"
+            },
             "capability_schema_digest": {
               "pattern": "^sha256:[0-9a-f]{64}$",
               "title": "Capability Schema Digest",
@@ -2998,6 +3034,15 @@
             },
             "capability": {
               "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_authority": {
+              "default": "legacy-action",
+              "enum": [
+                "legacy-action",
+                "package-revision"
+              ],
+              "title": "Capability Authority",
+              "type": "string"
             },
             "capability_schema_digest": {
               "pattern": "^sha256:[0-9a-f]{64}$",
@@ -3586,6 +3631,15 @@
             "capability": {
               "$ref": "#/$defs/CapabilityRef"
             },
+            "capability_authority": {
+              "default": "legacy-action",
+              "enum": [
+                "legacy-action",
+                "package-revision"
+              ],
+              "title": "Capability Authority",
+              "type": "string"
+            },
             "capability_schema_digest": {
               "pattern": "^sha256:[0-9a-f]{64}$",
               "title": "Capability Schema Digest",
@@ -4172,6 +4226,15 @@
             },
             "capability": {
               "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_authority": {
+              "default": "legacy-action",
+              "enum": [
+                "legacy-action",
+                "package-revision"
+              ],
+              "title": "Capability Authority",
+              "type": "string"
             },
             "capability_schema_digest": {
               "pattern": "^sha256:[0-9a-f]{64}$",
@@ -4771,6 +4834,15 @@
             },
             "capability": {
               "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_authority": {
+              "default": "legacy-action",
+              "enum": [
+                "legacy-action",
+                "package-revision"
+              ],
+              "title": "Capability Authority",
+              "type": "string"
             },
             "capability_schema_digest": {
               "pattern": "^sha256:[0-9a-f]{64}$",
@@ -5385,6 +5457,15 @@
             "capability": {
               "$ref": "#/$defs/CapabilityRef"
             },
+            "capability_authority": {
+              "default": "legacy-action",
+              "enum": [
+                "legacy-action",
+                "package-revision"
+              ],
+              "title": "Capability Authority",
+              "type": "string"
+            },
             "capability_schema_digest": {
               "pattern": "^sha256:[0-9a-f]{64}$",
               "title": "Capability Schema Digest",
@@ -5930,7 +6011,8 @@
                 "reviewed",
                 "producer",
                 "consumer",
-                "optional"
+                "optional",
+                "required-input"
               ],
               "title": "Mode",
               "type": "string"
@@ -6608,6 +6690,15 @@
             },
             "capability": {
               "$ref": "#/$defs/CapabilityRef"
+            },
+            "capability_authority": {
+              "default": "legacy-action",
+              "enum": [
+                "legacy-action",
+                "package-revision"
+              ],
+              "title": "Capability Authority",
+              "type": "string"
             },
             "capability_schema_digest": {
               "pattern": "^sha256:[0-9a-f]{64}$",

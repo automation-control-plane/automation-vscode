@@ -31,6 +31,24 @@ test('Managed editor keeps queue/review/Run identity separate and gates controls
     assert.equal(get('managed-complete').disabled,true);
     get('managed-approve').onclick();assert.deepEqual(messages.at(-1),{op:'managed.decide',decision:'approve'});
     get('managed-runs').children[0].onclick();assert.deepEqual(messages.at(-1),{op:'managed.run',id:'run-identity'});
+    const required={...state,review:undefined,reviews:[],queue:{queue,label:'Required fixture',mode:'required-input',counts:{},permissions:['work_items.read']},
+        capabilities:{...state.capabilities,modes:['required-input'],operations:['queues.list','items.list','items.get'],permissions:['work_items.read']},
+        snapshot:{capability_authority:'package-revision'}};
+    const before=messages.length;
+    for(const receive of receivers)receive({data:required});
+    assert.equal(messages.length,before,'Rendering/discovery must never submit or claim');
+    assert.match(get('managed-queue-policy').textContent,/existing input|required/i);
+    assert.match(get('managed-snapshot-authority').textContent,/Package revision/);
+    for(const id of ['managed-enqueue','managed-claim','managed-retry','managed-approve']) assert.equal(get(id).disabled,true,id);
+    required.capabilities.operations.push('items.enqueue');required.capabilities.permissions.push('work_items.enqueue');
+    for(const receive of receivers)receive({data:required});assert.equal(get('managed-enqueue').disabled,true,'Global operation is not a queue grant');
+    required.queue.permissions.push('work_items.enqueue');
+    for(const receive of receivers)receive({data:required});assert.equal(get('managed-enqueue').disabled,false);
+    assert.equal(get('managed-claim').disabled,true);assert.equal(get('managed-retry').disabled,true);assert.equal(get('managed-approve').disabled,true);
+    required.snapshot={};for(const receive of receivers)receive({data:required});
+    assert.match(get('managed-snapshot-authority').textContent,/Legacy action/);assert.deepEqual(required.snapshot,{});
+    required.queue={...required.queue,mode:'reviewed'};
+    for(const receive of receivers)receive({data:required});assert.equal(get('managed-enqueue').disabled,true,'Reviewed mode cannot bypass exact approval');
     for(const receive of receivers)receive({data:{...state,capabilities:undefined,queue:undefined,review:undefined,reviews:[],message:'Forbidden; reconnect'}});
     assert.equal(get('managed-approve').disabled,true);assert.match(get('managed-status').textContent,/Forbidden/);
     get('mode').value='published';get('mode').onchange();get('connect').onclick();

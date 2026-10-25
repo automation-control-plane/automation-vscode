@@ -2,12 +2,12 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { createHash, randomUUID } from "crypto";
-import { ManagedWorkItemsClient, ManagedCommand, MANAGED_VERSION, MANAGED_PERMISSIONS, QueueRef } from "./managedWorkItemsClient";
+import { ManagedWorkItemsClient, ManagedCommand, MANAGED_VERSION, MANAGED_PERMISSIONS, QueueRef, ManagedQueueMode, ManagedSnapshot } from "./managedWorkItemsClient";
 import { RuntimeHTTPError } from "./workItemsRuntimeClient";
 
 // DTOs are validated against the exact Actions-owned schema in the client.
-interface Queue {queue: QueueRef; label: string; mode: string; permissions: string[]; counts: Record<string, number>;}
-interface Item {id: string; queue: QueueRef; payload: unknown; snapshot: Record<string, unknown>; claim: {epoch: number; [key: string]: unknown} | null; run_ids: string[]; [key: string]: unknown;}
+interface Queue {queue: QueueRef; label: string; mode: ManagedQueueMode; permissions: string[]; counts: Record<string, number>;}
+interface Item {id: string; queue: QueueRef; payload: unknown; snapshot: ManagedSnapshot; claim: {epoch: number; [key: string]: unknown} | null; run_ids: string[]; [key: string]: unknown;}
 interface Review {proposal: {review_id: string; binding: {run_id: string; [key: string]: unknown}; [key: string]: unknown}; state: string; [key: string]: unknown;}
 interface Run {id: string; artifacts: {handle: string; digest: string; size: number; run_id: string}[]; [key: string]: unknown;}
 interface Journal {key: string; command: ManagedCommand; state: "uncertain" | "confirmed" | "denied";}
@@ -22,7 +22,7 @@ export class ManagedWorkItemsView {
     private item?: Item;
     private review?: Review;
     private run?: Run;
-    private snapshot?: Record<string, unknown>;
+    private snapshot?: ManagedSnapshot;
     private logs?: unknown;
     private pending = new Map<string, Journal>();
     private journalDir?: string;
