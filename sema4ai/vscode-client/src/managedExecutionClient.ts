@@ -8,6 +8,15 @@ import { CanvasApplicationSummary, ManagedClaimInvocation, ManagedInvocationDesc
 
 const protocol = "2026-07-28"; // Python MCP 2.3.0, verified installed consumer recipe.
 const schemas = JSON.parse(fs.readFileSync(path.join(__dirname, "../../resources/work-items/managed-mcp-schemas.json"), "utf8"));
+// a38 and the reviewed candidate differ in top-level explanatory prose only.
+// Do not recursively strip keys: a payload property named "description", defaults,
+// nested schemas, enums, required fields and authority constraints remain exact.
+function contractWithoutTopLevelProse(schema: any): unknown {
+    if (!schema || typeof schema !== "object" || Array.isArray(schema)) return schema;
+    if (schema.description !== undefined && typeof schema.description !== "string") return schema;
+    const {description, ...contract} = schema;
+    return contract;
+}
 const uuid = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value);
 export interface ManagedExecutionResult {
     state: "completed" | "failed" | "reconciliation_required";
@@ -53,7 +62,7 @@ export class ManagedExecutionClient extends RuntimeTransport {
         if (!Array.isArray(listed.tools) || listed.tools.length > 512 || listed.nextCursor) throw Error("Incomplete Runtime tool catalog; native Run is unavailable.");
         for (const [name, expected] of Object.entries(schemas)) {
             const matching = listed.tools.filter(tool => tool.name === name);
-            if (matching.length !== 1 || !isDeepStrictEqual(matching[0].inputSchema, expected) || !matching[0]._meta?.ui?.visibility?.includes("model")) {
+            if (matching.length !== 1 || !isDeepStrictEqual(contractWithoutTopLevelProse(matching[0].inputSchema), contractWithoutTopLevelProse(expected)) || !matching[0]._meta?.ui?.visibility?.includes("model")) {
                 throw Error("Unreviewed or unavailable Runtime MCP contract for " + name + ". Native Run is unavailable.");
             }
         }

@@ -38,3 +38,26 @@ test('Lost invocation response has no automatic retry; malformed execution ident
     await assert.rejects(client.invokeClaim(request,D),/identity|contract/i);
 }));
 module.exports={fixture,tools,serverFor};
+
+test('Only top-level tool schema prose can vary; the authority contract stays exact',async()=>{
+    await serverFor(async({endpoint,setOverride})=>{
+        setOverride(({body,result})=>{if(body.method==='tools/list')result.tools[1].inputSchema.description='Authorized execution references (a38 wording)';return result;});
+        const {ManagedExecutionClient}=require('../vscode-client/out/managedExecutionClient');
+        const client=new ManagedExecutionClient(endpoint,'synthetic-token',W);
+        await client.negotiate();assert.equal(client.negotiated(),true);
+    });
+    for(const mutate of [
+        schema=>{schema.description={unexpected:true};},
+        schema=>{schema.properties.description={type:'string'};},
+        schema=>{schema.additionalProperties=true;},
+        schema=>{schema.required=[];},
+        schema=>{schema.properties.appId.default='synthetic';},
+        schema=>{schema.properties.appId.enum=['synthetic'];},
+    ])await serverFor(async({endpoint,calls,setOverride})=>{
+        setOverride(({body,result})=>{if(body.method==='tools/list')mutate(result.tools[1].inputSchema);return result;});
+        const {ManagedExecutionClient}=require('../vscode-client/out/managedExecutionClient');
+        const client=new ManagedExecutionClient(endpoint,'synthetic-token',W);
+        await assert.rejects(client.negotiate(),/contract/);assert.equal(client.negotiated(),false);
+        assert.equal(calls.some(c=>c.method==='tools/call'),false);
+    });
+});
