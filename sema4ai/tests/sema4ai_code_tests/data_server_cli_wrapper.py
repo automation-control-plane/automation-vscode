@@ -149,14 +149,14 @@ class DataServerCliWrapper:
         url = (
             f"https://cdn.sema4.ai/data-server-cli/beta/v{self.VERSION}/{relative_path}"
         )
-        import sema4ai_http
+        import actions_http
 
-        result = sema4ai_http.download_with_resume(
+        result = actions_http.download_with_resume(
             url, self.target, make_executable=True
         )
         assert result.status in (
-            sema4ai_http.DownloadStatus.DONE,
-            sema4ai_http.DownloadStatus.ALREADY_EXISTS,
+            actions_http.DownloadStatus.DONE,
+            actions_http.DownloadStatus.ALREADY_EXISTS,
         )
 
     def start(self):

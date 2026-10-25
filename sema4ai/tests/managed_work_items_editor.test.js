@@ -15,6 +15,24 @@ function createEditor(initialState){
     return {get:document.getElementById,messages,receivers};
 }
 
+test('Native managed discovery selectors and Run use host identities without JSON or automatic execution',()=>{
+    const e=createEditor();const render=data=>e.receivers.forEach(receive=>receive({data:{type:'managed-state',...data}}));
+    render({});assert.equal(e.get('managed-discover-executions').disabled,true);assert.equal(e.get('managed-invoke').disabled,true);
+    const state={capabilities:{operations:['items.get','runs.get'],modes:['required-input'],permissions:['work_items.read']},
+        item:{id:'input-7',claim:{epoch:2},run_ids:[],payload:{value:7}},
+        execution:{applications:[{applicationId:'app-7',title:'Records'}],application:{applicationId:'app-7'},descriptors:[{bindingId:'process_records',inputMode:'claim'}],bindingId:'process_records',canRun:true,pending:[],message:'Exact revision selected'}};
+    const before=e.messages.length;render(state);assert.equal(e.messages.length,before);
+    e.get('managed-application').value='app-7';e.get('managed-application').onchange();assert.deepEqual(e.messages.at(-1),{op:'managed.application',id:'app-7'});
+    e.get('managed-capability').value='process_records';e.get('managed-capability').onchange();assert.deepEqual(e.messages.at(-1),{op:'managed.capability',id:'process_records'});
+    assert.equal(e.get('managed-invoke').disabled,false);e.get('managed-invoke').onclick();assert.deepEqual(e.messages.at(-1),{op:'managed.invoke'});
+    state.execution.canRun=false;state.execution.pending=[{key:'retained',itemId:'input-7'}];render(state);
+    assert.equal(e.get('managed-invoke').disabled,true);assert.equal(e.get('managed-uncertain-execution').hidden,false);
+    e.get('managed-invocations').children[0].onclick();assert.deepEqual(e.messages.at(-1),{op:'managed.inspectInvocation',key:'retained'});
+    assert.equal(e.messages.filter(m=>m.op==='managed.invoke').length,1);
+    state.execution.pending=[];state.execution.result={runId:'run-7',state:'completed'};state.item.claim=null;render(state);
+    assert.equal(e.get('managed-inspect-view').hidden,false);assert.equal(e.get('managed-invoke').disabled,true);
+});
+
 test('Managed editor keeps queue/review/Run identity separate and gates controls by actual grants',()=>{
     const {get,messages,receivers}=createEditor();
     get('mode').value='managed';get('mode').onchange();

@@ -16,10 +16,11 @@ export class RuntimeTransport {
         if (!token || /[\r\n]/.test(token)) throw Error("An explicit Runtime API token is required.");
         this.endpoint = url.origin;
     }
-    protected request(method: string, route: string, body?: Buffer, contentType = "application/json", binary = false): Promise<unknown> {
+    protected request(method: string, route: string, body?: Buffer, contentType = "application/json", binary = false,
+        options: {headers?: Record<string, string>; timeoutMs?: number} = {}): Promise<unknown> {
         return new Promise((resolve, reject) => {
             const request = (this.endpoint.startsWith("https:") ? https : http).request(this.endpoint + route,
-                { method, headers: { Authorization: "Bearer " + this.token, ...(body ? { "Content-Type": contentType, "Content-Length": body.length } : {}) } },
+                { method, headers: { ...options.headers, Authorization: "Bearer " + this.token, ...(body ? { "Content-Type": contentType, "Content-Length": body.length } : {}) } },
                 response => {
                     let size = 0;
                     const chunks: Buffer[] = [];
@@ -47,7 +48,12 @@ export class RuntimeTransport {
                     });
                     response.on("error", () => reject(Error("Runtime response was interrupted.")));
                 });
-            request.setTimeout(10000, () => request.destroy(Error("Runtime request timed out.")));
+            // The synchronous canonical MCP execution has a separate bounded
+            // deadline. Existing published/managed REST requests stay at 10s.
+            const timeoutMs = Math.min(options.timeoutMs || 10000, 360000);
+            const deadline = setTimeout(() => request.destroy(Error("Runtime request timed out.")), timeoutMs);
+            request.on("close", () => clearTimeout(deadline));
+            request.setTimeout(timeoutMs, () => request.destroy(Error("Runtime request timed out.")));
             request.on("error", () => reject(Error("Runtime connection failed. Reconnect to the configured endpoint.")));
             request.end(body);
         });

@@ -303,7 +303,7 @@ export async function runConfigDiagnostics(
         let env = createEnvWithRobocorpHome(robocorpHome);
         configureLongpathsOutput = await execFilePromise(
             rccLocation,
-            ["configure", "diagnostics", "-j", "--bundled", "--robocorp", "--controller", "Sema4aiCode"],
+            ["configure", "diagnostics", "-j", "--bundled", "--robocorp", "--controller", "AutomationCode"],
             { env: env }
         );
         let outputAsJSON = JSON.parse(configureLongpathsOutput.stdout);
@@ -417,7 +417,7 @@ async function collectIssueBaseMetadata(): Promise<any> {
         osRelease: os.release(),
         nodeVersion: process.version,
         version: version,
-        controller: "rcc.sema4aicode",
+        controller: "rcc.automationcode",
     };
     return metadata;
 }
@@ -514,7 +514,7 @@ export async function submitIssue(
                 "--bundled",
                 "--robocorp",
                 "--controller",
-                "Sema4aiCode",
+                "AutomationCode",
             ];
             for (const file of files) {
                 args.push("-a");
@@ -743,7 +743,7 @@ export async function collectBaseEnv(
         args.push("--robocorp");
         args.push("--bundled");
         args.push("--controller");
-        args.push("Sema4aiCode");
+        args.push("AutomationCode");
 
         let execFileReturn: ExecFileReturn = await execFilePromise(
             rccLocation,

@@ -81,43 +81,51 @@ managed state. Desktop QA's reported external MCP execution plus native
 DONE/Run/Attempt/four artifacts is not a native Run-button pass. Released claims
 keep Complete disabled; no terminal epoch or acknowledgment is manufactured.
 
-## Prepared boundary and remaining coordination
+## Implemented native boundary (2.20.18)
 
-`sema4ai/vscode-client/src/managedExecutionSelection.ts` is a pure typed boundary:
-it validates application/descriptor projections, freezes exact host selections,
-and constructs only the existing claim invocation for a matching live selected
-item. It has **no network, UI registration, claim or invocation side effects**.
-Tests cover immutable identity/defaults, duplicate IDs, size bounds, unknown
-mode/authority, and cross-scope/stale-item/claim refusal.
+The native panel now offers Discover executions, an authorized application and
+capability picker, Enqueue input, explicit Claim next item, and Run claimed input.
+No snapshot JSON file is required for that flow. Advanced import remains available
+for compatibility. The same multiline typed payload form is preserved.
 
-Parent requested integrator confirmation of the consumer contract. Remaining
-coordination before introducing ingress:
+`managedExecutionClient.ts` implements only the three reviewed tools over the
+actual MCP 2.3.0 stateless protocol (2026-07-28). Every required input schema is
+compared in full against the source-derived pin; unknown contracts, absent tools,
+app-only visibility and unknown protocol/server identity deny native execution.
+No initialization fallback, arbitrary tool caller, actor header or shell exists.
+The published Runtime 1.0.4 client and the managed HTTP schema are unchanged.
 
-- Supported MCP client/protocol negotiation for this Runtime, public tools/list
-  schemas/metadata and rejection of unavailable/changed invocation contracts.
-  Do not guess a legacy handshake or reuse the HTTP schema as the MCP schema.
-- Synchronous invocation request retention/reconciliation, transport interruption
-  and timeout semantics. No automatic retry, duplicate claim or false failure
-  after uncertain dispatch.
-- Existing synthetic consumer handoff for exact installed native tests; no secrets
-  or datadir transfer. Actor/audience and discovery above are now source-grounded.
+`managedWorkItemsView.ts` retains the exact host selection, serializes requests,
+confirms execution, rechecks the same capability and actual claim, and writes and
+syncs an exclusive request journal before invoking. Successful execution is
+cross-checked against the original input's authoritative Run, Attempt ID/epoch,
+snapshot and terminal state. Claim-next selects the actual returned item.
+Cancellation settles busy state with no submission. A changed revision never
+silently replaces the selected snapshot.
 
-## Integration files and acceptance
+The recipe at Actions commit 9340bc8aac7a4534b50f27bef522f1a942f20afa references
+source 7e0fa8d09be0f152d2aa82bea24fe0bb3209e2dd (Runtime a40/Core a5). The extension
+does not install or upgrade that candidate automatically. Source-derived schema
+construction is in `scripts/build-managed-mcp-contract.js`; schema references
+reuse the exact separately reviewed managed-v1 definitions. An independent real
+Pydantic generation check and real MCP 2.3 server wire smoke pass locally. These
+are synthetic execution tests, not native Runtime/RCC acceptance.
 
-One extension source owner, same PR #1, existing native tester:
+## Exact remaining backend/acceptance boundaries
 
-- Small typed MCP client beside managedWorkItemsClient.ts, preserving secure origin,
-  authentication and no fallback. Keep its fourteen-operation protocol intact.
-- managedWorkItemsView.ts: host-retained selection, explicit confirmed invocation
-  and exact result correlation using managedExecutionSelection.ts.
-- managed-editor.js / panel.html / panel.css: compact application/capability
-  selection, existing forms, explicit Run and accurate loading/denied/result states.
-  Keep standalone arguments separate from claimed Work Item payloads.
-- Tests: contract negotiation, immutable selection, zero automatic mutations,
-  audience/scope/grant negatives, exact request and uncertain result retention.
-- Native acceptance: empty-queue discovery without internal JSON files, form input,
-  explicit authorized enqueue/claim/Run, real RCC, Run/Attempt/output/artifact
-  lineage and denied cases. Retry/Robot/backend gaps remain explicit.
-
-2.20.17 stays unchanged for desktop multiline retest. This preparation checkpoint
-creates no replacement VSIX, new ingress or release-completion claim.
+- If an invocation response is lost, Inspect retained execution reads only the
+  original input and linked Runs. It never resubmits capability_invoke. The
+  public API does not expose an exact invocation-request/claim-epoch-to-Run lookup
+  or nonexecution receipt. The request therefore remains uncertain and blocks
+  another mutation. A server-owned read/reconciliation contract is needed to
+  clear that outcome safely; a new claim or a terminal item alone is not proof.
+- Standalone descriptors are discovered but this queue editor exposes only the
+  existing-claim invocation. No input queue is invented for standalone-only
+  capabilities. Standalone execution/lookup requires its own form and recovery
+  coverage before it can be enabled.
+- Native installed desktop discovery → enqueue → claim → Run → linked
+  Run/Attempt/artifacts is pending on exact 2.20.18 bytes. Prior external harness
+  execution and prior VSIX screenshots do not qualify this native flow.
+- Permissions, admission, leases, provider access and actual execution remain
+  canonical Runtime authority. Published 1.0.4 is still not a durable managed
+  queue substitute.

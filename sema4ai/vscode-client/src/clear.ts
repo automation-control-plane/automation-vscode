@@ -34,7 +34,7 @@ export async function clearRCCEnvironments(
             });
             let execFileReturn: ExecFileReturn = await execFilePromise(
                 rccLocation,
-                ["holotree", "delete", envId, "--bundled", "--robocorp", "--controller", "Sema4aiCode"],
+                ["holotree", "delete", envId, "--bundled", "--robocorp", "--controller", "AutomationCode"],
                 { "env": env },
                 { "showOutputInteractively": true }
             );
@@ -86,7 +86,7 @@ export async function computeEnvsToCollect(
     rccLocation: string,
     robocorpHome: string
 ): Promise<IJsonSpaceInfo[] | undefined> {
-    let args = ["holotree", "list", "--bundled", "--robocorp", "--json", "--controller", "Sema4aiCode"];
+    let args = ["holotree", "list", "--bundled", "--robocorp", "--json", "--controller", "AutomationCode"];
 
     let execFileReturn: ExecFileReturn = await execFilePromise(
         rccLocation,

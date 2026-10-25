@@ -4,6 +4,9 @@ import * as fs from "fs";
 import { createHash, randomUUID } from "crypto";
 import { ManagedWorkItemsClient, ManagedCommand, MANAGED_VERSION, MANAGED_PERMISSIONS, QueueRef, ManagedQueueMode, ManagedSnapshot } from "./managedWorkItemsClient";
 import { RuntimeHTTPError } from "./workItemsRuntimeClient";
+import { isDeepStrictEqual } from "util";
+import { ManagedExecutionClient, ManagedExecutionResult } from "./managedExecutionClient";
+import { buildManagedClaimInvocation, CanvasApplicationSummary, ManagedClaimInvocation, ManagedInvocationDescriptor } from "./managedExecutionSelection";
 
 // DTOs are validated against the exact Actions-owned schema in the client.
 interface Queue {queue: QueueRef; label: string; mode: ManagedQueueMode; permissions: string[]; counts: Record<string, number>;}
@@ -11,6 +14,7 @@ interface Item {id: string; queue: QueueRef; payload: unknown; snapshot: Managed
 interface Review {proposal: {review_id: string; binding: {run_id: string; [key: string]: unknown}; [key: string]: unknown}; state: string; [key: string]: unknown;}
 interface Run {id: string; artifacts: {handle: string; digest: string; size: number; run_id: string}[]; [key: string]: unknown;}
 interface Journal {key: string; command: ManagedCommand; state: "uncertain" | "confirmed" | "denied";}
+interface InvocationJournal {key: string; request: ManagedClaimInvocation; priorRuns: string[]; state: "uncertain" | "confirmed"; result?: ManagedExecutionResult;}
 
 /** Native projection of canonical Runtime authority, with an exact request journal. */
 export class ManagedWorkItemsView {
@@ -29,6 +33,14 @@ export class ManagedWorkItemsView {
     private cursor?: string;
     private queueCursor?: string;
     private reviewCursor?: string;
+    private executionClient?: ManagedExecutionClient;
+    private applications: readonly CanvasApplicationSummary[] = [];
+    private application?: CanvasApplicationSummary;
+    private descriptors: readonly ManagedInvocationDescriptor[] = [];
+    private descriptor?: ManagedInvocationDescriptor;
+    private executionMessage = "Discover authorized executions to select a capability without a snapshot file.";
+    private invocations = new Map<string, InvocationJournal>();
+    private handling = Promise.resolve();
     constructor(private readonly context: vscode.ExtensionContext, private readonly manifest: string,
         private readonly post: (message: unknown) => Thenable<boolean>) {}
 
@@ -44,10 +56,17 @@ export class ManagedWorkItemsView {
         return (await this.client.execute(command)).result;
     }
     private async publish(message?: string): Promise<void> {
+        let executable = false;
+        try {if (this.descriptor && this.executionClient?.negotiated() && this.permitted("items.get") && this.permitted("runs.get")) {buildManagedClaimInvocation(this.descriptor, this.item); executable = true;}} catch { /* Selection is not an executable claim. */ }
+        const unresolved = [...this.invocations.values()].filter(record => record.state === "uncertain");
+        const execution = [...this.invocations.values()].reverse().find(record => record.request.claim.item_id === this.item?.id);
         await this.post({type: "managed-state", endpoint: this.client?.endpoint, workspace: this.client?.workspace,
             capabilities: this.client?.capabilities(), queues: this.queues, queue: this.queue, items: this.items,
             reviews: this.reviews, item: this.item, review: this.review, run: this.run, logs: this.logs,
             snapshot: this.snapshot, itemCursor: this.cursor, queueCursor: this.queueCursor, reviewCursor: this.reviewCursor,
+            execution: {applications: this.applications, application: this.application, descriptors: this.descriptors.map(({bindingId, inputMode, standaloneAllowed}) => ({bindingId, inputMode, standaloneAllowed})),
+                bindingId: this.descriptor?.bindingId, message: this.executionMessage, canRun: executable && !unresolved.length && ![...this.pending.values()].some(record => record.state === "uncertain"),
+                result: execution?.result, pending: unresolved.map(record => ({key: record.key, itemId: record.request.claim.item_id}))},
             pending: [...this.pending.values()].filter(record => record.state === "uncertain").map(record => ({key: record.key, operation: record.command.operation})),
             message: message || (!this.client ? "Connect a Runtime with canonical managed Work Items support. Published 1.0.4 storage is a separate mode." : undefined)});
     }
@@ -64,7 +83,7 @@ export class ManagedWorkItemsView {
         await this.publish();
     }
     private clearSelection(): void {this.items = []; this.reviews = []; this.item = undefined; this.review = undefined; this.run = undefined; this.snapshot = undefined; this.logs = undefined; this.cursor = undefined;}
-    private clearProjection(): void {this.queues = []; this.queue = undefined; this.clearSelection();}
+    private clearProjection(): void {this.queues = []; this.queue = undefined; this.clearSelection(); this.applications = []; this.application = undefined; this.descriptors = []; this.descriptor = undefined; this.executionClient = undefined;}
     private async loadQueue(cursor?: string): Promise<void> {
         const previous = this.item?.id;
         const page = this.permitted("items.list") ? await this.call("items.list", cursor ? {cursor} : {}) : {};
@@ -87,10 +106,11 @@ export class ManagedWorkItemsView {
         if (entered === undefined) {await this.publish("Connection cancelled. Existing connection unchanged."); return;}
         const token = entered || stored;
         if (!token) throw Error("A managed API token is required.");
-        this.client = undefined; this.clearProjection(); this.pending.clear();
+        this.client = undefined; this.clearProjection(); this.pending.clear(); this.invocations.clear();
         const client = new ManagedWorkItemsClient(endpoint, token, workspace);
         await client.negotiate();
         this.client = client;
+        this.executionClient = new ManagedExecutionClient(endpoint, token, workspace);
         await this.context.secrets.store(secretKey, token);
         await this.context.workspaceState.update("managed.endpoint." + this.manifest, endpoint);
         await this.context.workspaceState.update("managed.workspace." + this.manifest, workspace);
@@ -103,11 +123,27 @@ export class ManagedWorkItemsView {
             const receipt = path.join(this.journalDir, key + ".receipt.json");
             try {await fs.promises.access(receipt);} catch {this.pending.set(key, {key, command, state: "uncertain"});}
         }
+        for (const name of await fs.promises.readdir(this.journalDir)) if (/^[0-9a-f-]{36}\.invocation\.json$/.test(name)) {
+            const record: InvocationJournal = JSON.parse(await fs.promises.readFile(path.join(this.journalDir, name), "utf8"));
+            if (name !== record.key + ".invocation.json" || record.request.claim.queue.workspace_id !== workspace || !Array.isArray(record.priorRuns)) throw Error("Retained execution scope/identity mismatch. Preserve the journal for inspection.");
+            // Restored execution is uncertain until its original response receipt
+            // exists. Reload never invokes a tool or clears an unresolved claim.
+            record.state = "uncertain";
+            const receipt = path.join(this.journalDir, record.key + ".invocation-result.json");
+            try {
+                record.result = JSON.parse(await fs.promises.readFile(receipt, "utf8"));
+                const confirmed = JSON.parse(await fs.promises.readFile(path.join(this.journalDir, record.key + ".invocation-confirmed.json"), "utf8"));
+                if (confirmed.runId !== record.result.runId || confirmed.attemptId !== record.result.attemptId) throw Error("Retained execution confirmation identity mismatch.");
+                record.state = "confirmed";
+            }
+            catch (error) {if (error.code !== "ENOENT") throw error;}
+            this.invocations.set(record.key, record);
+        }
         await this.refresh();
     }
     private async mutate(operation: string, fields: Record<string, unknown>, retained?: Journal): Promise<void> {
         if (!this.client || !this.journalDir || !this.permitted(operation)) throw Error("This managed operation is not granted.");
-        if (!retained && [...this.pending.values()].some(record => record.state === "uncertain")) throw Error("Reconcile the retained uncertain request before issuing another mutation. Its idempotency key must be preserved.");
+        if (!retained && ([...this.pending.values(), ...this.invocations.values()].some(record => record.state === "uncertain"))) throw Error("Reconcile the retained uncertain request before issuing another mutation. Its identity must be preserved.");
         const key = retained?.key || randomUUID();
         const command = retained?.command || {schema_version: MANAGED_VERSION, operation, queue: this.queue?.queue, idempotency_key: key, ...fields};
         this.client.validateCommand(command);
@@ -125,6 +161,14 @@ export class ManagedWorkItemsView {
             await fs.promises.writeFile(path.join(this.journalDir, key + ".receipt.json"), JSON.stringify(result), {flag: "wx", mode: 0o600});
             record.state = "confirmed";
             await this.refresh();
+            // Claim-next may choose a different item than the selected one.
+            // Select only the actual returned item, never attach a claim to the
+            // prior selection or infer ownership from a successful HTTP status.
+            if (operation === "items.claim" && (result.result.item as Item | undefined)?.id) {
+                this.item = result.result.item as Item; this.snapshot = this.item.snapshot;
+                this.run = undefined; this.logs = undefined; this.review = undefined;
+                await this.publish();
+            }
         } catch (error) {
             if (error instanceof RuntimeHTTPError && ([401, 403, 404, 413, 422].includes(error.status) ||
                 (error.status === 409 && ["stale_claim", "changed_input", "approval_required", "unsupported_operation"].includes(error.code)))) {
@@ -136,19 +180,112 @@ export class ManagedWorkItemsView {
             throw error;
         }
     }
-    async handle(message: Record<string, any>): Promise<void> {
-        try {await this.dispatch(message);} catch (error) {
+    handle(message: Record<string, any>): Promise<void> {
+        // Serialize host operations so a double-click or selection change cannot
+        // race the selected scope while a confirmation or Run is pending.
+        const work = this.handling.then(async () => {try {await this.dispatch(message);} catch (error) {
             if (!this.client?.capabilities()) this.clearProjection();
             await this.publish(error.message + ([...this.pending.values()].some(record => record.state === "uncertain") ? " Exact uncertain request/key retained; reconcile before another mutation." : ""));
             throw error;
+        }});
+        this.handling = work.catch(() => undefined);
+        return work;
+    }
+    private async discoverExecutions(): Promise<void> {
+        this.applications = []; this.application = undefined; this.descriptors = []; this.descriptor = undefined;
+        try {
+            await this.executionClient.negotiate();
+            this.applications = await this.executionClient.applications();
+            this.executionMessage = this.applications.length ? "Select an authorized application, then its capability. Discovery does not run or claim an item." : "No authorized applications were returned.";
+        } catch (error) {this.executionMessage = error.message; throw error;}
+    }
+    private async invokeSelected(): Promise<void> {
+        if (!this.executionClient || !this.descriptor || !this.application || !this.item || !this.journalDir || !this.permitted("items.get") || !this.permitted("runs.get")) throw Error("Select a discovered capability and its actual claimed input, with item and Run read access.");
+        if ([...this.pending.values(), ...this.invocations.values()].some(record => record.state === "uncertain")) throw Error("Inspect the retained uncertain request before another Run. No replacement invocation is sent.");
+        const selected = this.descriptor, itemId = this.item.id;
+        const request = buildManagedClaimInvocation(selected, this.item);
+        const key = randomUUID();
+        const confirmed = await vscode.window.showWarningMessage(`Run ${this.application.title} / ${selected.bindingId} at ${this.client.endpoint}? Input ${itemId}, claim epoch ${request.claim.epoch}. The Runtime will execute the exact selected revision. Request ${key}.`, {modal: true}, "Run claimed input");
+        if (!confirmed) {await this.publish("Run cancelled. Nothing was submitted."); return;}
+        // Recheck the same selection and grant immediately before dispatch. A
+        // changed revision never silently substitutes a new immutable snapshot.
+        await this.executionClient.negotiate();
+        const fresh = (await this.executionClient.descriptors(this.application.applicationId)).find(value => value.bindingId === selected.bindingId);
+        if (!isDeepStrictEqual(fresh, selected)) throw Error("The admitted capability changed. Discover and explicitly select it again before Run.");
+        this.item = (await this.call("items.get", {item_id: itemId})).item as Item;
+        if (!isDeepStrictEqual(buildManagedClaimInvocation(selected, this.item), request)) throw Error("The selected claim changed. Refresh and review its actual state before Run.");
+        const record: InvocationJournal = {key, request, priorRuns: this.item.run_ids.slice(), state: "uncertain"};
+        const retained = await fs.promises.open(path.join(this.journalDir, key + ".invocation.json"), "wx", 0o600);
+        try {await retained.writeFile(JSON.stringify(record)); await retained.sync();} finally {await retained.close();}
+        this.invocations.set(key, record);
+        this.executionMessage = "Running the claimed input. Closing or reloading does not safely cancel execution; the exact request is retained.";
+        await this.publish();
+        try {
+            const result = await this.executionClient.invokeClaim(request, key);
+            record.result = result;
+            await fs.promises.writeFile(path.join(this.journalDir, key + ".invocation-result.json"), JSON.stringify(result), {flag: "wx", mode: 0o600});
+            this.executionMessage = result.state === "reconciliation_required" ? "Runtime requires reconciliation of the original launch. Inspect its state; no automatic retry." : `Runtime execution ${result.state}. Inspect its linked Run, Attempts and artifacts.`;
+            await this.observeInvocation(record);
+        } catch (error) {
+            this.executionMessage = record.state === "uncertain" ? "Execution outcome is uncertain. The original request is retained. Inspect retained execution; no automatic retry or replacement claim." : "Runtime returned an execution result, but linked state could not be read. Refresh to inspect it.";
+            throw error;
         }
+    }
+    private async observeInvocation(record: InvocationJournal): Promise<void> {
+        const queue = this.queues.find(value => isDeepStrictEqual(value.queue, record.request.claim.queue));
+        if (!queue) throw Error("Discover the original authorized queue before inspecting this retained execution.");
+        this.queue = queue; this.clearSelection();
+        this.item = (await this.call("items.get", {item_id: record.request.claim.item_id})).item as Item;
+        if (!isDeepStrictEqual(this.item.snapshot, record.request.snapshot)) throw Error("Retained execution snapshot no longer matches the authoritative input.");
+        this.snapshot = this.item.snapshot;
+        const id = record.result?.runId;
+        if (id) {
+            if (!this.item.run_ids.includes(id)) throw Error("Runtime execution Run is not linked to the original input. Retain the request for reconciliation.");
+            this.run = (await this.call("runs.get", {run_id: id})).run as Run;
+            if (!isDeepStrictEqual(this.run.snapshot, record.request.snapshot)) throw Error("Runtime Run snapshot differs from the requested immutable selection.");
+            const attempt = (this.run.attempts as {id: string; epoch: number; state: string}[]).find(value => value.id === record.result.attemptId && value.epoch === record.result.attemptEpoch);
+            if (!attempt) throw Error("Runtime execution Attempt is not linked to the original Run. Retain the request for reconciliation.");
+            const terminal = record.result.state === "completed" ? "succeeded" : record.result.state === "failed" ? "failed" : undefined;
+            if (terminal) {
+                if (this.run.state !== terminal || attempt.state !== terminal) throw Error("Runtime execution response and authoritative Run/Attempt states disagree. Retain the request.");
+                if (record.state !== "confirmed") {
+                    await fs.promises.writeFile(path.join(this.journalDir, record.key + ".invocation-confirmed.json"), JSON.stringify({runId: id, attemptId: attempt.id}), {flag: "wx", mode: 0o600});
+                    record.state = "confirmed";
+                }
+            }
+        } else {
+            this.executionMessage = "Read the original input and its linked Runs below. The public API does not map a lost invocation response to an exact request/claim epoch; this request remains uncertain. It has not been retried.";
+        }
+        await this.publish();
     }
     private async dispatch(message: Record<string, any>): Promise<void> {
         const op = message.op;
         if (op === "managed.connect") {await this.connect(); return;}
         if (op === "managed.refresh") {await this.refresh(); return;}
         if (!this.client) throw Error("Connect a canonical managed Runtime first.");
-        if (op === "managed.moreQueues") {
+        if (op === "managed.discoverExecutions") {
+            await this.discoverExecutions();
+        } else if (op === "managed.application") {
+            const selected = this.applications.find(value => value.applicationId === message.id);
+            if (!selected) throw Error("Select an actually discovered authorized application.");
+            this.application = selected; this.descriptor = undefined; this.descriptors = [];
+            this.descriptors = await this.executionClient.descriptors(selected.applicationId);
+            this.executionMessage = this.descriptors.length ? "Select a capability to pin its exact admitted revision. No input is claimed or executed." : "No authorized generic capability was returned. Admission, grants or an active revision may be unavailable.";
+        } else if (op === "managed.capability") {
+            const selected = this.descriptors.find(value => value.bindingId === message.id);
+            if (!selected) throw Error("Select an actually discovered capability.");
+            const queue = this.queues.find(value => isDeepStrictEqual(value.queue, selected.inputQueue));
+            if (!queue) throw Error("This capability has no discovered managed input queue. Standalone execution is not enabled by this queue editor; no queue or snapshot is invented.");
+            this.queue = queue; this.clearSelection(); await this.loadQueue();
+            this.descriptor = selected; this.snapshot = selected.snapshot;
+            this.executionMessage = "Exact capability selected. Prepare and enqueue an input, explicitly claim it, then Run claimed input.";
+        } else if (op === "managed.invoke") {
+            await this.invokeSelected(); return;
+        } else if (op === "managed.inspectInvocation") {
+            const record = this.invocations.get(message.key);
+            if (!record) throw Error("No retained execution with this identity.");
+            await this.observeInvocation(record); return;
+        } else if (op === "managed.moreQueues") {
             if (!this.queueCursor) throw Error("No additional queue page.");
             const page = await this.call("queues.list", {cursor: this.queueCursor});
             this.queues.push(...page.queues as Queue[]); this.queueCursor = page.next_cursor as string | undefined;
@@ -163,7 +300,7 @@ export class ManagedWorkItemsView {
         } else if (op === "managed.queue") {
             this.queue = this.queues.find(queue => JSON.stringify(queue.queue) === message.queue);
             if (!this.queue) throw Error("Select an actually discovered authorized queue.");
-            this.clearSelection(); await this.loadQueue();
+            this.clearSelection(); this.descriptor = undefined; await this.loadQueue();
         } else if (op === "managed.item") {
             if (!this.items.some(item => item.id === message.id)) throw Error("Select a discovered item.");
             this.item = (await this.call("items.get", {item_id: message.id})).item as Item;
@@ -185,7 +322,7 @@ export class ManagedWorkItemsView {
             this.snapshot = JSON.parse(Buffer.from(await vscode.workspace.fs.readFile(source[0])).toString("utf8"));
         } else if (op === "managed.enqueue") {
             if (this.queue?.mode === "reviewed") throw Error("This is a reviewed queue. Approve its exact pending proposal; direct enqueue cannot create an approval.");
-            if (!this.snapshot) throw Error("An existing admitted execution snapshot is required. Select an admitted item or load the exact registered snapshot; the client cannot invent one.");
+            if (!this.snapshot) throw Error("Select an authorized application and capability to pin its admitted snapshot before enqueue.");
             await this.mutate("items.enqueue", {snapshot: this.snapshot, payload: message.payload}); return;
         } else if (op === "managed.decide") {
             if (!this.review || !["approve", "reject"].includes(message.decision)) throw Error("Select an exact review proposal and decision.");

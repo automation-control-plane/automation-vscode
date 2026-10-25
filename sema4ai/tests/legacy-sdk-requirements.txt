@@ -1,0 +1,4 @@
+# Opt-in historical compatibility fixtures only; never install in the extension
+# bootstrap or owned SDK environment. Keep independent of the project lock.
+sema4ai-actions==1.6.6
+sema4ai-data==1.2.2

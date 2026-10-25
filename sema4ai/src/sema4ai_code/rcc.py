@@ -282,7 +282,7 @@ class Rcc:
         args = (
             [rcc_location]
             + args
-            + ["--bundled", "--robocorp", "--controller", "Sema4aiCode"]
+            + ["--bundled", "--robocorp", "--controller", "AutomationCode"]
         )
         cmdline = list2cmdline([str(x) for x in args])
 

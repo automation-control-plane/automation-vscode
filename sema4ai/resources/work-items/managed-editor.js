@@ -28,6 +28,17 @@ byId('managed-more-items').onclick = () => managedSend('moreItems');
 byId('managed-more-reviews').onclick = () => managedSend('moreReviews');
 byId('managed-more-logs').onclick = () => managedSend('logs', {id:managedState.logs?.run_id,cursor:managedLogCursor});
 byId('managed-snapshot').onclick = () => managedSend('snapshot');
+let managedObservedRun;
+byId('managed-discover-executions').onclick = () => managedSend('discoverExecutions');
+byId('managed-application').onchange = () => managedSend('application',{id:byId('managed-application').value});
+byId('managed-capability').onchange = () => {navigateRunbook('prepare','fields');managedSend('capability',{id:byId('managed-capability').value});};
+byId('managed-invoke').onclick = () => managedSend('invoke');
+function managedOptions(id, entries, key, label, selected, placeholder) {
+    const node=byId(id);node.replaceChildren();
+    const empty=document.createElement('option');empty.value='';empty.textContent=placeholder;node.append(empty);
+    for(const entry of entries){const option=document.createElement('option');option.value=entry[key];option.textContent=entry[label];node.append(option);}
+    node.value=selected||'';node.disabled=!entries.length;
+}
 byId('managed-enqueue').onclick = () => {
     try {managedSend('enqueue', {payload:managedPayloadEditor.getValue()});}
     catch (error) {byId('managed-status').textContent = error.message;}
@@ -42,6 +53,19 @@ window.addEventListener('message', ({data}) => {
     if (data.type !== 'managed-state') return;
     managedState = data; mode = 'managed'; byId('mode').value = mode; showMode();
     byId('status').textContent = '';
+    const execution=data.execution || {};
+    managedOptions('managed-application',execution.applications||[],'applicationId','title',execution.application?.applicationId,'Select an application');
+    managedOptions('managed-capability',execution.descriptors||[],'bindingId','bindingId',execution.bindingId,'Select a capability');
+    byId('managed-discover-executions').disabled=!data.capabilities;
+    byId('managed-execution-status').textContent=execution.message || 'Discover authorized executions. Discovery does not claim or run an input.';
+    byId('managed-invoke').disabled=!execution.canRun;
+    byId('managed-run-guidance').textContent=execution.canRun ? 'Run uses this input’s exact current claim and the selected immutable capability. You will confirm before execution.'
+        : execution.pending?.length ? 'Inspect the retained uncertain execution before another Run.' : !execution.bindingId ? 'Discover and select an authorized capability first.'
+        : !data.item?.claim ? 'Claim an input explicitly before Run. Completed inputs cannot be run with an expired claim.' : 'This input does not match the selected capability or required read permissions.';
+    byId('managed-uncertain-execution').hidden=!execution.pending?.length;
+    byId('managed-invocations').replaceChildren();
+    for(const pending of execution.pending||[]) managedButton(byId('managed-invocations'),'Inspect retained execution',()=>{navigateRunbook('inspect','result');managedSend('inspectInvocation',{key:pending.key});},'Input '+pending.itemId+' · Request '+pending.key);
+    if(execution.result?.runId && execution.result.runId!==managedObservedRun){managedObservedRun=execution.result.runId;navigateRunbook('inspect','result');}
     byId('managed-title').textContent = data.item ? 'Item ' + data.item.id : data.review ? 'Review ' + data.review.proposal.review_id : data.queue?.label || 'Managed Work Items';
     byId('managed-snapshot').disabled = !data.queue || !data.capabilities;
     byId('managed-snapshot').title = byId('managed-snapshot').disabled ? 'Connect and select an authorized queue first.' : 'Load an admitted snapshot; this does not execute it.'; byId('managed-status').textContent = data.message || (data.capabilities ? 'Connected. Runtime authority and live permissions govern every operation.' : 'Not connected.');
@@ -81,7 +105,7 @@ window.addEventListener('message', ({data}) => {
     byId('managed-snapshot-view').textContent = JSON.stringify(data.snapshot || {}, null, 2);
     byId('managed-snapshot-authority').textContent = 'Capability authority: ' + managedAuthorityLabel(data.snapshot);
     byId('managed-enqueue').disabled = !data.queue || !managedAllowed('items.enqueue') || !data.snapshot || data.queue.mode === 'reviewed';
-    byId('managed-enqueue').title=byId('managed-enqueue').disabled ? data.queue?.mode==='reviewed' ? 'Reviewed queues require an exact review decision.' : !data.snapshot ? 'Load an admitted execution snapshot first.' : 'The selected queue has not granted enqueue.' : 'Enqueue this input with the admitted snapshot.';
+    byId('managed-enqueue').title=byId('managed-enqueue').disabled ? data.queue?.mode==='reviewed' ? 'Reviewed queues require an exact review decision.' : !data.snapshot ? 'Discover and select an authorized capability first.' : 'The selected queue has not granted enqueue.' : 'Enqueue this input with the admitted snapshot.';
     byId('managed-claim').disabled = !data.queue || !managedAllowed('items.claim');
     byId('managed-renew').disabled = !data.item?.claim || !managedAllowed('items.renew');
     byId('managed-complete').disabled = !data.item?.claim || !managedAllowed('items.complete');

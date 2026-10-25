@@ -336,7 +336,7 @@ class LaunchProcess:
             cmdline.append("--bundled")
             cmdline.append("--robocorp")
             cmdline.append("--controller")
-            cmdline.append("Sema4aiCode")
+            cmdline.append("AutomationCode")
 
         self._cmdline = cmdline
 

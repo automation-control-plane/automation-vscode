@@ -77,6 +77,7 @@ def test_rcc_process_routes_homes_and_supported_flags(monkeypatch, tmp_path):
         args, env = captured[-1]
         assert args[0] == str(executable)
         assert "--robocorp" in args and "--sema4ai" not in args
+        assert args[args.index("--controller") + 1] == "AutomationCode"
         assert env["ROBOCORP_HOME"] == env[f"{kind.upper()}_HOME"]
         assert env["RCC_HOLOTREE_MODE"] == "private"
         assert rcc.get_robocorp_code_datadir(kind).parent == Path(env["ROBOCORP_HOME"])

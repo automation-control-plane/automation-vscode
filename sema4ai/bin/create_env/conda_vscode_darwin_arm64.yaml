@@ -1,5 +1,5 @@
-# Note: when updated the pre-built environments must be updated
-# (run related robot in control-room and update values in getBaseAsZipBasename).
+# Owned extension bootstrap. RCC creates a new environment for this descriptor;
+# existing operator environments and data are never migrated or deleted.
 channels:
     - conda-forge
 
@@ -17,6 +17,5 @@ dependencies:
           - playwright==1.52.0
           - tree-sitter==0.24.0
           - tree-sitter-yaml==0.7.0
-          - sema4ai-http-helper==2.1.0
-          - sema4ai-common==0.1.0
+          - actions-http-helper==1.0.3
           - ruff==0.11.11
