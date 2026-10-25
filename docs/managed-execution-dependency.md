@@ -1,94 +1,123 @@
-# Native managed execution: bounded API dependency
+# Native managed execution: verified API and remaining wiring
 
-## Verified current boundary
+## Corrected source lookup
 
-The owned client pins `resources/work-items/managed-v1.json` to Actions commit
-`f1b11838674494cd6a34d343b97404cbb1537004`, blob
-`3a34f69c7770de072427fddb79bf0d4cc39da06f`. This contract has fourteen operations;
-it has no execution invocation or independent admitted-snapshot discovery operation.
+Actions **#327 is an issue**, and **#328 is the integration PR**. The former
+pulls/327 404 was the wrong resource type, not lack of Actions access. Reads of
+the issue, PR and committed consumer recipe succeeded on October 25.
 
-- `queues.list` returns QueueView: counts, label, mode, permissions and QueueRef.
-  It does not return an execution snapshot or a capability catalog.
-- `items.list` / `items.get` return ItemView.snapshot. The controller already
-  assigns the exact selected item's snapshot in `managed.item`.
-- `runs.get` returns RunView.snapshot for a Run linked to the selected item/review.
-  The controller currently displays it, without making it an enqueue selection.
-- `managed.snapshot` imports an existing admitted snapshot from a selected file.
-  It cannot register, synthesize or authorize an execution.
-- Enqueue checks exact Deployment revision scope. Claims and execution are
-  separate. Runtime supplies worker/actor authority; the extension must not mint it.
+- Installed recipe/runtime source: `f332a8284e78844abcf6700a600d2891d742b682`,
+  Runtime 1.1.0a38, Core 1.1.0a3, SDK 0.5.0a2, Python MCP client 2.3.0.
+- Read-only integration head: `deedbcd50c570cd93df9db46a14acece435d6e3c` on
+  `release/327-invoice-vertical-20261020`; this is not the installed a38 source.
+- Recipe: `docs/program/evidence/actions-next-327/recovery-a38/managed-installed-consumer/qualify.py`,
+  blob `8af14773e631260e03de77445dadc6c6c73f7983`; README blob
+  `c3d4841628dadb29d68417cb87e3478ebb32f2fb`.
+- At installed source, `foundry/generic_execution_port.py` blob
+  `32ca2a7bd0c6baecc9f38ac6767cede3c72cb333` defines the typed invocation.
+- `foundry/invocation_discovery.py` blob
+  `e8c6c6c1a3a16e2358eda745c96c804bb010b744` and `foundry/bootstrap.py` blob
+  `3d9826f891b037fae26826afe1051f044e5cca74` are unchanged at the inspected head.
+  Authoring and generated-result verification have other current-head changes.
 
-Source: `sema4ai/vscode-client/src/managedWorkItemsView.ts` (`managed.item`,
-`managed.run`, `managed.snapshot`); `managedWorkItemsClient.ts`
-(`validateCommand`, response scope checks); `resources/work-items/managed-editor.js`.
+Backend paths above are under `action_server/src/actions/server/`. No upstream
+files, grants or services were changed or executed by this inspection.
 
-Desktop QA reported ordinary a38 native enqueue/claim, then real RCC execution via
-the documented external `capability_invoke` harness. Native Inspect showed DONE,
-Run/Attempt and four artifacts. That proves the backend path, not a native Run
-button. Completion remains disabled when execution already released the claim;
-do not manufacture a terminal epoch or treat external completion acknowledgment
-as button acceptance.
+## Canonical selection path
 
-## Smallest proposed UX, without new authority
+The recipe authenticates streamable HTTP MCP at the configured origin's **/mcp**
+with the existing bearer, discovers the server, then calls public tools:
 
-1. Keep the existing connection/workspace, queue list and form. Add an **Execution**
-   selection inside Prepare, showing authorized deployment/revision and capability
-   names returned by canonical discovery. Select only server-admitted immutable
-   snapshots; show revision/provenance in details. Selection never invokes or claims.
-2. Where an existing authorized item or linked Run is the source, offer an explicit
-   **Use this execution** selection using its exact validated snapshot, unchanged.
-   This can reuse the verified current APIs. An empty queue needs canonical
-   discovery of admitted executions; queue labels/metadata cannot supply authority.
-3. Add one explicit managed **Run** using the canonical typed invocation ingress
-   and existing authenticated connection only after its actor/audience contract is
-   verified. Keep action arguments separate from Work Item fields. Preserve exact
-   immutable selection, correlation/idempotency semantics and returned Run identity.
-4. Project returned Run/Attempt/logs/artifacts through existing Inspect. Denied,
-   incompatible and uncertain outcomes remain explicit; no arbitrary shell, new
-   scheduler, automatic claim, guessed snapshot, implicit approval or endpoint fallback.
+1. `canvas_open({})` returns structuredContent.applications with applicationId,
+   title and nullable activeRevisionId. It is read-only, subject to inspect_library
+   authorization and server Workspace filtering.
+2. `canvas_inspect({appId})` requires inspect_application. Its structured content
+   includes activeRevisionId and invocationDescriptors for authorized active
+   bindings, plus invocationAvailability and invocationReadiness: "not-checked".
+3. A descriptor contains bindingId, mode: "generic", exact snapshot, inputMode
+   (none/optional/required/claim), nullable inputQueue, standaloneAllowed, and bounded
+   inputSchema. Defaults/examples are omitted by the backend. These references
+   neither register admission nor grant execution.
+4. The host retains the exact descriptor/revision; the webview sends only selection
+   identity. Refresh must not silently switch to a newly active revision. Selection
+   and rendering never invoke or claim.
 
-## Contract needed from the Actions integrator through parent
+Discovery checks exact Run execute and Package/profile grants, plus applicable
+input read/claim and output read/enqueue. Missing authority omits a descriptor.
+Input mode and standalone eligibility are independent server projections, not
+client-derived grants or readiness guarantees.
 
-Before implementing new ingress, supply the exact a38 commit and the successful
-synthetic harness/source locations, with no credentials:
+The existing fourteen-operation managed HTTP protocol remains separate and
+strictly pinned. It supplies queue/item/claim/Run/Attempt/log/artifact projection;
+it has no invocation operation. No managed operation is invented.
 
-- Discovery transport, paths/tool names, generated request/response schema,
-  pagination and availability/version negotiation. Identify which response supplies
-  the authoritative admitted snapshot and immutable revision/capability identifiers.
-- `capability_invoke` transport and typed schema, including argument versus Work
-  Item binding, claim/fence requirements, output Run identity and polling/result
-  contract. Confirm whether execution consumes an existing claim or obtains one;
-  the client must not infer it.
-- Required actor/audience/grants and how the existing Runtime token is admitted.
-  Confirm scoped denial behavior, idempotency/reconciliation, cancellation and
-  timeout semantics. No authorization downgrade or new credential service.
-- A synthetic deployment/recipe for no-manual-JSON selection → explicit native Run
-  → actual RCC → authoritative Run/Attempt/artifact acceptance, plus denied cases.
+## Typed invocation and audience
 
-The supported read of `https://api.github.com/repos/joshyorko/actions/pulls/327`
-on October 25 returned **404 Not Found**. This does not identify its cause or prove
-the absence of a38 APIs. No alternate access route was attempted. Additional a38
-discovery/invocation semantics remain unverified; parent/integrator handoff was
-requested while the independent multiline fix proceeded.
+The proven consumer uses this existing MCP request:
 
-## Bounded file ownership / implementation plan
+```text
+capability_invoke({mode: "generic", snapshot: selectedDescriptor.snapshot,
+                   claim: actualSelectedItem.claim})
+```
 
-One extension source owner, existing PR #1; parent retains the sole native tester.
+No payload, idempotency key, actor, audience or worker override is added to that
+claim variant. A separate standalone variant accepts inputs and idempotencyKey;
+it must not be substituted for required/claimed input.
 
-- `vscode-client/src/managedWorkItemsClient.ts`: retain exact fourteen-operation
-  protocol and scope checks. Do not add invented operations to its schema.
-- A small typed execution client beside it, **only if the verified canonical
-  invocation uses a separate ingress**, reusing RuntimeTransport and its secure
-  origin/auth/error handling. Pin only reviewed schema/version/capabilities.
-- `vscode-client/src/managedWorkItemsView.ts`: discovery selection, exact snapshot
-  provenance, explicit invocation and returned Run projection; no actor fabrication.
-- `resources/work-items/managed-editor.js` / `panel.html` / `panel.css`: compact
-  execution selector, form arguments, explicit Run and accurate loading/denied/result
-  states using existing Runbook components. Keep Advanced JSON optional.
-- Client/controller/editor tests: immutable selection, scope/permission/version
-  negatives, zero automatic execution, exact invocation and uncertain outcome.
-- Existing native tester: exact installed VSIX, no JSON file/schema authoring,
-  real selected capability execution and artifact/lineage proof.
+Ordinary bootstrap verifies the bearer and assigns the saved actor/Workspace and
+**model audience on the server**. Caller audience/Workspace/principal headers confer
+no authority. capability_invoke is model-only; app-session tokens cannot become
+model authority. The extension must not create CanvasCaller, profile/grants or
+use private View metadata as discovery.
 
-This is required current-release work. The proposal does not change production
-discovery or execution until the actual canonical contract is supplied and reviewed.
+The server re-resolves and compares the exact snapshot, requires the actual
+input QueueRef/trusted-worker claim owner, then dispatches with the claim epoch.
+It executes RCC or returns retained state. A retained uncertain launch yields
+reconciliation_required, not permission to retry or claim again.
+
+structuredContent.execution returns state, Run/Attempt IDs and epoch, Work Item
+ID/epoch/state, and optional output handles. Inspect must re-read authoritative
+managed state. Desktop QA's reported external MCP execution plus native
+DONE/Run/Attempt/four artifacts is not a native Run-button pass. Released claims
+keep Complete disabled; no terminal epoch or acknowledgment is manufactured.
+
+## Prepared boundary and remaining coordination
+
+`sema4ai/vscode-client/src/managedExecutionSelection.ts` is a pure typed boundary:
+it validates application/descriptor projections, freezes exact host selections,
+and constructs only the existing claim invocation for a matching live selected
+item. It has **no network, UI registration, claim or invocation side effects**.
+Tests cover immutable identity/defaults, duplicate IDs, size bounds, unknown
+mode/authority, and cross-scope/stale-item/claim refusal.
+
+Parent requested integrator confirmation of the consumer contract. Remaining
+coordination before introducing ingress:
+
+- Supported MCP client/protocol negotiation for this Runtime, public tools/list
+  schemas/metadata and rejection of unavailable/changed invocation contracts.
+  Do not guess a legacy handshake or reuse the HTTP schema as the MCP schema.
+- Synchronous invocation request retention/reconciliation, transport interruption
+  and timeout semantics. No automatic retry, duplicate claim or false failure
+  after uncertain dispatch.
+- Existing synthetic consumer handoff for exact installed native tests; no secrets
+  or datadir transfer. Actor/audience and discovery above are now source-grounded.
+
+## Integration files and acceptance
+
+One extension source owner, same PR #1, existing native tester:
+
+- Small typed MCP client beside managedWorkItemsClient.ts, preserving secure origin,
+  authentication and no fallback. Keep its fourteen-operation protocol intact.
+- managedWorkItemsView.ts: host-retained selection, explicit confirmed invocation
+  and exact result correlation using managedExecutionSelection.ts.
+- managed-editor.js / panel.html / panel.css: compact application/capability
+  selection, existing forms, explicit Run and accurate loading/denied/result states.
+  Keep standalone arguments separate from claimed Work Item payloads.
+- Tests: contract negotiation, immutable selection, zero automatic mutations,
+  audience/scope/grant negatives, exact request and uncertain result retention.
+- Native acceptance: empty-queue discovery without internal JSON files, form input,
+  explicit authorized enqueue/claim/Run, real RCC, Run/Attempt/output/artifact
+  lineage and denied cases. Retry/Robot/backend gaps remain explicit.
+
+2.20.17 stays unchanged for desktop multiline retest. This preparation checkpoint
+creates no replacement VSIX, new ingress or release-completion claim.
