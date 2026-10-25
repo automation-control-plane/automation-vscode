@@ -562,8 +562,8 @@ class StartupHelper {
                 this.robotConda = getExtensionRelativeFile("../../bin/create_env/conda_vscode_windows_amd64.yaml");
                 break;
             default:
-                this.robotConda = getExtensionRelativeFile("../../bin/create_env/conda.yaml");
-                break;
+                this.error("INIT_UNSUPPORTED_PLATFORM", `No supported Automation bootstrap descriptor for ${process.platform}/${process.arch}.`);
+                return;
         }
 
         if (!this.robotConda) {

@@ -49,12 +49,12 @@ pytest = "*"
 pytest-regressions = "1.0.6"
 pytest-xdist = "*"
 pytest-timeout = "*"
+psutil = "^5.9" # Used by tests/run_tests.py; previously incidental to the log plugin.
 
 types-invoke = "^2.0"
 types-psutil = "^5.9"
 types-mock = "*"
 types-PyYAML = "*"
-robocorp-log-pytest = "*"
 types-docutils = "*"
 types-Pillow = "^10.2.0"
 types-pywin32 = "304.0.0.6"

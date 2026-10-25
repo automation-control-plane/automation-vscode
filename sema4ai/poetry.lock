@@ -1454,22 +1454,6 @@ files = [
 psutil = ">=5.9,<6.0"
 
 [[package]]
-name = "robocorp-log-pytest"
-version = "0.0.5"
-description = "PyTest plugin for auto-logging of pytest tests with robocorp-log."
-optional = false
-python-versions = "<4.0.0,>=3.9.2"
-groups = ["dev"]
-files = [
-    {file = "robocorp_log_pytest-0.0.5-py3-none-any.whl", hash = "sha256:55dcd15d98ec905a5c917a029b4c4aca2f3595283ac5ade9dad632b9726c3741"},
-    {file = "robocorp_log_pytest-0.0.5.tar.gz", hash = "sha256:6a44182054649605268bf220b977932e4efaedf035910f8dd454188631488e81"},
-]
-
-[package.dependencies]
-pytest = ">=7"
-robocorp-log = ">=2.5,<4"
-
-[[package]]
 name = "robocorp-truststore"
 version = "0.9.1"
 description = "Verify certificates using native system trust stores"
@@ -1877,4 +1861,4 @@ zstd = ["backports-zstd (>=1.0.0) ; python_version < \"3.14\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "ce60bb3d6afedcd86d1820379d444137433560b56c26b5becb9393996142c62b"
+content-hash = "09d60e433a0a80363c415b20107c5feceadefdbbfa25d7ceeda9c570f30708ef"
