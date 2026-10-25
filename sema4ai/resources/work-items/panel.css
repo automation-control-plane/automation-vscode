@@ -89,6 +89,7 @@ dd { overflow-wrap: anywhere; }
 .work-item-form-node { min-width: 0; }
 .work-item-form-field { display: grid; grid-template-columns: minmax(90px, 1fr) 94px minmax(90px, 1.4fr) 30px; align-items: start; gap: 8px; margin-bottom: 9px; }
 .work-item-form-field > input, .work-item-form-field > select { width: 100%; }
+textarea.form-string { min-height: 54px; margin: 0; font-family: inherit; line-height: 1.5; }
 .work-item-form-field > .work-item-form-node { grid-column: 1 / -1; grid-row: 2; margin: 3px 0 6px 12px; padding-left: 14px; border-left: 1px solid var(--automation-border); }
 .work-item-form-field > .remove { grid-column: 4; grid-row: 1; padding: 2px; font-size: 17px; }
 .form-add { color: var(--automation-link) !important; padding-left: 0; font-size: 12px; }

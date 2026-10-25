@@ -106,8 +106,11 @@ test('Current required-input candidate negotiates without granting mutations and
         for(const op of ['items.enqueue','items.claim','items.retry','reviews.decide']) await assert.rejects(c.execute(command(op)),/unavailable or not granted/);
         assert.equal(calls.length,before);
         operations=[...operations,'items.enqueue'];permissions=[...permissions,'work_items.enqueue'];await c.negotiate();
-        const enqueue=command('items.enqueue');await c.execute(enqueue);
+        const enqueue=command('items.enqueue');
+        enqueue.payload={records:'{"value":"東京 🙂"}\n{"quote":"\\"yes\\""}\n',nested:{text:'line one\nline two'},array:['café\n"quoted"']};
+        await c.execute(enqueue);
         assert.deepEqual(bodies.at(-1),enqueue);assert.equal(Object.hasOwn(bodies.at(-1).snapshot,'capability_authority'),false);
+        assert.equal(bodies.at(-1).payload.records.trimEnd().split('\n').map(line=>JSON.parse(line)).length,2);
         for(const authority of ['legacy-action','package-revision']) {
             enqueue.snapshot.capability_authority=authority;await c.execute(enqueue);assert.deepEqual(bodies.at(-1),enqueue);
         }

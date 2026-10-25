@@ -12,6 +12,11 @@ Open **Automation → Package Resources → Work Items**, or run **Automation: O
 
 Each field supports string, number, boolean, null, object or array. Objects have **Add field / Remove field** controls; arrays have **Add item / Remove item** controls. Existing values provide their actual types. Existing package constraints provide field hints when available; there is no schema-creation prerequisite. A Work Item payload contract is never inferred from an Action argument schema.
 
+String values use compact, vertically resizable text areas. Type or paste multiple
+lines directly into the value field, including NDJSON text, Unicode and quotes.
+Line breaks are kept in the payload through draft restore and submission; no
+Advanced JSON edit or schema is needed. Nested string fields use the same control.
+
 **Advanced JSON** is an optional, collapsed view. Applying it roundtrips supported JSON values through the same form. Malformed JSON, duplicate names (including escaped-equivalent names), non-finite numbers and integers outside JavaScript's exact range are rejected. Use strings for very large identifiers. Own keys such as `__proto__` and `constructor` remain data in containers without a prototype; they never become executable HTML or prototype assignments. Backend parsing also rejects duplicate/non-finite JSON.
 
 Unsaved form drafts, names, invalid values and replay sources survive refresh, metadata updates, closing/reopening the panel and Extension Host recreation through VS Code workspace state. State is isolated by package, mode and queue; restoring it never launches a workload, requests a model or authenticates a Runtime. A draft keeps its original saved revision so external changes cannot be overwritten silently. **Reload saved values** explicitly discards that draft and reads current data. Invalid edits remain visible for correction.

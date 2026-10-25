@@ -15,3 +15,26 @@ test('Malformed/duplicate keys, non-finite or imprecise numbers and excessive ne
     const root=F.fromValue({a:1,b:2});root.entries[1].key='a';assert.throws(()=>F.toValue(root),/Duplicate/);
     root.entries[1].key='b';root.entries[0].node.value='7wrong';assert.throws(()=>F.toValue(root),/valid number/);
 });
+
+test('Nested and scalar string controls preserve newlines and Unicode through render, edit and state restore',()=>{
+    function element(tag){let value='';return {tag,children:[],textContent:'',get value(){return value;},set value(next){value=tag==='input'?String(next).replace(/[\r\n]/g,''):String(next);},
+        append(...nodes){this.children.push(...nodes);},replaceChildren(...nodes){this.children=nodes;}};}
+    const container=element('div'),document={createElement:element};
+    const all=node=>[node,...node.children.flatMap(all)];
+    const text='first "quoted" line\n第二行 🙂\\path\n';
+    const editor=new F.Editor(container,{document});
+    for(const value of [text,{nested:{text},array:[text]}]){
+        editor.setValue(value);
+        const fields=all(container).filter(node=>node.ariaLabel==='Field value');
+        assert.equal(fields.length,typeof value==='string'?1:2);
+        for(const field of fields){assert.equal(field.tag,'textarea');assert.equal(field.value,text);field.value=text+'edited';field.oninput();}
+        const expected=typeof value==='string'?text+'edited':{nested:{text:text+'edited'},array:[text+'edited']};
+        assert.deepEqual(JSON.parse(editor.getJSON()),expected);
+        editor.setState(JSON.parse(JSON.stringify(editor.getState())));
+        assert.deepEqual(JSON.parse(editor.getJSON()),expected);
+        for(const field of all(container).filter(node=>node.ariaLabel==='Field value'))assert.equal(field.value,text+'edited');
+    }
+    editor.setReadOnly(true);
+    assert.ok(all(container).every(node=>!['textarea','input','select','button'].includes(node.tag)));
+    assert.ok(all(container).some(node=>node.textContent===text+'edited'));
+});

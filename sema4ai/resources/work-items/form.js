@@ -151,7 +151,7 @@
                     if(!this.readOnly)group.append(this.button('Add field',()=>{let number=1,name='field';const names=new Set(current.entries.map(entry=>entry.key));while(names.has(name))name='field'+(++number);const child=node();current.entries.push({key:name,node:child});this.render();this.changed();this.container.querySelector?.('[data-field="'+child.id+'"] > input')?.focus();}));
                 } else if(current.kind==='array') {
                     current.children.forEach((child,index)=>{const row=this.document.createElement('div');row.className='work-item-form-field';group.append(row);const label=this.document.createElement('span');label.className='field-key';label.textContent='Item '+(index+1);row.append(label);drawValue(child,row,depth+1);if(!this.readOnly){const remove=this.button('×',()=>{current.children.splice(index,1);this.render();this.changed();});remove.className='quiet remove';remove.ariaLabel='Remove item '+(index+1);row.append(remove);}});
-                    if(!this.readOnly)group.append(this.button('Add item',()=>{const child=node();current.children.push(child);this.render();this.changed();this.container.querySelector?.('[data-field="'+child.id+'"] input')?.focus();}));
+                    if(!this.readOnly)group.append(this.button('Add item',()=>{const child=node();current.children.push(child);this.render();this.changed();this.container.querySelector?.('[data-field="'+child.id+'"] textarea, [data-field="'+child.id+'"] input')?.focus();}));
                 }
             };
             const drawValue=(current,parent,depth)=>{
@@ -167,9 +167,13 @@
                 type.onchange=()=>{Object.assign(current,node(type.value));this.render();this.changed();this.container.querySelector?.('[data-field="'+current.id+'"] > select')?.focus();};parent.append(type);
                 if(current.kind==='object'||current.kind==='array'){draw(current,parent,depth);return;}
                 if(current.kind==='null'){const label=this.document.createElement('span');label.textContent='null';parent.append(label);return;}
-                const input=this.document.createElement(current.kind==='boolean'?'select':'input');input.ariaLabel='Field value';input.disabled=this.readOnly;
+                const input=this.document.createElement(current.kind==='boolean'?'select':current.kind==='string'?'textarea':'input');input.ariaLabel='Field value';input.disabled=this.readOnly;
                 if(current.kind==='boolean'){for(const value of ['true','false']){const option=this.document.createElement('option');option.value=value;option.textContent=value;input.append(option);}input.value=String(current.value);input.onchange=()=>{current.value=input.value==='true';this.changed();};}
-                else {input.type='text';input.placeholder=current.kind==='number'?'Number':'Value';input.value=current.value;input.oninput=()=>{current.value=input.value;this.changed();};}
+                else {
+                    if(current.kind==='string'){input.rows=2;input.className='form-string';input.placeholder='Text (multiple lines supported)';}
+                    else {input.type='text';input.placeholder='Number';}
+                    input.value=current.value;input.oninput=()=>{current.value=input.value;this.changed();};
+                }
                 parent.append(input);
             };
             if(this.root.kind==='object'||this.root.kind==='array')draw(this.root,this.container,0);else drawValue(this.root,this.container,0);

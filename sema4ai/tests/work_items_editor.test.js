@@ -6,7 +6,8 @@ const fs=require('node:fs');
 function editor(initialState) {
     const nodes=new Map(),messages=[],receivers=[];
     const ids=new Set([...fs.readFileSync('resources/work-items/panel.html','utf8').matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
-    function element(tag){return {tag,value:'',textContent:'',children:[],disabled:false,hidden:false,
+    // Model the browser's single-line input sanitization; textareas preserve LF.
+    function element(tag){let value='';return {tag,get value(){return value;},set value(next){value=tag==='input'?String(next).replace(/[\r\n]/g,''):String(next);},textContent:'',children:[],disabled:false,hidden:false,
         append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;},
         set innerHTML(_){assert.fail('Business fields must not become HTML');}};}
     const document={getElementById(id){assert.ok(ids.has(id),'Panel must contain '+id);if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},createElement:element};
@@ -38,6 +39,29 @@ test('Empty input -> field/value form -> create -> save/debug -> output without 
         {id:'devdata/work-items-out/native-run1/work-items.json#0',role:'output',payload:{observed:8},files:[],state:'LOCAL_FIXTURE'}],receipts:[{id:'run1',mode:'file',input:'input#0',state:'EXITED',exit_code:0}]});
     const card=e.get('receipts').children[0];assert.equal(card.children[0].textContent,'Succeeded · exit 0');card.children[2].onclick();
     assert.equal(e.get('save').disabled,true);assert.equal(e.get('payload-apply-json').disabled,true);
+});
+
+test('Multiline string form input survives create, saved reload, draft restore and save/debug submission',()=>{
+    const text='{"city":"東京","quote":"say \\"hello\\""}\n{"city":"München","emoji":"🙂"}\n';
+    assert.equal(text.trimEnd().split('\n').map(line=>JSON.parse(line)).length,2);
+    const e=editor();
+    const row=add(e,'records','string',text);
+    e.get('create').onclick();
+    assert.equal(e.messages.at(-1).payload.records,text,'Pasted NDJSON must not lose line separators');
+    assert.equal(row.children[2].tag,'textarea');
+    assert.equal(row.children[2].ariaLabel,'Field value');
+    const draft=e.messages.filter(message=>message.op==='editorDraftState').at(-1).state;
+    const reopened=editor(draft);reopened.get('create').onclick();
+    assert.equal(reopened.messages.at(-1).payload.records,text);
+    reopened.receive({type:'state',mode:'file',selectId:'input#0',items:[{id:'input#0',role:'input',payload:{records:text},files:[],revision:'original'}],receipts:[]});
+    const saved=fieldGroup(reopened).children[0].children[2];
+    assert.equal(saved.value,text);
+    saved.value=text+'last line: "quoted" \\ path';saved.oninput();
+    for(const operation of ['save','run','debug']){
+        reopened.get(operation).onclick();
+        assert.equal(reopened.messages.at(-1).payload.records,text+'last line: "quoted" \\ path');
+    }
+    assert.equal(JSON.parse(reopened.get('payload').value).records,text+'last line: "quoted" \\ path','Optional preview roundtrips; it was never edited');
 });
 
 test('Duplicate form names block submission; nested objects/arrays and own names are authored through controls',()=>{
@@ -119,7 +143,7 @@ test('Selection scopes results, sidebar state and genuinely read-only output con
     e.get('show-outputs').onclick();e.get('items').children[0].onclick();
     for(const id of ['run','debug','create','save','attach','reload-payload','parameters-section','proposal-tools'])assert.equal(e.get(id).hidden,true,id);
     const all=node=>[node,...node.children.flatMap(all)];
-    assert.ok(all(e.get('payload-fields')).every(node=>!['button','input','select'].includes(node.tag)));
+    assert.ok(all(e.get('payload-fields')).every(node=>!['button','input','select','textarea'].includes(node.tag)));
     assert.equal(e.get('replay').className,'primary');assert.equal(e.get('last-execution').textContent,'Succeeded · exit 0');
 });
 

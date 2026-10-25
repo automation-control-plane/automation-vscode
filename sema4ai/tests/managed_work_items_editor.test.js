@@ -3,14 +3,14 @@ const assert=require('node:assert/strict');
 const vm=require('node:vm');
 const fs=require('node:fs');
 
-function createEditor(){
+function createEditor(initialState){
     const nodes=new Map(),messages=[],receivers=[];
     const ids=new Set([...fs.readFileSync('resources/work-items/panel.html','utf8').matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
-    function element(){return {value:'',textContent:'',children:[],disabled:false,hidden:false,
+    function element(tag){let value='';return {tag,get value(){return value;},set value(next){value=tag==='input'?String(next).replace(/[\r\n]/g,''):String(next);},textContent:'',children:[],disabled:false,hidden:false,
         append(...values){this.children.push(...values);},replaceChildren(...values){this.children=values;},
         set innerHTML(_){assert.fail('Runtime content must never become HTML');}};}
     const document={getElementById(id){assert.ok(ids.has(id),'Panel must contain '+id);if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},createElement:element};
-    const scope={document,acquireVsCodeApi:()=>({postMessage:message=>{messages.push(JSON.parse(JSON.stringify(message)));if(message.op==='restoreEditorDraft')receivers.forEach(callback=>callback({data:{type:'editorDraftRestore'}}));}}),window:{addEventListener:(_,callback)=>receivers.push(callback)}};
+    const scope={document,acquireVsCodeApi:()=>({postMessage:message=>{messages.push(JSON.parse(JSON.stringify(message)));if(message.op==='restoreEditorDraft')receivers.forEach(callback=>callback({data:{type:'editorDraftRestore',state:initialState}}));}}),window:{addEventListener:(_,callback)=>receivers.push(callback)}};
     vm.runInNewContext(fs.readFileSync('resources/work-items/form.js','utf8')+'\n'+fs.readFileSync('resources/work-items/editor.js','utf8')+'\n'+fs.readFileSync('resources/work-items/managed-editor.js','utf8'),scope);
     return {get:document.getElementById,messages,receivers};
 }
@@ -57,6 +57,28 @@ test('Managed editor keeps queue/review/Run identity separate and gates controls
     assert.equal(get('managed-approve').disabled,true);assert.match(get('managed-status').textContent,/Forbidden/);
     get('mode').value='published';get('mode').onchange();get('connect').onclick();
     assert.equal(messages.at(-1).op,'connect');assert.equal(get('local-root').hidden,false);
+});
+
+test('Managed form preserves multiline strings through draft restore and explicit enqueue without advanced JSON',()=>{
+    const text='{"value":"café 東京 🙂"}\n{"quote":"\\"yes\\"","path":"C:\\\\file"}\n';
+    const e=createEditor();e.get('mode').value='managed';e.get('mode').onchange();
+    const group=()=>e.get('managed-payload-fields').children[0];
+    group().children.find(node=>node.textContent==='Add field').onclick();
+    const row=group().children[0];row.children[0].value='records';row.children[0].oninput();
+    row.children[2].value=text;row.children[2].oninput();
+    assert.equal(JSON.parse(e.get('managed-payload').value).records,text);
+    assert.equal(row.children[2].tag,'textarea');
+    const draft=e.messages.filter(message=>message.op==='editorDraftState').at(-1).state;
+    const restored=createEditor(draft);
+    const {command}=require('./fixtures/managed_contract');
+    const fixture=command('items.enqueue');
+    const state={type:'managed-state',snapshot:fixture.snapshot,queue:{queue:fixture.queue,mode:'required-input',label:'Fixture',permissions:['work_items.enqueue'],counts:{}},
+        capabilities:{operations:['items.enqueue'],permissions:['work_items.enqueue'],modes:['required-input']}};
+    for(const receive of restored.receivers)receive({data:state});
+    assert.equal(restored.get('managed-enqueue').disabled,false);
+    assert.ok(restored.messages.every(message=>!['managed.enqueue','managed.claim'].includes(message.op)),'Restoration and refresh never submit');
+    restored.get('managed-enqueue').onclick();
+    assert.deepEqual(restored.messages.at(-1),{op:'managed.enqueue',payload:{records:text}});
 });
 
 test('Managed logs distinguish an unloaded result, an empty page, and literal returned lines',()=>{
