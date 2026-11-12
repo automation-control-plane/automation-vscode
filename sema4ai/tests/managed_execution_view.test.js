@@ -89,6 +89,13 @@ test('Native selection, explicit claim Run, authoritative lineage and read-only 
         await fs.writeFile(confirmationPath,JSON.stringify({runId:I,attemptId:D}));
         view=create();await assert.rejects(connect(),/result|identity|contract/i);
         await fs.rm(resultPath);await fs.rm(confirmationPath);
+        await fs.writeFile(resultPath,JSON.stringify({state:'completed',runId:I,attemptId:D,attemptEpoch:1,workItemId:I,workItemEpoch:3,runStatus:2,attemptState:'succeeded',workItemState:'COMPLETED'}));
+        view=create();await connect();assert.equal(posts.at(-1).execution.pending[0].key,pending.key,'a validated result without confirmation remains uncertain');
+        const knownResultCalls=invokeCalls().length;
+        await view.handle({op:'managed.inspectInvocation',key:pending.key});
+        assert.equal(invokeCalls().length,knownResultCalls,'known-result recovery never invokes again');
+        assert.equal(posts.at(-1).execution.pending.length,0,'authoritative inspection can confirm the saved result');
+        await fs.rm(resultPath);await fs.rm(confirmationPath);
         await fs.mkdir(resultPath);
         view=create();await assert.rejects(connect(),/EISDIR|directory/i,'journal read failures are not treated as missing receipts');
         await fs.rm(resultPath,{recursive:true});

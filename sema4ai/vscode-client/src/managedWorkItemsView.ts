@@ -15,6 +15,84 @@ interface Review {proposal: {review_id: string; binding: {run_id: string; [key: 
 interface Run {id: string; artifacts: {handle: string; digest: string; size: number; run_id: string}[]; [key: string]: unknown;}
 interface Journal {key: string; command: ManagedCommand; state: "uncertain" | "confirmed" | "denied";}
 interface InvocationJournal {key: string; request: ManagedClaimInvocation; priorRuns: string[]; state: "uncertain" | "confirmed"; result?: ManagedExecutionResult;}
+interface JournalScope {schema_version: "managed-journal-scope/v1"; manifest: string; workspace: string; origin: string; rawOrigin: string; namespace: string;}
+
+function journalNamespace(manifest: string, rawOrigin: string, workspace: string): string {
+    return createHash("sha256").update(manifest + "\n" + rawOrigin + "\n" + workspace).digest("hex");
+}
+
+function parseJournalScope(value: unknown, namespace: string): JournalScope | undefined {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+    const scope = value as Record<string, unknown>;
+    if (Object.keys(scope).sort().join(",") !== "manifest,namespace,origin,rawOrigin,schema_version,workspace" || scope.schema_version !== "managed-journal-scope/v1" ||
+        typeof scope.manifest !== "string" || typeof scope.workspace !== "string" || typeof scope.origin !== "string" || typeof scope.rawOrigin !== "string" || scope.namespace !== namespace) return undefined;
+    try {
+        if (journalNamespace(scope.manifest, scope.rawOrigin, scope.workspace) !== namespace || canonicalRuntimeOrigin(scope.rawOrigin) !== scope.origin) return undefined;
+    } catch {return undefined;}
+    return scope as unknown as JournalScope;
+}
+
+async function writeJournalScope(directory: string, scope: JournalScope): Promise<void> {
+    const file = path.join(directory, "scope.json"), bytes = JSON.stringify(scope);
+    try {
+        const handle = await fs.promises.open(file, "wx", 0o600);
+        try {await handle.writeFile(bytes); await handle.sync();} finally {await handle.close();}
+    } catch (error) {
+        if (error.code !== "EEXIST") throw error;
+        const saved = parseJournalScope(JSON.parse(await fs.promises.readFile(file, "utf8")), scope.namespace);
+        if (!saved || !isDeepStrictEqual(saved, scope)) throw Error("Managed journal scope metadata conflicts with its directory. Preserve the journal and inspect it.");
+    }
+}
+
+async function hasUnresolvedJournal(directory: string): Promise<boolean> {
+    try {
+        const names = await fs.promises.readdir(directory);
+        for (const name of names) {
+            if (name.endsWith(".request.json")) {
+                const match = /^([0-9a-f-]{36})\.request\.json$/.exec(name);
+                if (!match) return true;
+                const value: unknown = JSON.parse(await fs.promises.readFile(path.join(directory, name), "utf8"));
+                const raw = value as Record<string, unknown>;
+                const workspace = (raw?.queue as Record<string, unknown> | undefined)?.workspace_id || raw?.workspace_id;
+                if (typeof workspace !== "string") return true;
+                const command = validateManagedJournalCommand(value, workspace);
+                if (command.idempotency_key !== match[1]) return true;
+                let primary: any;
+                try {primary = JSON.parse(await fs.promises.readFile(path.join(directory, match[1] + ".receipt.json"), "utf8"));}
+                catch (error) {if (error.code === "ENOENT") return true; throw error;}
+                if (primary?.denied === true) {
+                    if (typeof primary.status !== "number" || ![401, 403, 404, 409, 413, 422].includes(primary.status) ||
+                        (primary.code !== undefined && typeof primary.code !== "string")) return true;
+                    let proof: any;
+                    try {proof = JSON.parse(await fs.promises.readFile(path.join(directory, match[1] + ".reconciliation-receipt.json"), "utf8"));}
+                    catch (error) {if (error.code === "ENOENT") return true; throw error;}
+                    if (!proof || typeof proof !== "object" || Array.isArray(proof) || Object.keys(proof).sort().join(",") !== "command,idempotency_key,response,schema_version" ||
+                        proof.schema_version !== MANAGED_VERSION || proof.idempotency_key !== match[1] ||
+                        !isDeepStrictEqual(validateManagedJournalCommand(proof.command, workspace), command)) return true;
+                    validateManagedResponse(command, proof.response, workspace);
+                } else validateManagedResponse(command, primary, workspace);
+            } else if (name.endsWith(".invocation.json")) {
+                const match = /^([0-9a-f-]{36})\.invocation\.json$/.exec(name);
+                if (!match) return true;
+                const entry: any = JSON.parse(await fs.promises.readFile(path.join(directory, name), "utf8"));
+                const workspace = entry?.request?.claim?.queue?.workspace_id;
+                if (!entry || typeof entry !== "object" || Array.isArray(entry) || Object.keys(entry).some(key => !["key", "request", "priorRuns", "state"].includes(key)) ||
+                    entry.key !== match[1] || typeof workspace !== "string" || entry.state !== "uncertain" || !Array.isArray(entry.priorRuns) ||
+                    !entry.priorRuns.every((id: unknown) => typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id))) return true;
+                const request = validateManagedExecutionRequest(entry.request, workspace);
+                let result: Buffer | undefined, confirmation: Buffer | undefined;
+                try {result = await fs.promises.readFile(path.join(directory, match[1] + ".invocation-result.json"));} catch (error) {if (error.code !== "ENOENT") throw error;}
+                try {confirmation = await fs.promises.readFile(path.join(directory, match[1] + ".invocation-confirmed.json"));} catch (error) {if (error.code !== "ENOENT") throw error;}
+                if (!result || !confirmation) return true;
+                const execution = validateManagedExecutionResult(JSON.parse(result.toString("utf8")), request);
+                validateManagedExecutionConfirmation(JSON.parse(confirmation.toString("utf8")), execution);
+            }
+        }
+        return names.some(name => /\.(?:receipt|reconciliation-receipt|invocation-result|invocation-confirmed)\.json$/.test(name) &&
+            !names.includes(name.replace(/\.(?:receipt|reconciliation-receipt|invocation-result|invocation-confirmed)\.json$/, ".request.json")) &&
+            !names.includes(name.replace(/\.(?:receipt|reconciliation-receipt|invocation-result|invocation-confirmed)\.json$/, ".invocation.json")));
+    } catch {return true;}
+}
 
 /** Native projection of canonical Runtime authority, with an exact request journal. */
 export class ManagedWorkItemsView {
@@ -100,14 +178,15 @@ export class ManagedWorkItemsView {
         const workspace = await vscode.window.showInputBox({prompt: "Workspace UUID granted by this Runtime", value: this.context.workspaceState.get("managed.workspace." + this.manifest, ""), ignoreFocusOut: true});
         if (!workspace) {await this.publish("Connection cancelled. Existing connection unchanged."); return;}
         const origin = canonicalRuntimeOrigin(endpoint);
-        const namespace = createHash("sha256").update(this.manifest + "\n" + origin + "\n" + workspace).digest("hex");
+        const namespace = journalNamespace(this.manifest, origin, workspace);
         const secretKey = "managed.token." + namespace;
         const savedEndpoint = this.context.workspaceState.get("managed.endpoint." + this.manifest, "");
         const legacyEndpoints = [...new Set([origin, origin + "/", endpoint, endpoint + "/", savedEndpoint, savedEndpoint ? savedEndpoint + "/" : ""].filter(value => {
             if (!value) return false;
             try {return canonicalRuntimeOrigin(value) === origin;} catch {return false;}
         }))];
-        const legacyNamespaces = legacyEndpoints.map(value => createHash("sha256").update(this.manifest + "\n" + value + "\n" + workspace).digest("hex"));
+        const legacyScopes = new Map(legacyEndpoints.map(value => [journalNamespace(this.manifest, value, workspace), value]));
+        const legacyNamespaces = [...legacyScopes.keys()];
         const stored = (await this.context.secrets.get(secretKey)) || (await Promise.all(legacyNamespaces.map(value => this.context.secrets.get("managed.token." + value)))).find(Boolean);
         const entered = await vscode.window.showInputBox({prompt: stored ? "Managed API token; empty reuses this scope's stored token, Escape cancels" : "Managed API token", password: true, ignoreFocusOut: true});
         if (entered === undefined) {await this.publish("Connection cancelled. Existing connection unchanged."); return;}
@@ -116,14 +195,36 @@ export class ManagedWorkItemsView {
         this.client = undefined; this.executionClient = undefined; this.journalDir = undefined; this.clearProjection(); this.pending.clear(); this.invocations.clear();
         const client = new ManagedWorkItemsClient(endpoint, token, workspace);
         await client.negotiate();
-        const journalDir = path.join(this.context.globalStorageUri.fsPath, "managed-work-items", namespace);
+        const managedRoot = path.join(this.context.globalStorageUri.fsPath, "managed-work-items");
+        const journalDir = path.join(managedRoot, namespace);
+        await fs.promises.mkdir(managedRoot, {recursive: true});
         await fs.promises.mkdir(journalDir, {recursive: true});
-        for (const legacyNamespace of legacyNamespaces) {
+        await writeJournalScope(journalDir, {schema_version: "managed-journal-scope/v1", manifest: this.manifest, workspace, origin, rawOrigin: origin, namespace});
+        for (const [legacyNamespace, rawOrigin] of legacyScopes) {
             if (legacyNamespace === namespace) continue;
-            const legacyDir = path.join(this.context.globalStorageUri.fsPath, "managed-work-items", legacyNamespace);
+            const legacyDir = path.join(managedRoot, legacyNamespace);
+            try {await fs.promises.access(legacyDir);} catch (error) {if (error.code === "ENOENT") continue; throw error;}
+            await writeJournalScope(legacyDir, {schema_version: "managed-journal-scope/v1", manifest: this.manifest, workspace, origin, rawOrigin, namespace: legacyNamespace});
+        }
+        const scopes = await fs.promises.readdir(managedRoot, {withFileTypes: true});
+        for (const entry of scopes) {
+            if (entry.isSymbolicLink() && /^[0-9a-f]{64}$/.test(entry.name)) throw Error("A managed journal scope is a symbolic link. Preserve it and inspect its ownership before reconnecting.");
+            if (!entry.isDirectory() || !/^[0-9a-f]{64}$/.test(entry.name) || entry.name === namespace || legacyScopes.has(entry.name)) continue;
+            const legacyDir = path.join(managedRoot, entry.name);
+            let savedScope: JournalScope | undefined;
+            try {savedScope = parseJournalScope(JSON.parse(await fs.promises.readFile(path.join(legacyDir, "scope.json"), "utf8")), entry.name);}
+            catch (error) {if (error.code !== "ENOENT") savedScope = undefined;}
+            if (savedScope && savedScope.manifest === this.manifest && savedScope.workspace === workspace && savedScope.origin === origin) legacyScopes.set(entry.name, savedScope.rawOrigin);
+            else if (!savedScope && await hasUnresolvedJournal(legacyDir)) throw Error("An unattributed managed journal may contain an unresolved request. Preserve its files and reconnect using its exact original Runtime origin before creating another mutation.");
+        }
+        for (const [legacyNamespace, rawOrigin] of legacyScopes) {
+            if (legacyNamespace === namespace) continue;
+            const legacyDir = path.join(managedRoot, legacyNamespace);
             let names: string[];
             try {names = await fs.promises.readdir(legacyDir);} catch (error) {if (error.code === "ENOENT") continue; throw error;}
+            await writeJournalScope(legacyDir, {schema_version: "managed-journal-scope/v1", manifest: this.manifest, workspace, origin, rawOrigin, namespace: legacyNamespace});
             for (const name of names) {
+                if (name === "scope.json") continue;
                 const source = path.join(legacyDir, name), target = path.join(journalDir, name);
                 try {await fs.promises.copyFile(source, target, fs.constants.COPYFILE_EXCL);}
                 catch (error) {
@@ -142,8 +243,15 @@ export class ManagedWorkItemsView {
             catch (error) {if (error.code !== "ENOENT") throw error; pending.set(key, {key, command, state: "uncertain"}); continue;}
             if (receipt && typeof receipt === "object" && !Array.isArray(receipt) && "denied" in receipt && receipt.denied === true) {
                 const denial = receipt as Record<string, unknown>;
-                if (typeof denial.status !== "number" || ![401, 403, 409, 413, 422].includes(denial.status) || (denial.code !== undefined && typeof denial.code !== "string")) throw Error("Legacy denial receipt is malformed; preserve the journal and inspect it.");
-                pending.set(key, {key, command, state: "uncertain"}); continue;
+                if (typeof denial.status !== "number" || ![401, 403, 404, 409, 413, 422].includes(denial.status) || (denial.code !== undefined && typeof denial.code !== "string")) throw Error("Legacy denial receipt is malformed; preserve the journal and inspect it.");
+                let reconciled: unknown;
+                try {reconciled = JSON.parse(await fs.promises.readFile(path.join(journalDir, key + ".reconciliation-receipt.json"), "utf8"));}
+                catch (error) {if (error.code !== "ENOENT") throw error; pending.set(key, {key, command, state: "uncertain"}); continue;}
+                if (!reconciled || typeof reconciled !== "object" || Array.isArray(reconciled)) throw Error("Retained reconciliation receipt is malformed; preserve the journal and inspect it.");
+                const proof = reconciled as Record<string, unknown>;
+                if (Object.keys(proof).sort().join(",") !== "command,idempotency_key,response,schema_version" || proof.schema_version !== MANAGED_VERSION || proof.idempotency_key !== key ||
+                    !isDeepStrictEqual(validateManagedJournalCommand(proof.command, workspace), command)) throw Error("Retained reconciliation receipt identity mismatch; preserve the journal and inspect it.");
+                validateManagedResponse(command, proof.response, workspace); continue;
             }
             validateManagedResponse(command, receipt, workspace);
         }
@@ -163,11 +271,13 @@ export class ManagedWorkItemsView {
             let resultBytes: Buffer | undefined, confirmationBytes: Buffer | undefined;
             try {resultBytes = await fs.promises.readFile(receipt);} catch (error) {if (error.code !== "ENOENT") throw error;}
             try {confirmationBytes = await fs.promises.readFile(path.join(journalDir, record.key + ".invocation-confirmed.json"));} catch (error) {if (error.code !== "ENOENT") throw error;}
-            if (resultBytes && confirmationBytes) {
+            if (resultBytes) {
                 record.result = validateManagedExecutionResult(JSON.parse(resultBytes.toString("utf8")), request);
-                validateManagedExecutionConfirmation(JSON.parse(confirmationBytes.toString("utf8")), record.result);
-                record.state = "confirmed";
-            } else if (resultBytes || confirmationBytes) throw Error("Retained execution result/confirmation is incomplete. Preserve the journal for inspection.");
+                if (confirmationBytes) {
+                    validateManagedExecutionConfirmation(JSON.parse(confirmationBytes.toString("utf8")), record.result);
+                    record.state = "confirmed";
+                }
+            } else if (confirmationBytes) throw Error("Retained execution result/confirmation is incomplete. Preserve the journal for inspection.");
             invocations.set(record.key, record);
         }
         this.pending = pending; this.invocations = invocations; this.journalDir = journalDir;
@@ -194,7 +304,9 @@ export class ManagedWorkItemsView {
         const record: Journal = {key, command, state: "uncertain"}; this.pending.set(key, record);
         try {
             const result = await this.client.execute(command);
-            await fs.promises.writeFile(path.join(this.journalDir, key + ".receipt.json"), JSON.stringify(result), {flag: "wx", mode: 0o600});
+            const receiptName = retained ? key + ".reconciliation-receipt.json" : key + ".receipt.json";
+            const receipt = retained ? {schema_version: MANAGED_VERSION, idempotency_key: key, command, response: result} : result;
+            await fs.promises.writeFile(path.join(this.journalDir, receiptName), JSON.stringify(receipt), {flag: "wx", mode: 0o600});
             record.state = "confirmed";
             await this.refresh();
             // Claim-next may choose a different item than the selected one.

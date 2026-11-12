@@ -114,16 +114,20 @@ are synthetic execution tests, not native Runtime/RCC acceptance.
 ## Exact remaining backend/acceptance boundaries
 
 Request journals use the same validated canonical Runtime origin as transport
-and credentials. Reconnection copies prior raw-origin journal entries into that
-scope without deleting originals; conflicting identities stop reconnect and
-preserve both files. Missing receipts and legacy denial receipts remain
-uncertain. Malformed receipts, scope mismatches, and journal I/O errors stop
-activation and require preserving the files for inspection. Failed 401/403/404
-reconciliation never resolves an already uncertain request. Restored managed
+and credentials. Each known hash directory records a validated manifest,
+Workspace, original spelling, and canonical origin binding. Reconnection copies
+matching raw-origin journals without deleting originals; conflicting identities
+stop reconnect. Unattributed directories with unresolved or corrupt journals
+block connection until the original origin is supplied; validated foreign scopes
+are left untouched. Missing receipts and legacy denial receipts remain uncertain.
+Malformed receipts, scope mismatches, and journal I/O errors stop activation and
+require preserving the files for inspection. Failed reconciliation never resolves
+an already uncertain request. Successful exact-key replay appends a separate
+validated recovery receipt and preserves the original denial. Restored managed
 responses are checked against pinned command/result schemas and exact queue,
-Deployment, item, claim, and enqueue snapshot Deployment identity. Historical valid
-Runtime versions remain readable. Invocation request, result epochs/IDs, and
-confirmation IDs use the same validators as the live MCP path.
+Deployment, item, and claim identity. Historical valid Runtime versions remain
+readable. Invocation request, result epochs/IDs, and confirmation IDs use the same
+validators as the live MCP path.
 
 - If an invocation response is lost, Inspect retained execution reads only the
   original input and linked Runs. It never resubmits capability_invoke. The
