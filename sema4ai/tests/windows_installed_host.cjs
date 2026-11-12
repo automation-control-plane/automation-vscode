@@ -60,8 +60,31 @@ exports.run = async () => {
         }
         assert.ok(vscode.workspace.isTrusted, 'Synthetic test workspace must be trusted before execution');
         report.workspaceTrust.currentWorkspaceGranted = true; save();
-        const extension = vscode.extensions.getExtension('automation-control-plane.automation-vscode');
-        assert.ok(extension && extension.extensionPath.toLowerCase().startsWith(path.join(root, 'extensions').toLowerCase()));
+        const installedIdentity = JSON.parse(fs.readFileSync(path.join(root, 'public/installed-identity.json')));
+        assert.equal(installedIdentity.id, 'automation-control-plane.automation-vscode');
+        const inventory = () => vscode.extensions.all.filter(item =>
+            item.id.startsWith('automation-control-plane.') || item.id.startsWith('ms-python.') || item.id === 'task-local.windows-qualification')
+            .map(item => ({id: item.id, version: item.packageJSON.version, directory: path.basename(item.extensionPath)}));
+        let extension = vscode.extensions.getExtension(installedIdentity.id);
+        report.extensionDiscovery = {initiallyAvailable: !!extension, initialRegistry: inventory(),
+            expectedDirectory: installedIdentity.directory, expectedVersion: installedIdentity.version}; save();
+        if (!extension) {
+            try {
+                await waitFor(() => {extension = vscode.extensions.getExtension(installedIdentity.id); return !!extension;}, 60000);
+            } catch {
+                report.extensionDiscovery.finalRegistry = inventory(); save();
+                throw Error('Installed extension absent from native registry after workspace trust grant');
+            }
+        }
+        const expectedInstall = fs.realpathSync(path.join(root, 'extensions', installedIdentity.directory)).toLowerCase();
+        const actualInstall = fs.realpathSync(extension.extensionPath).toLowerCase();
+        report.extensionDiscovery.actualDirectory = path.basename(actualInstall);
+        report.extensionDiscovery.exactCanonicalDirectoryMatch = actualInstall === expectedInstall;
+        report.extensionDiscovery.exactManifestMatch = hash(path.join(extension.extensionPath, 'package.json')) === installedIdentity.manifest_sha256;
+        save();
+        assert.equal(actualInstall, expectedInstall, 'Native registry must load the exact verified VSIX directory');
+        assert.ok(report.extensionDiscovery.exactManifestMatch, 'Native registry manifest must match the verified installed artifact');
+        assert.equal(extension.packageJSON.version, installedIdentity.version);
         report.version = extension.packageJSON.version;
         await extension.activate(); assert.ok(extension.isActive);
         report.debugger = ['ms-python.python', 'ms-python.debugpy'].map(id => {

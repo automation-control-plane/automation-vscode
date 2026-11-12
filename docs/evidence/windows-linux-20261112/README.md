@@ -61,3 +61,13 @@ workspace API, which first asserts one exact synthetic folder. Display text
 remains diagnostic. Parent trust is refused, trust enforcement stays enabled,
 and the actual isTrusted assertion remains mandatory. Six portable boundary/
 layout/binding tests pass; native execution remains pending the next run.
+
+## Native trust passed; extension identity diagnosis
+
+[Run43307242916 evidence](windows-extension-discovery-failure.json) proves the
+real trust UI grant passed without parent trust or disabled enforcement. The
+next combined discovery/path assertion failed before activation. The next run
+records registry identity separately, waits boundedly for post-trust discovery,
+and requires the exact canonical verified install directory, version and
+manifest digest. The previous receipt does not establish timing versus path
+mismatch, so neither is claimed as the cause. No native workload ran.

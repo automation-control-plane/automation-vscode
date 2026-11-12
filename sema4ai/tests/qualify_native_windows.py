@@ -155,6 +155,11 @@ def main():
             raise RuntimeError("Installed/source VSIX payload mismatch: " + ", ".join(mismatches))
         report["payloads_verified"] = len(members)
         report["code"] = {"version": "1.146.0", "sha256": CODE_SHA256}
+        installed_manifest = json.loads((installed / "package.json").read_text())
+        identity = {"id": installed_manifest["publisher"] + "." + installed_manifest["name"],
+                    "version": installed_manifest["version"], "directory": installed.name,
+                    "manifest_sha256": digest(installed / "package.json")}
+        (public / "installed-identity.json").write_text(json.dumps(identity, indent=2) + "\n")
         workspace = root / "workspace"
         shutil.copytree(extension / "tests/fixtures/native_work_items", workspace)
         action = workspace / "action/package.yaml"
