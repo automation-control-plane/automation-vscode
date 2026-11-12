@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const cp = require('node:child_process');
 const http = require('node:http');
 const vscode = require('vscode');
-const {scrubDiagnostic, exceptionSummary, fatalDiagnosticLines} = require('./windows_diagnostic.cjs');
+const {scrubDiagnostic, exceptionSummary, fatalDiagnosticLines, isCompletedReadClosure} = require('./windows_diagnostic.cjs');
 
 const root = process.env.AUTOMATION_WINDOWS_QA;
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -147,7 +147,7 @@ exports.run = async () => {
                     assert.ok(actions?.success); const action = actions.result.find(item => item.name === 'copy_attachment'); assert.ok(action);
                     Object.assign(config, {package: manifest, actionName: action.name, uri: action.uri, jsonInput: prepared.parameters});
                 } else Object.assign(config, {robot: manifest, task: 'Copy Work Item Attachment'});
-                let exited, terminated = false, stopped = false, nativeError;
+                let exited, terminated = false, dapTerminated = false, stopped = false, nativeError;
                 const priorTerminals = new Set(vscode.window.terminals);
                 let captureTerminal = true;
                 const retainTerminalLines = text => {
@@ -198,20 +198,33 @@ exports.run = async () => {
                             if (text) {report.nativeStderr = [...(report.nativeStderr || []), text].slice(-8); save();}
                         }
                         if (message.type !== 'event') return;
-                        if (message.event === 'exited') exited = message.body?.exitCode;
+                        if (message.event === 'exited') {
+                            exited = message.body?.exitCode; report.currentCase.nativeTargetExitCode = exited; save();
+                        }
+                        if (message.event === 'terminated') {
+                            dapTerminated = true; report.currentCase.nativeDapTerminated = true; save();
+                        }
                         if (message.event === 'stopped') {
                             if (!debug || message.body?.reason !== 'breakpoint') {nativeError = 'Unexpected native stop'; return;}
                             stopped = true; vscode.debug.removeBreakpoints([breakpoint]);
                             void session.customRequest('continue', {threadId: message.body.threadId}).catch(() => {nativeError = 'Native continue failed';});
                         }
                     }, onError(error) {
-                        report.nativeAdapterFailure = {adapterType: session.type, error: exceptionSummary(error, root)};
-                        save(); nativeError = 'Native debug adapter error';
+                        const observed = {adapterType: session.type, error: exceptionSummary(error, root),
+                            targetExitCodeAlreadyObserved: exited, dapTerminationAlreadyObserved: dapTerminated};
+                        if (isCompletedReadClosure(error, exited, dapTerminated)) {
+                            report.postCompletionTransportClosures = [...(report.postCompletionTransportClosures || []),
+                                {kind, mode, operation: debug ? 'debug' : 'run', ...observed}]; save();
+                        } else {
+                            report.nativeAdapterFailure = observed; save(); nativeError = 'Native debug adapter error';
+                        }
                     }, onExit(code, signal) {
                         report.nativeAdapterExit = {adapterType: session.type, code, signal}; save();
                     }};
                 }});
-                const ended = vscode.debug.onDidTerminateDebugSession(session => {if (session.name === name) terminated = true;});
+                const ended = vscode.debug.onDidTerminateDebugSession(session => {
+                    if (session.name === name) {terminated = true; report.currentCase.nativeSessionTerminated = true; save();}
+                });
                 try {
                     assert.ok(await vscode.debug.startDebugging(vscode.workspace.getWorkspaceFolder(vscode.Uri.file(manifest)), config));
                     report.currentCase.stage = 'native-debugging-started'; save();

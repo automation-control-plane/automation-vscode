@@ -1,6 +1,14 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
-const {scrubDiagnostic, exceptionSummary, collectAdapterFailures} = require('./windows_diagnostic.cjs');
+const {scrubDiagnostic, exceptionSummary, collectAdapterFailures, isCompletedReadClosure} = require('./windows_diagnostic.cjs');
+
+test('only exact read closure after observed exit zero and DAP termination is post-completion', () => {
+    assert.equal(isCompletedReadClosure(new Error('read error'), 0, true), true);
+    for (const [message, code, terminated] of [
+        ['read error', undefined, false], ['read error', undefined, true],
+        ['read error', 0, false], ['read error', 1, true], ['launch failed', 0, true],
+    ]) assert.equal(isCompletedReadClosure(new Error(message), code, terminated), false);
+});
 
 test('adapter error preserves the error code and approved diagnostic context', () => {
     const error = Object.assign(new Error('spawn D:\\qa\\python.exe ENOENT'), {code: 'ENOENT'});

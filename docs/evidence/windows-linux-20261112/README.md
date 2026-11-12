@@ -114,3 +114,15 @@ No input normalization or assertion weakening is used. A secondary SDK0.4.4
 error while releasing the failed input is separately recorded and routed to the
 existing Actions owner for contract clarification, not accepted as correct
 failure handling. Native Windows acceptance still awaits the next full gate.
+
+## Successful target completion versus transport shutdown
+
+[Run43313656256](windows-post-completion-read-error.json) records target exit0
+and terminated after the fixture fix, while the unconditional read-error hook
+still aborted the harness. The corrected classifier admits only an exact read
+error observed after both native target exit0 and DAP termination markers.
+Errors seen before those markers remain fatal even if later events arrive.
+Native session termination and all output/attachment/lineage/replay checks remain
+mandatory. The next run must prove callback ordering and actual results; the
+private protocol log alone cannot qualify the host. Six classifier/security
+regressions pass, with the new positive case demonstrated red before the fix.

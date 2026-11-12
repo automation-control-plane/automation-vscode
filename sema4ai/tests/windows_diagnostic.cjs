@@ -17,6 +17,10 @@ function exceptionSummary(error, root) {
     return {name, code, message: scrubDiagnostic(error?.message || error, root)};
 }
 
+function isCompletedReadClosure(error, exitCode, dapTerminated) {
+    return error?.message === 'read error' && exitCode === 0 && dapTerminated === true;
+}
+
 function collectAdapterFailures(root) {
     const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
     const directory = path.join(root, 'debugpy-private');
@@ -60,7 +64,7 @@ function fatalDiagnosticLines(text, root) {
         .map(line => scrubDiagnostic(line, root)).filter(Boolean);
 }
 
-module.exports = {scrubDiagnostic, exceptionSummary, collectAdapterFailures, fatalDiagnosticLines};
+module.exports = {scrubDiagnostic, exceptionSummary, collectAdapterFailures, fatalDiagnosticLines, isCompletedReadClosure};
 
 if (require.main === module) {
     const fs = require('node:fs'), path = require('node:path');
