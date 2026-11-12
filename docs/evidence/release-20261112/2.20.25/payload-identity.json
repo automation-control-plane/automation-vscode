@@ -1,0 +1,18 @@
+{
+  "candidate": "2.20.25",
+  "payload_source": "b31f70645af714b0a742273264c8dcc7447be330",
+  "vsix_sha256": "02aecf7d5068f53234296cedd26bf183fdc2610fbf4fba04d07de826f5aee59d",
+  "vsix_bytes": 2216865,
+  "matched_payloads": 752,
+  "installed_mismatches": [],
+  "source_mismatches": [],
+  "changed_from_qualified_2_20_24": [
+    "package.json",
+    "published-tools.json",
+    "src/sema4ai_code/__init__.py",
+    "src/sema4ai_code/action_server.py",
+    "src/sema4ai_code/rcc.py",
+    "src/sema4ai_code/robo/action_runtime.py"
+  ],
+  "native_client_and_managed_payloads_byte_identical": true
+}

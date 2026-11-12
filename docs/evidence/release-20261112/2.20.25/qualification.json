@@ -1,0 +1,64 @@
+{
+  "candidate": "2.20.25",
+  "identity": {
+    "candidate": "2.20.25",
+    "payload_source": "b31f70645af714b0a742273264c8dcc7447be330",
+    "vsix_sha256": "02aecf7d5068f53234296cedd26bf183fdc2610fbf4fba04d07de826f5aee59d",
+    "vsix_bytes": 2216865,
+    "matched_payloads": 752,
+    "installed_mismatches": [],
+    "source_mismatches": [],
+    "changed_from_qualified_2_20_24": [
+      "package.json",
+      "published-tools.json",
+      "src/sema4ai_code/__init__.py",
+      "src/sema4ai_code/action_server.py",
+      "src/sema4ai_code/rcc.py",
+      "src/sema4ai_code/robo/action_runtime.py"
+    ],
+    "native_client_and_managed_payloads_byte_identical": true
+  },
+  "public_dependency_evidence": {
+    "runtime": "published-runtime-provenance.json",
+    "core": "../2.20.24/published-core-1.1.0.json",
+    "sdk": "../2.20.24/published-sdk-0.5.0.json"
+  },
+  "composition": {
+    "default_native_runtime": "1.1.0",
+    "default_rcc": "18.19.8",
+    "new_action_packages_core": "1.1.0",
+    "local_file_sqlite_sdk": "0.4.4 (unchanged exact native bridge pin)",
+    "managed_backend_sdk": "0.5.0",
+    "helper": "1.0.3",
+    "runtime_platforms": [
+      "Linux x86-64",
+      "Windows AMD64"
+    ],
+    "runtime_macos_assets": false,
+    "extension_native_acceptance_platform": "Linux x64 only"
+  },
+  "new_validation": {
+    "focused_python_passed": 24,
+    "node_composition_passed": 2,
+    "native_default_download_package_creation_and_core_execution": "native-composition.json",
+    "native_runtime_start_owned_stop": "native-runtime-lifecycle.json",
+    "initial_qa_alias_failure": "Runtime correctly refused a symlink ancestor. Preserved failed receipt privately; retry used canonical disk-backed Runtime homes without changing any storage guard.",
+    "unit_setup_correction": "Initial focused pytest invocation omitted PYTHONPATH. Corrected invocation passed. A new test initially referenced a nonexistent class constant; corrected to inspect the actual download call. No production guard changed for these harness errors."
+  },
+  "carried_forward": {
+    "source_candidate": "2.20.24",
+    "evidence": "../2.20.24/qualification.json",
+    "basis": "All native Work Items bridge, frontend, managed protocol, journal, launch/debug and editor payloads are byte-identical. Six changed archive files are enumerated in payload-identity.json. Core launcher changed only its missing-dependency recommendation. New Runtime/Core/RCC composition tested independently through actual installed commands and runtime lifecycle.",
+    "not_reexecuted": "Full local eight-case native matrix and managed happy/second/failure/cancel/stale/lost-response/reload suite; their original receipts remain2.20.24 evidence."
+  },
+  "review": "Prior Astra xhigh review and scoped Luna fixes retained. Coordinator reviewed minimal dependency delta; no new delegate, formal GitHub approval or hosted CI pass claimed.",
+  "security": "Public digests/source identities checked; no no-deps install, altered dependency wheel, fabricated receipt, lost-request retry, weakened schema/RCC-only/storage guard or vendor publishing workflow. Test subprocess environments minimized.",
+  "limitations": [
+    "Missing generic original-invocation lookup retains uncertainty and blocks replacement mutation;404 is not nonexecution proof.",
+    "Configured managed consumer queue proof does not certify every reviewed-queue operation; unsupported operations fail closed.",
+    "Standalone-only queue-editor invocation remains unavailable.",
+    "Windows/macOS extension and Java inspector acceptance are not claimed. Runtime native delivery is Linux/Windows only.",
+    "Isolated legacy Holotree archive export remains unsupported; distinct genuine RCC Environment Artifact publication/acquisition was verified.",
+    "Marketplace/Open VSX publisher verification is outside this GitHub VSIX release."
+  ]
+}

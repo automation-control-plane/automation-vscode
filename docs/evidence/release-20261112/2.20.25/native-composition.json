@@ -1,0 +1,32 @@
+{
+  "scope": "Actual installed official Code Extension Host/LSP: default public executable acquisition, package creation, interpreter and Core execution; no new full native managed acceptance claim.",
+  "checks": [
+    {
+      "check": "Installed default verified acquisition",
+      "tool": "rcc",
+      "version": "v18.19.8",
+      "sha256": "ea8dc96e66d7a81536b03a344b4eaf44bbd94122585954e70290bd466f5de4b6"
+    },
+    {
+      "check": "Installed default verified acquisition",
+      "tool": "action-server",
+      "version": "1.1.0",
+      "sha256": "e163684dc296f632a177e95d4f355ac6d4f2299c62aab53789f43a642f41c0f1"
+    },
+    {
+      "check": "Native installed package-creation command",
+      "corePin": "1.1.0"
+    },
+    {
+      "check": "New package public Core execution through installed owned launcher",
+      "result": "qualified-public-core"
+    }
+  ],
+  "version": "2.20.25",
+  "activated": true,
+  "packageMetadata": {
+    "core": "1.1.0",
+    "helper": "1.0.3"
+  },
+  "passed": true
+}
