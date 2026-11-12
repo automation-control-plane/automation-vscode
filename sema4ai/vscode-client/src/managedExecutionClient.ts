@@ -18,11 +18,37 @@ function contractWithoutTopLevelProse(schema: any): unknown {
     return contract;
 }
 const uuid = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value);
+function record(value: unknown): value is Record<string, any> {return !!value && typeof value === "object" && !Array.isArray(value);}
 export interface ManagedExecutionResult {
     state: "completed" | "failed" | "reconciliation_required";
     runId: string; attemptId: string; attemptEpoch: number;
     workItemId: string; workItemEpoch: number; runStatus: number;
     attemptState: string; workItemState: string | null;
+}
+
+export function validateManagedExecutionRequest(value: unknown, workspace: string): ManagedClaimInvocation {
+    if (!record(value) || Object.keys(value).sort().join(",") !== "claim,mode,snapshot") throw Error("Retained execution request identity/variant mismatch; preserve the journal and inspect it.");
+    validateManagedValue(value, {$ref: "#/$defs/GenericClaimInvocation"}, schemas.capability_invoke);
+    const request = value as unknown as ManagedClaimInvocation;
+    const claim = request.claim, queue = claim.queue;
+    if (!uuid(claim.item_id) || !uuid(claim.owner_id) || !Number.isSafeInteger(claim.epoch) || claim.epoch < 1 || queue.workspace_id !== workspace ||
+        queue.deployment.workspace_id !== workspace || !isDeepStrictEqual(request.snapshot.deployment, queue.deployment)) throw Error("Retained execution request scope/claim mismatch; preserve the journal and inspect it.");
+    return request;
+}
+
+export function validateManagedExecutionResult(value: unknown, request: ManagedClaimInvocation): ManagedExecutionResult {
+    if (!record(value) || Object.keys(value).sort().join(",") !== "attemptEpoch,attemptId,attemptState,runId,runStatus,state,workItemEpoch,workItemId,workItemState" ||
+        !["completed", "failed", "reconciliation_required"].includes(value.state) || !uuid(value.runId) || !uuid(value.attemptId) ||
+        !Number.isSafeInteger(value.attemptEpoch) || value.attemptEpoch < 1 || value.workItemId !== request.claim.item_id ||
+        value.workItemEpoch !== request.claim.epoch || !Number.isInteger(value.runStatus) || !["running", "succeeded", "failed"].includes(value.attemptState) ||
+        !(value.workItemState === null || typeof value.workItemState === "string")) throw Error("Retained execution result identity/contract mismatch; preserve the journal and inspect it.");
+    return value as ManagedExecutionResult;
+}
+
+export function validateManagedExecutionConfirmation(value: unknown, result: ManagedExecutionResult): {runId: string; attemptId: string} {
+    if (!record(value) || Object.keys(value).sort().join(",") !== "attemptId,runId" || value.runId !== result.runId || value.attemptId !== result.attemptId ||
+        !uuid(value.runId) || !uuid(value.attemptId)) throw Error("Retained execution confirmation identity mismatch; preserve the journal and inspect it.");
+    return {runId: value.runId, attemptId: value.attemptId};
 }
 
 /** Narrow stateless MCP consumer: three fixed tools, no shell, callbacks,
@@ -84,14 +110,9 @@ export class ManagedExecutionClient extends RuntimeTransport {
     }
     async invokeClaim(request: ManagedClaimInvocation, requestId: string): Promise<ManagedExecutionResult> {
         if (!uuid(requestId) || Object.keys(request).sort().join(",") !== "claim,mode,snapshot") throw Error("Invalid native execution request identity or variant.");
-        validateManagedValue(request, {$ref: "#/$defs/GenericClaimInvocation"}, schemas.capability_invoke);
+        validateManagedExecutionRequest(request, this.workspace);
         const response = await this.call("capability_invoke", request, requestId);
-        const value = response.execution;
-        if (!value || !["completed", "failed", "reconciliation_required"].includes(value.state) || !uuid(value.runId) || !uuid(value.attemptId) ||
-            !Number.isSafeInteger(value.attemptEpoch) || value.attemptEpoch < 1 || value.workItemId !== request.claim.item_id || value.workItemEpoch !== request.claim.epoch ||
-            !Number.isInteger(value.runStatus) || !["running", "succeeded", "failed"].includes(value.attemptState) || !(value.workItemState === null || typeof value.workItemState === "string")) {
-            throw Error("Runtime execution result identity/contract mismatch. Inspect the retained request; do not retry.");
-        }
+        const value = validateManagedExecutionResult(response.execution, request);
         // Only validated public identities enter the UI. Output handles are
         // independently rediscovered using authorized linked managed Run reads.
         return {state: value.state, runId: value.runId, attemptId: value.attemptId, attemptEpoch: value.attemptEpoch,

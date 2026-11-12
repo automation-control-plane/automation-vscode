@@ -37,6 +37,23 @@ test('Lost invocation response has no automatic retry; malformed execution ident
     assert.equal(client.negotiated(),false);await client.negotiate();
     await assert.rejects(client.invokeClaim(request,D),/identity|contract/i);
 }));
+test('Retained invocation request, result and confirmation require exact typed identities and scope',()=>{
+    const {validateManagedExecutionRequest,validateManagedExecutionResult,validateManagedExecutionConfirmation}=require('../vscode-client/out/managedExecutionClient');
+    const f=fixture(),{buildManagedClaimInvocation}=require('../vscode-client/out/managedExecutionSelection');
+    const request=buildManagedClaimInvocation(f.descriptor,f.item);
+    const result={state:'completed',runId:I,attemptId:D,attemptEpoch:1,workItemId:I,workItemEpoch:3,runStatus:2,attemptState:'succeeded',workItemState:'COMPLETED'};
+    const confirmation={runId:I,attemptId:D};
+    assert.deepEqual(validateManagedExecutionRequest(request,W),request);
+    assert.deepEqual(validateManagedExecutionResult(result,request),result);
+    assert.deepEqual(validateManagedExecutionConfirmation(confirmation,result),confirmation);
+    for(const invalid of [
+        {...result,attemptEpoch:0},{...result,attemptEpoch:'1'},{...result,attemptId:'bad'},
+        {...result,workItemId:D},{...result,workItemEpoch:4},{...result,extra:true},
+    ])assert.throws(()=>validateManagedExecutionResult(invalid,request),/identity|contract/i);
+    assert.throws(()=>validateManagedExecutionRequest(request,'00000000-0000-4000-8000-000000000000'),/scope/i);
+    assert.throws(()=>validateManagedExecutionConfirmation({...confirmation,attemptId:I},result),/confirmation/i);
+    assert.throws(()=>validateManagedExecutionConfirmation({...confirmation,extra:true},result),/confirmation/i);
+});
 module.exports={fixture,tools,serverFor};
 
 test('Only top-level tool schema prose can vary; the authority contract stays exact',async()=>{

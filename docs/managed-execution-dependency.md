@@ -119,7 +119,11 @@ scope without deleting originals; conflicting identities stop reconnect and
 preserve both files. Missing receipts and legacy denial receipts remain
 uncertain. Malformed receipts, scope mismatches, and journal I/O errors stop
 activation and require preserving the files for inspection. Failed 401/403/404
-reconciliation never resolves an already uncertain request.
+reconciliation never resolves an already uncertain request. Restored managed
+responses are checked against pinned command/result schemas and exact queue,
+Deployment, item, claim, and enqueue snapshot Deployment identity. Historical valid
+Runtime versions remain readable. Invocation request, result epochs/IDs, and
+confirmation IDs use the same validators as the live MCP path.
 
 - If an invocation response is lost, Inspect retained execution reads only the
   original input and linked Runs. It never resubmits capability_invoke. The

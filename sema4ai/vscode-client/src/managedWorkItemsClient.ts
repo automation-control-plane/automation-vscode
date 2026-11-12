@@ -56,6 +56,53 @@ function finiteJSON(value: unknown, parents = new Set<object>(), depth = 0): voi
     parents.delete(value);
 }
 
+function isRecord(value: unknown): value is Record<string, any> {return !!value && typeof value === "object" && !Array.isArray(value);}
+
+/** Validate a persisted command with the same pinned schema and scope checks as a live command. */
+export function validateManagedJournalCommand(value: unknown, workspace: string): ManagedCommand {
+    if (!isRecord(value)) throw Error("Retained request is not an object; preserve the journal and inspect it.");
+    finiteJSON(value);
+    validateManagedValue(value, contract.commands);
+    const command = value as ManagedCommand;
+    const actualWorkspace = command.operation === "queues.list" ? command.workspace_id : command.queue?.workspace_id;
+    if (actualWorkspace !== workspace || (command.queue && command.queue.deployment.workspace_id !== workspace)) throw Error("Retained request crosses Workspace scope; preserve the journal and inspect it.");
+    if (command.operation === "items.enqueue" && stable((command.snapshot as any)?.deployment) !== stable(command.queue?.deployment)) throw Error("Retained enqueue Deployment mismatch; preserve the journal and inspect it.");
+    if ((command.operation === "items.renew" || command.operation === "items.complete") && stable((command.claim as any)?.queue) !== stable(command.queue)) throw Error("Retained claim queue mismatch; preserve the journal and inspect it.");
+    if (command.operation === "reviews.decide" && stable((command.proposal as any)?.binding?.scope?.deployment) !== stable(command.queue?.deployment)) throw Error("Retained review Deployment mismatch; preserve the journal and inspect it.");
+    return command;
+}
+
+/** Validate a persisted or live response without tying it to today's Runtime version. */
+export function validateManagedResponse(command: ManagedCommand, value: unknown, workspace: string): ManagedEnvelope {
+    if (!isRecord(value) || Object.keys(value).some(key => !["schema_version", "operation", "runtime_version", "result"].includes(key)) ||
+        value.schema_version !== MANAGED_VERSION || value.operation !== command.operation || typeof value.runtime_version !== "string") throw Error("Managed response identity/contract mismatch; preserve the journal and inspect it.");
+    version(value.runtime_version);
+    validateManagedValue(value.result, contract.results[command.operation]);
+    const result = value.result as Record<string, any>;
+    const sameQueue = (queue: QueueRef) => {
+        if (queue.workspace_id !== workspace || queue.deployment.workspace_id !== workspace || (command.queue && stable(queue) !== stable(command.queue))) throw Error("Managed response crosses the requested queue scope.");
+    };
+    const item = (entry: any) => {
+        sameQueue(entry.queue);
+        if (!uuid(entry.id) || stable(entry.snapshot.deployment) !== stable(entry.queue.deployment) || (entry.claim && (stable(entry.claim.queue) !== stable(entry.queue) || entry.claim.item_id !== entry.id)) || ((entry.claim === null) !== (entry.lease_deadline_ms === null))) throw Error("Managed item identity/admission/claim mismatch.");
+    };
+    for (const queue of result.queues || []) {sameQueue(queue.queue); if (!(MANAGED_QUEUE_MODES as readonly string[]).includes(queue.mode)) throw Error("Managed queue mode is invalid.");}
+    for (const entry of result.items || []) item(entry);
+    if (result.item) item(result.item);
+    if (command.item_id && result.item?.id && result.item.id !== command.item_id) throw Error("Managed response changed the requested item.");
+    if (command.operation === "items.claim" || command.operation === "items.renew") {
+        if (stable(result.item?.claim || null) !== stable(result.claim) || (result.item?.lease_deadline_ms || null) !== result.lease_deadline_ms) throw Error("Managed claim result mismatch.");
+    }
+    for (const review of [...(result.reviews || []), ...(result.review ? [result.review] : [])]) {
+        if (stable(review.proposal.binding.scope.deployment) !== stable(command.queue?.deployment) || (["pending", "rejected"].includes(review.state) && review.work_item_id !== null)) throw Error("Managed review binding mismatch.");
+    }
+    if (command.operation === "reviews.decide" && (stable(result.review.proposal) !== stable(command.proposal) || result.review.state !== (command.decision === "approve" ? "approved" : "rejected"))) throw Error("Managed review decision changed its exact binding.");
+    if (result.run && (!uuid(result.run.id) || result.run.id !== command.run_id || stable(result.run.snapshot.deployment) !== stable(command.queue?.deployment) || result.run.artifacts.some((artifact: any) => artifact.run_id !== result.run.id))) throw Error("Managed Run/artifact identity mismatch.");
+    if (command.operation === "runs.logs" && result.run_id !== command.run_id) throw Error("Managed log Run identity mismatch.");
+    if (command.operation === "artifacts.read" && result.artifact.handle !== command.artifact_handle) throw Error("Managed artifact handle mismatch.");
+    return value as unknown as ManagedEnvelope;
+}
+
 /** Validates the exact admitted generated schema vocabulary, with local refs only.
  * This is not an arbitrary external JSON Schema interpreter. Semantic authority,
  * canonical digests, admission and live fences remain server checks.
@@ -133,13 +180,7 @@ export class ManagedWorkItemsClient extends RuntimeTransport {
     validateCommand(command: ManagedCommand): Buffer {
         const available = this.admitted;
         if (!available || !available.operations.includes(command.operation)) throw Error("Managed operation is unavailable or not granted. Reconnect to refresh live capabilities.");
-        finiteJSON(command);
-        validateManagedValue(command, contract.commands);
-        const workspace = command.operation === "queues.list" ? command.workspace_id : command.queue?.workspace_id;
-        if (workspace !== this.workspace || (command.queue && command.queue.deployment.workspace_id !== workspace)) throw Error("Managed command crosses Workspace scope.");
-        if (command.operation === "items.enqueue" && stable((command.snapshot as any)?.deployment) !== stable(command.queue?.deployment)) throw Error("Enqueue snapshot crosses the exact queue Deployment revision.");
-        if ((command.operation === "items.renew" || command.operation === "items.complete") && stable((command.claim as any)?.queue) !== stable(command.queue)) throw Error("Claim belongs to another queue.");
-        if (command.operation === "reviews.decide" && stable((command.proposal as any)?.binding?.scope?.deployment) !== stable(command.queue?.deployment)) throw Error("Review decision crosses the exact Deployment revision.");
+        validateManagedJournalCommand(command, this.workspace);
         const raw = Buffer.from(JSON.stringify(command));
         if (raw.length > 512 * 1024) throw Error("Managed command exceeds 512 KiB.");
         return raw;
@@ -148,36 +189,10 @@ export class ManagedWorkItemsClient extends RuntimeTransport {
         const raw = this.validateCommand(command);
         const available = this.admitted;
         try {
-            const value = await this.request("POST", "/api/managed-work-items/v1/operations", raw) as ManagedEnvelope;
-            if (!value || Object.keys(value).some(key => !["schema_version", "operation", "runtime_version", "result"].includes(key)) || value.schema_version !== MANAGED_VERSION || value.operation !== command.operation || value.runtime_version !== available.runtime_version) throw Error("Managed response identity changed; reconnect and reconcile the original request.");
-            validateManagedValue(value.result, contract.results[command.operation]);
-            const sameQueue = (queue: QueueRef) => {
-                if (queue.workspace_id !== this.workspace || queue.deployment.workspace_id !== this.workspace || (command.queue && stable(queue) !== stable(command.queue))) throw Error("Managed response crosses the requested queue scope.");
-            };
-            const item = (entry: any) => {
-                sameQueue(entry.queue);
-                if (!uuid(entry.id) || stable(entry.snapshot.deployment) !== stable(entry.queue.deployment) || (entry.claim && (stable(entry.claim.queue) !== stable(entry.queue) || entry.claim.item_id !== entry.id)) || ((entry.claim === null) !== (entry.lease_deadline_ms === null))) throw Error("Managed item identity/admission/claim mismatch.");
-            };
-            const result: any = value.result;
-            for (const queue of result.queues || []) {
-                sameQueue(queue.queue);
-                if (!available.modes.includes(queue.mode)) throw Error("Managed queue mode was not advertised by this Runtime.");
-            }
-            for (const entry of result.items || []) item(entry);
-            if (result.item) item(result.item);
-            if (command.item_id && result.item?.id && result.item.id !== command.item_id) throw Error("Managed response changed the requested item.");
-            if (command.operation === "items.claim" || command.operation === "items.renew") {
-                if (stable(result.item?.claim || null) !== stable(result.claim) || (result.item?.lease_deadline_ms || null) !== result.lease_deadline_ms) throw Error("Managed claim result mismatch.");
-            }
-            for (const review of [...(result.reviews || []), ...(result.review ? [result.review] : [])]) {
-                if (stable(review.proposal.binding.scope.deployment) !== stable(command.queue?.deployment) || (["pending", "rejected"].includes(review.state) && review.work_item_id !== null)) throw Error("Managed review binding mismatch.");
-            }
-            if (command.operation === "reviews.decide" && (stable(result.review.proposal) !== stable(command.proposal) || result.review.state !== (command.decision === "approve" ? "approved" : "rejected"))) throw Error("Managed review decision changed its exact binding.");
-            if (result.run) {
-                if (!uuid(result.run.id) || result.run.id !== command.run_id || stable(result.run.snapshot.deployment) !== stable(command.queue?.deployment) || result.run.artifacts.some(artifact => artifact.run_id !== result.run.id)) throw Error("Managed Run/artifact identity mismatch.");
-            }
-            if (command.operation === "runs.logs" && result.run_id !== command.run_id) throw Error("Managed log Run identity mismatch.");
-            if (command.operation === "artifacts.read" && result.artifact.handle !== command.artifact_handle) throw Error("Managed artifact handle mismatch.");
+            const rawResponse = await this.request("POST", "/api/managed-work-items/v1/operations", raw);
+            const value = validateManagedResponse(command, rawResponse, this.workspace);
+            if (value.runtime_version !== available.runtime_version) throw Error("Managed response Runtime version changed; reconnect and reconcile the original request.");
+            for (const queue of (value.result.queues || []) as any[]) if (!available.modes.includes(queue.mode)) throw Error("Managed queue mode was not advertised by this Runtime.");
             return value;
         } catch (error) {
             if (error instanceof RuntimeHTTPError && [401, 403].includes(error.status)) this.admitted = undefined;

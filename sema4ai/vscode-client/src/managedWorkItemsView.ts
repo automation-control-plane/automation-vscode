@@ -2,10 +2,10 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { createHash, randomUUID } from "crypto";
-import { ManagedWorkItemsClient, ManagedCommand, MANAGED_VERSION, MANAGED_PERMISSIONS, QueueRef, ManagedQueueMode, ManagedSnapshot } from "./managedWorkItemsClient";
+import { ManagedWorkItemsClient, ManagedCommand, MANAGED_VERSION, MANAGED_PERMISSIONS, QueueRef, ManagedQueueMode, ManagedSnapshot, validateManagedJournalCommand, validateManagedResponse } from "./managedWorkItemsClient";
 import { RuntimeHTTPError, canonicalRuntimeOrigin } from "./workItemsRuntimeClient";
 import { isDeepStrictEqual } from "util";
-import { ManagedExecutionClient, ManagedExecutionResult } from "./managedExecutionClient";
+import { ManagedExecutionClient, ManagedExecutionResult, validateManagedExecutionConfirmation, validateManagedExecutionRequest, validateManagedExecutionResult } from "./managedExecutionClient";
 import { buildManagedClaimInvocation, CanvasApplicationSummary, ManagedClaimInvocation, ManagedInvocationDescriptor } from "./managedExecutionSelection";
 
 // DTOs are validated against the exact Actions-owned schema in the client.
@@ -103,7 +103,10 @@ export class ManagedWorkItemsView {
         const namespace = createHash("sha256").update(this.manifest + "\n" + origin + "\n" + workspace).digest("hex");
         const secretKey = "managed.token." + namespace;
         const savedEndpoint = this.context.workspaceState.get("managed.endpoint." + this.manifest, "");
-        const legacyEndpoints = [...new Set([endpoint, endpoint + "/", savedEndpoint, savedEndpoint ? savedEndpoint + "/" : ""].filter(Boolean))];
+        const legacyEndpoints = [...new Set([origin, origin + "/", endpoint, endpoint + "/", savedEndpoint, savedEndpoint ? savedEndpoint + "/" : ""].filter(value => {
+            if (!value) return false;
+            try {return canonicalRuntimeOrigin(value) === origin;} catch {return false;}
+        }))];
         const legacyNamespaces = legacyEndpoints.map(value => createHash("sha256").update(this.manifest + "\n" + value + "\n" + workspace).digest("hex"));
         const stored = (await this.context.secrets.get(secretKey)) || (await Promise.all(legacyNamespaces.map(value => this.context.secrets.get("managed.token." + value)))).find(Boolean);
         const entered = await vscode.window.showInputBox({prompt: stored ? "Managed API token; empty reuses this scope's stored token, Escape cancels" : "Managed API token", password: true, ignoreFocusOut: true});
@@ -132,31 +135,39 @@ export class ManagedWorkItemsView {
         const pending = new Map<string, Journal>(), invocations = new Map<string, InvocationJournal>();
         for (const name of await fs.promises.readdir(journalDir)) if (/^[0-9a-f-]{36}\.request\.json$/.test(name)) {
             const key = name.slice(0, -13);
-            const command = JSON.parse(await fs.promises.readFile(path.join(journalDir, name), "utf8"));
-            if (command.idempotency_key !== key || command.queue?.workspace_id !== workspace) throw Error("Retained request scope/identity mismatch; preserve the journal and inspect it.");
+            const command = validateManagedJournalCommand(JSON.parse(await fs.promises.readFile(path.join(journalDir, name), "utf8")), workspace);
+            if (command.idempotency_key !== key) throw Error("Retained request scope/identity mismatch; preserve the journal and inspect it.");
             let receipt: unknown;
             try {receipt = JSON.parse(await fs.promises.readFile(path.join(journalDir, key + ".receipt.json"), "utf8"));}
             catch (error) {if (error.code !== "ENOENT") throw error; pending.set(key, {key, command, state: "uncertain"}); continue;}
-            if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) throw Error("Retained request receipt identity mismatch; preserve the journal and inspect it.");
-            const receiptRecord = receipt as Record<string, unknown>;
-            if (receiptRecord.denied === true) {pending.set(key, {key, command, state: "uncertain"}); continue;}
-            if (receiptRecord.operation !== command.operation || !receiptRecord.result || typeof receiptRecord.result !== "object" || Array.isArray(receiptRecord.result)) throw Error("Retained request receipt identity mismatch; preserve the journal and inspect it.");
+            if (receipt && typeof receipt === "object" && !Array.isArray(receipt) && "denied" in receipt && receipt.denied === true) {
+                const denial = receipt as Record<string, unknown>;
+                if (typeof denial.status !== "number" || ![401, 403, 409, 413, 422].includes(denial.status) || (denial.code !== undefined && typeof denial.code !== "string")) throw Error("Legacy denial receipt is malformed; preserve the journal and inspect it.");
+                pending.set(key, {key, command, state: "uncertain"}); continue;
+            }
+            validateManagedResponse(command, receipt, workspace);
         }
         for (const name of await fs.promises.readdir(journalDir)) if (/^[0-9a-f-]{36}\.invocation\.json$/.test(name)) {
-            const record: InvocationJournal = JSON.parse(await fs.promises.readFile(path.join(journalDir, name), "utf8"));
-            if (name !== record.key + ".invocation.json" || record.request.claim.queue.workspace_id !== workspace || !Array.isArray(record.priorRuns)) throw Error("Retained execution scope/identity mismatch. Preserve the journal for inspection.");
+            const stored: unknown = JSON.parse(await fs.promises.readFile(path.join(journalDir, name), "utf8"));
+            if (!stored || typeof stored !== "object" || Array.isArray(stored)) throw Error("Retained execution journal is malformed. Preserve it for inspection.");
+            const entry = stored as Record<string, unknown>;
+            if (Object.keys(entry).some(key => !["key", "request", "priorRuns", "state"].includes(key)) ||
+                name !== entry.key + ".invocation.json" || typeof entry.key !== "string" || !/^[0-9a-f-]{36}$/.test(entry.key) ||
+                entry.state !== "uncertain" || !Array.isArray(entry.priorRuns) ||
+                !entry.priorRuns.every(id => typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id))) throw Error("Retained execution scope/identity mismatch. Preserve the journal for inspection.");
+            const request = validateManagedExecutionRequest(entry.request, workspace);
+            const record: InvocationJournal = {key: entry.key, request, priorRuns: entry.priorRuns, state: "uncertain"};
             // Restored execution is uncertain until its original response receipt
             // exists. Reload never invokes a tool or clears an unresolved claim.
-            record.state = "uncertain";
             const receipt = path.join(journalDir, record.key + ".invocation-result.json");
-            try {
-                record.result = JSON.parse(await fs.promises.readFile(receipt, "utf8"));
-                if (!record.result || !record.result.runId || !record.result.attemptId || record.result.workItemId !== record.request.claim.item_id) throw Error("Retained execution result identity mismatch.");
-                const confirmed = JSON.parse(await fs.promises.readFile(path.join(journalDir, record.key + ".invocation-confirmed.json"), "utf8"));
-                if (confirmed.runId !== record.result.runId || confirmed.attemptId !== record.result.attemptId) throw Error("Retained execution confirmation identity mismatch.");
+            let resultBytes: Buffer | undefined, confirmationBytes: Buffer | undefined;
+            try {resultBytes = await fs.promises.readFile(receipt);} catch (error) {if (error.code !== "ENOENT") throw error;}
+            try {confirmationBytes = await fs.promises.readFile(path.join(journalDir, record.key + ".invocation-confirmed.json"));} catch (error) {if (error.code !== "ENOENT") throw error;}
+            if (resultBytes && confirmationBytes) {
+                record.result = validateManagedExecutionResult(JSON.parse(resultBytes.toString("utf8")), request);
+                validateManagedExecutionConfirmation(JSON.parse(confirmationBytes.toString("utf8")), record.result);
                 record.state = "confirmed";
-            }
-            catch (error) {if (error.code !== "ENOENT") throw error;}
+            } else if (resultBytes || confirmationBytes) throw Error("Retained execution result/confirmation is incomplete. Preserve the journal for inspection.");
             invocations.set(record.key, record);
         }
         this.pending = pending; this.invocations = invocations; this.journalDir = journalDir;
@@ -195,8 +206,7 @@ export class ManagedWorkItemsView {
                 await this.publish();
             }
         } catch (error) {
-            const cannotResolveUncertainRequest = !!retained && [401, 403, 404].includes(error instanceof RuntimeHTTPError ? error.status : 0);
-            if (error instanceof RuntimeHTTPError && !cannotResolveUncertainRequest && error.status !== 404 &&
+            if (!retained && error instanceof RuntimeHTTPError && error.status !== 404 &&
                 ([401, 403, 413, 422].includes(error.status) || error.status === 409 && ["stale_claim", "changed_input", "approval_required", "unsupported_operation"].includes(error.code))) {
                 record.state = "denied";
                 await fs.promises.writeFile(path.join(this.journalDir, key + ".receipt.json"), JSON.stringify({denied: true, status: error.status, code: error.code}), {flag: "wx", mode: 0o600});

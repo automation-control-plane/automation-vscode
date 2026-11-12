@@ -55,6 +55,8 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
     async function connect(){inputs=[connectEndpoint||endpoint,W,'synthetic-token'];await view.handle({op:'managed.connect'});}
     try{
         await connect();assert.equal(posted.at(-1).queues.length,1);
+        inputs=[`http://localhost:${server.address().port}`,W,''];
+        await assert.rejects(view.handle({op:'managed.connect'}),/token is required/i,'a different origin must not reuse the saved origin token');
         await view.handle({op:'managed.queue',queue:JSON.stringify(queue)});
         await view.handle({op:'managed.item',id:I});
         await view.handle({op:'managed.run',id:I});
@@ -101,6 +103,13 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         await assert.rejects(view.handle({op:'managed.enqueue',payload:{value:8} }));
         assert.equal(calls.slice(beforeRestore).some(c=>c.operation==='items.enqueue'),false,'failed journal restore leaves mutations disabled');
         await fs.rm(path.join(journalDir,first.idempotency_key+'.receipt.json'));
+        await fs.writeFile(path.join(journalDir,first.idempotency_key+'.receipt.json'),JSON.stringify({schema_version:MANAGED_VERSION,operation:'items.enqueue',runtime_version:'1.1.0a13',result:{}}));
+        view=create();await assert.rejects(connect(),/receipt|contract|invalid/i,'a syntactically valid but invalid result must not resolve uncertainty');
+        await view.handle({op:'managed.refresh'});
+        const afterInvalidRestore=calls.length;
+        for(const op of ['managed.enqueue','managed.claim','managed.invoke']) await assert.rejects(view.handle({op,payload:{value:8},lease_seconds:60}));
+        assert.equal(calls.length,afterInvalidRestore,'invalid retained result keeps every mutation path disabled');
+        await fs.rm(path.join(journalDir,first.idempotency_key+'.receipt.json'));
         const legacyNamespace=crypto.createHash('sha256').update('/synthetic/action/package.yaml\n'+endpoint+'/\n'+W).digest('hex');
         const legacyDir=path.join(scratch,'managed-work-items',legacyNamespace);await fs.mkdir(legacyDir,{recursive:true});
         await fs.copyFile(path.join(journalDir,first.idempotency_key+'.request.json'),path.join(legacyDir,first.idempotency_key+'.request.json'));
@@ -108,7 +117,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         view=create();await connect();assert.equal(posted.at(-1).pending[0].key,first.idempotency_key);
         assert.ok((await fs.readdir(legacyDir)).includes(first.idempotency_key+'.request.json'),'legacy raw-origin journal remains preserved');
         connectEndpoint=undefined;
-        for(deniedStatus of [401,403,404]){
+        for(deniedStatus of [401,403,404,413,422]){
             denied=true;
             await assert.rejects(view.handle({op:'managed.reconcile',key:first.idempotency_key}));
             assert.ok(posted.at(-1).pending.some(entry=>entry.key===first.idempotency_key),'failed reconciliation preserves the original uncertain request');

@@ -2,8 +2,22 @@ const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const contract = require('../resources/work-items/managed-v1.json');
-const {ManagedWorkItemsClient, MANAGED_PERMISSIONS, MANAGED_VERSION, managedCommandSchema, validateManagedValue} = require('../vscode-client/out/managedWorkItemsClient');
+const {ManagedWorkItemsClient, MANAGED_PERMISSIONS, MANAGED_VERSION, managedCommandSchema, validateManagedValue, validateManagedJournalCommand, validateManagedResponse} = require('../vscode-client/out/managedWorkItemsClient');
 const {command,response,queue,W,D,I}=require('./fixtures/managed_contract');
+
+test('Retained managed receipts use pinned command/result schemas and preserve valid historical Runtime versions',()=>{
+    const request=command('items.enqueue'),saved=validateManagedJournalCommand(request,W);
+    const envelope=response(request);envelope.runtime_version='1.1.0a13';
+    assert.equal(validateManagedResponse(saved,envelope,W).runtime_version,'1.1.0a13');
+    for(const invalid of [
+        {...envelope,result:{}},
+        {...envelope,operation:'items.claim'},
+        {...envelope,runtime_version:'not-a-version'},
+        {...envelope,result:{...envelope.result,item:{...envelope.result.item,queue:{...envelope.result.item.queue,queue_id:'foreign'}}}},
+        {...envelope,result:{...envelope.result,item:{...envelope.result.item,snapshot:{...envelope.result.item.snapshot,deployment:{...envelope.result.item.snapshot.deployment,deployment_id:I}}}}},
+    ])assert.throws(()=>validateManagedResponse(saved,invalid,W),/contract|identity|version|scope/i,'invalid receipt: '+invalid.operation+'/'+invalid.runtime_version+'/'+JSON.stringify(invalid.result).slice(-60));
+    assert.throws(()=>validateManagedJournalCommand({...request,queue:{...request.queue,workspace_id:D}},W),/scope|contract/i);
+});
 
 test('Canonical generated commands reject extra authority, invalid lease/size and non-finite JSON', () => {
     const claim=command('items.claim');
