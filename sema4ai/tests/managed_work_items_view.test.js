@@ -15,7 +15,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
     // This is not an installed Extension Host or managed SQL worker proof.
     const scratch=await fs.mkdtemp(path.join(os.tmpdir(),'managed-view-'));
     const secret=new Map(),state=new Map(),posted=[],calls=[],confirmations=[];
-    let inputs=[],save=path.join(scratch,'artifact.txt'),disconnect=false,denied=false,replay=false,conflict,generic=false,cancelDialog=false,emptyLogs=false;
+    let inputs=[],connectEndpoint,save=path.join(scratch,'artifact.txt'),disconnect=false,denied=false,deniedStatus=403,replay=false,conflict,generic=false,cancelDialog=false,emptyLogs=false;
     const payload=Buffer.from('proof');
     const artifact={handle:'synthetic-artifact',run_id:I,digest:'sha256:'+crypto.createHash('sha256').update(payload).digest('hex'),size:payload.length};
     const item=response(command('items.get')).result.item;item.run_ids=[I];
@@ -28,7 +28,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         if(req.url.includes('/capabilities?'))return res.end(JSON.stringify({schema_version:MANAGED_VERSION,runtime_version:'1.1.0a13',sdk_version:'0.5.0a1',workspace_id:W,operations:generic?['queues.list','items.list','items.get']:Object.keys(MANAGED_PERMISSIONS),permissions:generic?['work_items.read']:permissions,backend:'sqlite',time_authority:'database',modes:generic?['required-input']:['reviewed','producer']}));
         let raw='';req.on('data',chunk=>raw+=chunk);req.on('end',()=>{
             const c=JSON.parse(raw);calls.push(c);
-            if(denied){res.statusCode=403;return res.end(JSON.stringify({schema_version:MANAGED_VERSION,error:{code:'forbidden'}}));}
+            if(denied){res.statusCode=deniedStatus;return res.end(JSON.stringify({schema_version:MANAGED_VERSION,error:{code:deniedStatus===404?'not_found':deniedStatus===401?'not_authenticated':'forbidden'}}));}
             if(conflict&&c.operation==='items.retry'){res.statusCode=409;return res.end(JSON.stringify({schema_version:MANAGED_VERSION,error:{code:conflict}}));}
             if(disconnect&&c.operation==='items.enqueue'){disconnect=false;req.socket.destroy();return;}
             const out=response(c);
@@ -52,7 +52,7 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
     let View;try{View=require('../vscode-client/out/managedWorkItemsView').ManagedWorkItemsView;}finally{Module._load=load;}
     const create=()=>new View(context,'/synthetic/action/package.yaml',async message=>{posted.push(JSON.parse(JSON.stringify(message)));return true;});
     let view=create();
-    async function connect(){inputs=[endpoint,W,'synthetic-token'];await view.handle({op:'managed.connect'});}
+    async function connect(){inputs=[connectEndpoint||endpoint,W,'synthetic-token'];await view.handle({op:'managed.connect'});}
     try{
         await connect();assert.equal(posted.at(-1).queues.length,1);
         await view.handle({op:'managed.queue',queue:JSON.stringify(queue)});
@@ -94,7 +94,28 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         const first=calls.filter(c=>c.operation==='items.enqueue').at(-1);
         assert.equal(posted.at(-1).pending.length,1);
         await assert.rejects(view.handle({op:'managed.enqueue',payload:{value:7}}),/Reconcile/);
+        const journalDir=path.join(scratch,'managed-work-items',crypto.createHash('sha256').update('/synthetic/action/package.yaml\n'+endpoint+'\n'+W).digest('hex'));
+        await fs.writeFile(path.join(journalDir,first.idempotency_key+'.receipt.json'),'{' );
+        const beforeRestore=calls.length;view=create();await assert.rejects(connect(),/JSON|receipt/i);
+        await view.handle({op:'managed.refresh'});
+        await assert.rejects(view.handle({op:'managed.enqueue',payload:{value:8} }));
+        assert.equal(calls.slice(beforeRestore).some(c=>c.operation==='items.enqueue'),false,'failed journal restore leaves mutations disabled');
+        await fs.rm(path.join(journalDir,first.idempotency_key+'.receipt.json'));
+        const legacyNamespace=crypto.createHash('sha256').update('/synthetic/action/package.yaml\n'+endpoint+'/\n'+W).digest('hex');
+        const legacyDir=path.join(scratch,'managed-work-items',legacyNamespace);await fs.mkdir(legacyDir,{recursive:true});
+        await fs.copyFile(path.join(journalDir,first.idempotency_key+'.request.json'),path.join(legacyDir,first.idempotency_key+'.request.json'));
+        connectEndpoint=endpoint+'/';
         view=create();await connect();assert.equal(posted.at(-1).pending[0].key,first.idempotency_key);
+        assert.ok((await fs.readdir(legacyDir)).includes(first.idempotency_key+'.request.json'),'legacy raw-origin journal remains preserved');
+        connectEndpoint=undefined;
+        for(deniedStatus of [401,403,404]){
+            denied=true;
+            await assert.rejects(view.handle({op:'managed.reconcile',key:first.idempotency_key}));
+            assert.ok(posted.at(-1).pending.some(entry=>entry.key===first.idempotency_key),'failed reconciliation preserves the original uncertain request');
+            denied=false;
+            view=create();await connect();assert.equal(posted.at(-1).pending[0].key,first.idempotency_key);
+        }
+        deniedStatus=403;
         cancelDialog=true;await assertCancelled({op:'managed.reconcile',key:first.idempotency_key},{preserveQueue:false});cancelDialog=false;
         replay=true;await view.handle({op:'managed.reconcile',key:first.idempotency_key});
         const second=calls.filter(c=>c.operation==='items.enqueue').at(-1);assert.deepEqual(second,first);

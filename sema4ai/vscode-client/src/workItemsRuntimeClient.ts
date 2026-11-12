@@ -5,16 +5,20 @@ export class RuntimeHTTPError extends Error {
     constructor(message: string, readonly status: number, readonly code?: string) {super(message);}
 }
 
+export function canonicalRuntimeOrigin(endpoint: string): string {
+    const url = new URL(endpoint);
+    if (url.username || url.password || url.search || url.hash || url.pathname !== "/") throw Error("Use a Runtime origin without credentials, path or query.");
+    const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+    if (!(url.protocol === "https:" || (url.protocol === "http:" && loopback))) throw Error("Managed Runtime requires HTTPS, or HTTP on loopback.");
+    return url.origin;
+}
+
 /** Authenticated origin transport. No redirects, retries, fallback or raw errors. */
 export class RuntimeTransport {
     readonly endpoint: string;
     constructor(endpoint: string, private readonly token: string, private readonly maxBytes = 4 * 1024 * 1024) {
-        const url = new URL(endpoint);
-        if (url.username || url.password || url.search || url.hash || url.pathname !== "/") throw Error("Use a Runtime origin without credentials, path or query.");
-        const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
-        if (!(url.protocol === "https:" || (url.protocol === "http:" && loopback))) throw Error("Managed Runtime requires HTTPS, or HTTP on loopback.");
         if (!token || /[\r\n]/.test(token)) throw Error("An explicit Runtime API token is required.");
-        this.endpoint = url.origin;
+        this.endpoint = canonicalRuntimeOrigin(endpoint);
     }
     protected request(method: string, route: string, body?: Buffer, contentType = "application/json", binary = false,
         options: {headers?: Record<string, string>; timeoutMs?: number} = {}): Promise<unknown> {

@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { createHash, randomUUID } from "crypto";
 import { ManagedWorkItemsClient, ManagedCommand, MANAGED_VERSION, MANAGED_PERMISSIONS, QueueRef, ManagedQueueMode, ManagedSnapshot } from "./managedWorkItemsClient";
-import { RuntimeHTTPError } from "./workItemsRuntimeClient";
+import { RuntimeHTTPError, canonicalRuntimeOrigin } from "./workItemsRuntimeClient";
 import { isDeepStrictEqual } from "util";
 import { ManagedExecutionClient, ManagedExecutionResult } from "./managedExecutionClient";
 import { buildManagedClaimInvocation, CanvasApplicationSummary, ManagedClaimInvocation, ManagedInvocationDescriptor } from "./managedExecutionSelection";
@@ -99,46 +99,71 @@ export class ManagedWorkItemsView {
         if (!endpoint) {await this.publish("Connection cancelled. Existing connection unchanged."); return;}
         const workspace = await vscode.window.showInputBox({prompt: "Workspace UUID granted by this Runtime", value: this.context.workspaceState.get("managed.workspace." + this.manifest, ""), ignoreFocusOut: true});
         if (!workspace) {await this.publish("Connection cancelled. Existing connection unchanged."); return;}
-        const namespace = createHash("sha256").update(this.manifest + "\n" + endpoint + "\n" + workspace).digest("hex");
+        const origin = canonicalRuntimeOrigin(endpoint);
+        const namespace = createHash("sha256").update(this.manifest + "\n" + origin + "\n" + workspace).digest("hex");
         const secretKey = "managed.token." + namespace;
-        const stored = await this.context.secrets.get(secretKey);
+        const savedEndpoint = this.context.workspaceState.get("managed.endpoint." + this.manifest, "");
+        const legacyEndpoints = [...new Set([endpoint, endpoint + "/", savedEndpoint, savedEndpoint ? savedEndpoint + "/" : ""].filter(Boolean))];
+        const legacyNamespaces = legacyEndpoints.map(value => createHash("sha256").update(this.manifest + "\n" + value + "\n" + workspace).digest("hex"));
+        const stored = (await this.context.secrets.get(secretKey)) || (await Promise.all(legacyNamespaces.map(value => this.context.secrets.get("managed.token." + value)))).find(Boolean);
         const entered = await vscode.window.showInputBox({prompt: stored ? "Managed API token; empty reuses this scope's stored token, Escape cancels" : "Managed API token", password: true, ignoreFocusOut: true});
         if (entered === undefined) {await this.publish("Connection cancelled. Existing connection unchanged."); return;}
         const token = entered || stored;
         if (!token) throw Error("A managed API token is required.");
-        this.client = undefined; this.clearProjection(); this.pending.clear(); this.invocations.clear();
+        this.client = undefined; this.executionClient = undefined; this.journalDir = undefined; this.clearProjection(); this.pending.clear(); this.invocations.clear();
         const client = new ManagedWorkItemsClient(endpoint, token, workspace);
         await client.negotiate();
-        this.client = client;
-        this.executionClient = new ManagedExecutionClient(endpoint, token, workspace);
-        await this.context.secrets.store(secretKey, token);
-        await this.context.workspaceState.update("managed.endpoint." + this.manifest, endpoint);
-        await this.context.workspaceState.update("managed.workspace." + this.manifest, workspace);
-        this.journalDir = path.join(this.context.globalStorageUri.fsPath, "managed-work-items", namespace);
-        await fs.promises.mkdir(this.journalDir, {recursive: true});
-        for (const name of await fs.promises.readdir(this.journalDir)) if (/^[0-9a-f-]{36}\.request\.json$/.test(name)) {
-            const key = name.slice(0, -13);
-            const command = JSON.parse(await fs.promises.readFile(path.join(this.journalDir, name), "utf8"));
-            if (command.idempotency_key !== key) throw Error("Retained request identity mismatch; preserve the journal and inspect it.");
-            const receipt = path.join(this.journalDir, key + ".receipt.json");
-            try {await fs.promises.access(receipt);} catch {this.pending.set(key, {key, command, state: "uncertain"});}
+        const journalDir = path.join(this.context.globalStorageUri.fsPath, "managed-work-items", namespace);
+        await fs.promises.mkdir(journalDir, {recursive: true});
+        for (const legacyNamespace of legacyNamespaces) {
+            if (legacyNamespace === namespace) continue;
+            const legacyDir = path.join(this.context.globalStorageUri.fsPath, "managed-work-items", legacyNamespace);
+            let names: string[];
+            try {names = await fs.promises.readdir(legacyDir);} catch (error) {if (error.code === "ENOENT") continue; throw error;}
+            for (const name of names) {
+                const source = path.join(legacyDir, name), target = path.join(journalDir, name);
+                try {await fs.promises.copyFile(source, target, fs.constants.COPYFILE_EXCL);}
+                catch (error) {
+                    if (error.code !== "EEXIST") throw error;
+                    if (!(await fs.promises.readFile(source)).equals(await fs.promises.readFile(target))) throw Error("Conflicting legacy managed journal identity; preserve both scopes and inspect before reconnecting.");
+                }
+            }
         }
-        for (const name of await fs.promises.readdir(this.journalDir)) if (/^[0-9a-f-]{36}\.invocation\.json$/.test(name)) {
-            const record: InvocationJournal = JSON.parse(await fs.promises.readFile(path.join(this.journalDir, name), "utf8"));
+        const pending = new Map<string, Journal>(), invocations = new Map<string, InvocationJournal>();
+        for (const name of await fs.promises.readdir(journalDir)) if (/^[0-9a-f-]{36}\.request\.json$/.test(name)) {
+            const key = name.slice(0, -13);
+            const command = JSON.parse(await fs.promises.readFile(path.join(journalDir, name), "utf8"));
+            if (command.idempotency_key !== key || command.queue?.workspace_id !== workspace) throw Error("Retained request scope/identity mismatch; preserve the journal and inspect it.");
+            let receipt: unknown;
+            try {receipt = JSON.parse(await fs.promises.readFile(path.join(journalDir, key + ".receipt.json"), "utf8"));}
+            catch (error) {if (error.code !== "ENOENT") throw error; pending.set(key, {key, command, state: "uncertain"}); continue;}
+            if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) throw Error("Retained request receipt identity mismatch; preserve the journal and inspect it.");
+            const receiptRecord = receipt as Record<string, unknown>;
+            if (receiptRecord.denied === true) {pending.set(key, {key, command, state: "uncertain"}); continue;}
+            if (receiptRecord.operation !== command.operation || !receiptRecord.result || typeof receiptRecord.result !== "object" || Array.isArray(receiptRecord.result)) throw Error("Retained request receipt identity mismatch; preserve the journal and inspect it.");
+        }
+        for (const name of await fs.promises.readdir(journalDir)) if (/^[0-9a-f-]{36}\.invocation\.json$/.test(name)) {
+            const record: InvocationJournal = JSON.parse(await fs.promises.readFile(path.join(journalDir, name), "utf8"));
             if (name !== record.key + ".invocation.json" || record.request.claim.queue.workspace_id !== workspace || !Array.isArray(record.priorRuns)) throw Error("Retained execution scope/identity mismatch. Preserve the journal for inspection.");
             // Restored execution is uncertain until its original response receipt
             // exists. Reload never invokes a tool or clears an unresolved claim.
             record.state = "uncertain";
-            const receipt = path.join(this.journalDir, record.key + ".invocation-result.json");
+            const receipt = path.join(journalDir, record.key + ".invocation-result.json");
             try {
                 record.result = JSON.parse(await fs.promises.readFile(receipt, "utf8"));
-                const confirmed = JSON.parse(await fs.promises.readFile(path.join(this.journalDir, record.key + ".invocation-confirmed.json"), "utf8"));
+                if (!record.result || !record.result.runId || !record.result.attemptId || record.result.workItemId !== record.request.claim.item_id) throw Error("Retained execution result identity mismatch.");
+                const confirmed = JSON.parse(await fs.promises.readFile(path.join(journalDir, record.key + ".invocation-confirmed.json"), "utf8"));
                 if (confirmed.runId !== record.result.runId || confirmed.attemptId !== record.result.attemptId) throw Error("Retained execution confirmation identity mismatch.");
                 record.state = "confirmed";
             }
             catch (error) {if (error.code !== "ENOENT") throw error;}
-            this.invocations.set(record.key, record);
+            invocations.set(record.key, record);
         }
+        this.pending = pending; this.invocations = invocations; this.journalDir = journalDir;
+        this.client = client; this.executionClient = new ManagedExecutionClient(origin, token, workspace);
+        await this.context.secrets.store(secretKey, token);
+        await this.context.workspaceState.update("managed.endpoint." + this.manifest, origin);
+        await this.context.workspaceState.update("managed.workspace." + this.manifest, workspace);
         await this.refresh();
     }
     private async mutate(operation: string, fields: Record<string, unknown>, retained?: Journal): Promise<void> {
@@ -170,8 +195,9 @@ export class ManagedWorkItemsView {
                 await this.publish();
             }
         } catch (error) {
-            if (error instanceof RuntimeHTTPError && ([401, 403, 404, 413, 422].includes(error.status) ||
-                (error.status === 409 && ["stale_claim", "changed_input", "approval_required", "unsupported_operation"].includes(error.code)))) {
+            const cannotResolveUncertainRequest = !!retained && [401, 403, 404].includes(error instanceof RuntimeHTTPError ? error.status : 0);
+            if (error instanceof RuntimeHTTPError && !cannotResolveUncertainRequest && error.status !== 404 &&
+                ([401, 403, 413, 422].includes(error.status) || error.status === 409 && ["stale_claim", "changed_input", "approval_required", "unsupported_operation"].includes(error.code))) {
                 record.state = "denied";
                 await fs.promises.writeFile(path.join(this.journalDir, key + ".receipt.json"), JSON.stringify({denied: true, status: error.status, code: error.code}), {flag: "wx", mode: 0o600});
                 if ([401, 403].includes(error.status)) this.clearProjection();

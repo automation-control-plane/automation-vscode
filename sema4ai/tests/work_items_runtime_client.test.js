@@ -1,7 +1,7 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
-const {WorkItemsRuntimeClient} = require('../vscode-client/out/workItemsRuntimeClient');
+const {WorkItemsRuntimeClient, canonicalRuntimeOrigin} = require('../vscode-client/out/workItemsRuntimeClient');
 
 test('Managed client requires secure origin, explicit auth and a verified published contract', async () => {
     for (const endpoint of ['http://example.test', 'https://user:pass@example.test', 'https://example.test/path', 'https://example.test/?token=x']) {
@@ -44,4 +44,13 @@ test('Managed client requires secure origin, explicit auth and a verified publis
         assert.equal(requests.filter(item => item.method === 'POST').length, 1);
         assert.ok(requests.every(item => !/retry|lease|approve|cancel/.test(item.route)));
     } finally {await new Promise(resolve => server.close(resolve));}
+});
+
+test('Managed Runtime origin canonicalization shares transport origin rules', () => {
+    assert.equal(canonicalRuntimeOrigin('https://runtime.example/'), 'https://runtime.example');
+    assert.equal(canonicalRuntimeOrigin('https://runtime.example'), 'https://runtime.example');
+    assert.equal(canonicalRuntimeOrigin('http://127.0.0.1:8082/'), 'http://127.0.0.1:8082');
+    for (const endpoint of ['https://runtime.example/path', 'https://user@runtime.example/', 'https://runtime.example/?q=1', 'http://runtime.example/']) {
+        assert.throws(() => canonicalRuntimeOrigin(endpoint));
+    }
 });
