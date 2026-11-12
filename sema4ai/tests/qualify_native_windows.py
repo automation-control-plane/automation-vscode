@@ -89,6 +89,8 @@ def main():
             raise RuntimeError(f"{name} failed with exit {result.returncode}; private diagnostics retained")
 
     try:
+        run([sys.executable, str(extension / "tests/test_windows_qualification_driver.py"), "-v"], "driver-boundaries")
+        report["checks"].append("Environment and archive boundaries pass on native Windows")
         # Read-only prerequisite. Never enable long paths or request elevation.
         import winreg
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\FileSystem") as key:

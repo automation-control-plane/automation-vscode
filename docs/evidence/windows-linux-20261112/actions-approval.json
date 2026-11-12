@@ -1,0 +1,23 @@
+{
+  "checked_at_utc": "2026-11-12T20:49:46.593306+00:00",
+  "authorization": "Josh explicitly approved restricted Actions enablement in this release thread.",
+  "repository": "automation-control-plane/automation-vscode",
+  "verified_policy": {
+    "enabled": true,
+    "allowed_actions": "selected"
+  },
+  "verified_selected_actions": {
+    "github_owned_allowed": false,
+    "verified_allowed": false,
+    "patterns_allowed": [
+      "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+      "actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+      "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+      "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
+    ]
+  },
+  "job_permissions": "contents:read",
+  "credentials_or_scopes_added": false,
+  "native_windows_acceptance": "Pending actual native run; permission approval is not acceptance.",
+  "preserved_release": "automation-vscode-v2.20.25"
+}

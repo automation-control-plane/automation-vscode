@@ -1,8 +1,9 @@
 # Windows/Linux release continuation
 
-Native Windows acceptance is blocked until repository Actions is enabled with
-owner approval. The repository currently has Actions disabled and zero
-self-hosted runners; no linked Windows host exists.
+Josh approved restricted repository Actions enablement. The exact four-action
+policy is now independently verified in [the approval receipt](actions-approval.json).
+Native Windows acceptance remains pending the actual hosted run. The initial
+disabled state below is historical evidence, not the current permission state.
 
 [Initial status and exact permission proposal](initial-status.json) records the
 upstream Sema4AI distribution pattern, immutable action revisions, acceptance
