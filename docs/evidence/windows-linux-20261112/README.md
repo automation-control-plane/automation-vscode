@@ -29,3 +29,15 @@ all752 Windows/Linux extension payloads match each other. Compared with the
 verified2.20.25 Linux release, only package.json and __init__.py version metadata
 changed. These Windows bytes were cross-packaged onLinux and remain UNQUALIFIED;
 the final Windows release must use the exact artifact installed/tested by CI.
+
+## First native Windows failure and correction
+
+[The retained failure receipt](windows-install-failure.json) identifies the first
+fatal gate as VSIX installation. The official, hash-verified Code1.146.0 Windows
+archive places cli.js in a versioned resources directory; the driver had assumed
+the older unversioned layout. Its own bin/code.cmd confirms the actual path.
+The corrected lookup requires exactly one existing CLI entry and refuses missing
+or ambiguous layouts. The regression failed before the fix; all five harness
+boundary/layout checks pass afterward, including a check against the actual
+official archive. No acceptance guard was relaxed. Native acceptance still
+requires the next exact-head run; the failed artifact remains unqualified.

@@ -11,6 +11,29 @@ spec.loader.exec_module(driver)
 
 
 class WindowsQualificationBoundaries(unittest.TestCase):
+    def test_official_versioned_cli_layout_is_resolved(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            entry = root / "69047191fc/resources/app/out/cli.js"
+            entry.parent.mkdir(parents=True)
+            entry.write_text("// synthetic official archive layout")
+            self.assertEqual(driver.code_cli_entry(root), entry)
+
+    def test_cli_layout_missing_or_ambiguous_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with self.assertRaisesRegex(RuntimeError, "missing or ambiguous"):
+                driver.code_cli_entry(root)
+            legacy = root / "resources/app/out/cli.js"
+            legacy.parent.mkdir(parents=True)
+            legacy.write_text("// synthetic legacy layout")
+            self.assertEqual(driver.code_cli_entry(root), legacy)
+            other = root / "69047191fc/resources/app/out/cli.js"
+            other.parent.mkdir(parents=True)
+            other.write_text("// synthetic second CLI")
+            with self.assertRaisesRegex(RuntimeError, "missing or ambiguous"):
+                driver.code_cli_entry(root)
+
     def test_only_system_and_explicit_test_environment_reaches_child(self):
         result = driver.clean_environment({"Path": "test-tools", "SYSTEMROOT": "test-windows",
             "AWS_BEARER_TOKEN_BEDROCK": "synthetic-not-a-credential", "GITHUB_TOKEN": "synthetic",

@@ -41,6 +41,14 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def code_cli_entry(code_root):
+    candidates = [code_root / "resources/app/out/cli.js", *code_root.glob("*/resources/app/out/cli.js")]
+    present = [entry for entry in candidates if entry.is_file()]
+    if len(present) != 1:
+        raise RuntimeError("Official Code CLI entry is missing or ambiguous")
+    return present[0]
+
+
 def extract_archive(archive, destination):
     with zipfile.ZipFile(archive) as source:
         for entry in source.infolist():
@@ -120,7 +128,7 @@ def main():
         extract_archive(archive, code_root)
         code = code_root / "Code.exe"
         profile, extensions = root / "profile", root / "extensions"
-        cli = [str(code), str(code_root / "resources/app/out/cli.js")]
+        cli = [str(code), str(code_cli_entry(code_root))]
         cli_env = {**env, "ELECTRON_RUN_AS_NODE": "1"}
         run([*cli, f"--user-data-dir={profile}", f"--extensions-dir={extensions}",
              "--install-extension", str(vsix)], "install-vsix", environment=cli_env)

@@ -1,0 +1,19 @@
+{
+  "checked_at_utc": "2026-11-12T20:55:45.187572+00:00",
+  "failed_run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43304183391",
+  "first_fatal_gate": "install-vsix exit1",
+  "root_cause": "Driver passed nonexistent unversioned CLI path. Verified official Code1.146.0 Windows archive and its own bin/code.cmd use a versioned resources directory.",
+  "official_code_archive_sha256": "0d47f5bbff72499c6a4a92f6d72dd8cc5ba4606185f624465032626614119d61",
+  "old_cli_relative_path": "resources/app/out/cli.js",
+  "actual_cli_relative_path": "69047191fc/resources/app/out/cli.js",
+  "archive_and_official_launcher_agree": true,
+  "corrected_resolver_matches_actual_archive": true,
+  "regression": "Versioned-layout test failed before correction;5 boundary/layout tests pass after correction. Missing/ambiguous entries fail closed.",
+  "guards": "No installation, digest, payload, cold-bootstrap, execution or environment guard relaxed.",
+  "failed_candidate": {
+    "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+    "sha256": "2e6a43b5117e20c915c637878ddea1de3abd82a41a44e6e4bc3a34be0472df9d",
+    "size": 2223847
+  },
+  "native_windows_acceptance": "Still pending next exact-head native run; packaging and resolver proof are not installation acceptance."
+}
