@@ -112,7 +112,10 @@ export class ManagedExecutionClient extends RuntimeTransport {
         if (!uuid(requestId) || Object.keys(request).sort().join(",") !== "claim,mode,snapshot") throw Error("Invalid native execution request identity or variant.");
         validateManagedExecutionRequest(request, this.workspace);
         const response = await this.call("capability_invoke", request, requestId);
-        const value = validateManagedExecutionResult(response.execution, request);
+        const identity = record(response.execution) ? {...response.execution} : response.execution;
+        // Optional output metadata is not authority; artifacts are re-read through the managed API.
+        if (record(identity)) delete identity.outputs;
+        const value = validateManagedExecutionResult(identity, request);
         // Only validated public identities enter the UI. Output handles are
         // independently rediscovered using authorized linked managed Run reads.
         return {state: value.state, runId: value.runId, attemptId: value.attemptId, attemptEpoch: value.attemptEpoch,

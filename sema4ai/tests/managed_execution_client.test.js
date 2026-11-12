@@ -16,6 +16,17 @@ test('Native MCP discovers exact schemas and invokes only the matching retained 
     assert.equal(calls.filter(c=>c.params.name==='capability_invoke').length,1);
     assert.deepEqual(Object.keys(invoke.params.arguments).sort(),['claim','mode','snapshot']);
 }));
+test('Live optional output metadata is not persisted as execution authority',async()=>serverFor(async({endpoint,setOverride})=>{
+    setOverride(({body,result})=>{
+        if(body.params.name==='capability_invoke')result.structuredContent.execution.outputs=[{handle:'synthetic-output',name:'robot-output.xml',mediaType:'application/xml',size:7}];
+        return result;
+    });
+    const {ManagedExecutionClient}=require('../vscode-client/out/managedExecutionClient');
+    const client=new ManagedExecutionClient(endpoint,'synthetic-token',W);await client.negotiate();
+    const {buildManagedClaimInvocation}=require('../vscode-client/out/managedExecutionSelection'),f=fixture();
+    const result=await client.invokeClaim(buildManagedClaimInvocation(f.descriptor,f.item),I);
+    assert.equal(result.runId,I);assert.equal(Object.hasOwn(result,'outputs'),false);
+}));
 test('Unknown protocol, server identity, tool schema and app-only audience fail closed',async()=>{
     for(const change of [
         ({body,result})=>body.method==='server/discover'?{...result,supportedVersions:['2099-01-01']}:result,
