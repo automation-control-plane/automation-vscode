@@ -10,7 +10,7 @@ test("Task code lens does not start a debug session when debugger resolution dec
     const calls = [];
     const original = Module._load;
     Module._load = function(name, parent, ...args) {
-        if (parent?.filename.endsWith("/robo/runRobocorpTasks.js")) {
+        if (parent?.filename.replaceAll("\\", "/").endsWith("/robo/runRobocorpTasks.js")) {
             if (name === "vscode") return {
                 commands: {executeCommand: async () => ({success: false, message: "No fixture interpreter"})},
                 debug: {startDebugging: (...args) => calls.push(args)},
@@ -33,7 +33,7 @@ test("Native Python launch refuses a missing debugger instead of selecting absen
     let installed;
     const original = Module._load;
     Module._load = function(name, parent, ...args) {
-        if (parent?.filename.endsWith("/debugger.js")) {
+        if (parent?.filename.replaceAll("\\", "/").endsWith("/debugger.js")) {
             if (name === "vscode") return {
                 extensions: {getExtension: id => installed?.id === id ? installed : undefined},
                 window: {showErrorMessage: message => messages.push(message)},
@@ -82,7 +82,7 @@ const vscode = {
 };
 const load = Module._load;
 Module._load = function(name, parent, main) {
-    if (parent?.filename.endsWith("/pythonExtIntegration.js")) {
+    if (parent?.filename.replaceAll("\\", "/").endsWith("/pythonExtIntegration.js")) {
         if (name === "vscode") return vscode;
         if (name === "./activities") return {resolveInterpreter: async () => resolvedInterpreter};
         if (name === "./channel") return {logError: assert.fail, OUTPUT_CHANNEL: {appendLine: value => output.push(value)}};
