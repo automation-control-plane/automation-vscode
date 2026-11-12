@@ -62,5 +62,6 @@ export async function runRobocorpTasks(noDebug: boolean, args: string[]) {
     }
     let debugSessionOptions: DebugSessionOptions = {};
     debugConfiguration = await updateDebugConfigurationAndAutoActivatePythonExtension(debugConfiguration);
+    if (!debugConfiguration) return;
     debug.startDebugging(undefined, debugConfiguration, debugSessionOptions);
 }

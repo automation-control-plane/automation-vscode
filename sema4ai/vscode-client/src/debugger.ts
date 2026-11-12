@@ -36,7 +36,7 @@ interface ActionResult {
 
 export async function updateDebugConfigurationAndAutoActivatePythonExtension(
     debugConfiguration: DebugConfiguration
-): Promise<DebugConfiguration> {
+): Promise<DebugConfiguration | undefined> {
     const isPythonRun = debugConfiguration && debugConfiguration.type && debugConfiguration.type == "python";
     if (isPythonRun) {
         let extension = extensions.getExtension("ms-python.python");
@@ -47,7 +47,7 @@ export async function updateDebugConfigurationAndAutoActivatePythonExtension(
                 // the launch is already resolved.
                 await extension.activate();
             }
-        } else if (isPyDevDebuggerPythonExtensionInstalled()) {
+        } else if (await isPyDevDebuggerPythonExtensionInstalled()) {
             let extension = extensions.getExtension("fabioz.vscode-pydev-python-debugger");
             if (extension) {
                 if (!extension.isActive) {
@@ -257,6 +257,7 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
             return;
         }
         result = await updateDebugConfigurationAndAutoActivatePythonExtension(result);
+        if (!result) return;
 
         // OUTPUT_CHANNEL.appendLine("Launching with: " + JSON.stringify(result));
         result["noDebug"] = debugConfiguration.noDebug;

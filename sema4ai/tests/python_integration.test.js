@@ -4,6 +4,61 @@ const Module = require("node:module");
 let extension, environmentsExtension, resolvedInterpreter, resourceConfig, environmentsEnabled;
 const output = [];
 const resource = {fsPath: "/work/action-package/package.yaml", toString: () => "file:///work/action-package/package.yaml"};
+
+test("Task code lens does not start a debug session when debugger resolution declines", async () => {
+    const calls = [];
+    const original = Module._load;
+    Module._load = function(name, parent, ...args) {
+        if (parent?.filename.endsWith("/robo/runRobocorpTasks.js")) {
+            if (name === "vscode") return {
+                commands: {executeCommand: async () => ({success: false, message: "No fixture interpreter"})},
+                debug: {startDebugging: (...args) => calls.push(args)},
+            };
+            if (name === "../debugger") return {updateDebugConfigurationAndAutoActivatePythonExtension: async () => undefined};
+            if (name === "../channel") return {logError() {}};
+            if (name.startsWith("../")) return {};
+        }
+        return original.call(this, name, parent, ...args);
+    };
+    let run;
+    try {run = require("../vscode-client/out/robo/runRobocorpTasks").runRobocorpTasks;}
+    finally {Module._load = original;}
+    await run(false, ["/work/robot/tasks.py"]);
+    assert.equal(calls.length, 0);
+});
+
+test("Native Python launch refuses a missing debugger instead of selecting absent PyDev", async () => {
+    const messages = [];
+    let installed;
+    const original = Module._load;
+    Module._load = function(name, parent, ...args) {
+        if (parent?.filename.endsWith("/debugger.js")) {
+            if (name === "vscode") return {
+                extensions: {getExtension: id => installed?.id === id ? installed : undefined},
+                window: {showErrorMessage: message => messages.push(message)},
+            };
+            if (name === "./pythonExtIntegration") return {
+                isPyDevDebuggerPythonExtensionInstalled: async () => installed?.id === "fabioz.vscode-pydev-python-debugger",
+            };
+            if (name === "./channel") return {OUTPUT_CHANNEL: {appendLine() {}}};
+            if (name.startsWith("./")) return {};
+        }
+        return original.call(this, name, parent, ...args);
+    };
+    let resolve;
+    try {resolve = require("../vscode-client/out/debugger").updateDebugConfigurationAndAutoActivatePythonExtension;}
+    finally {Module._load = original;}
+    const missing = {type: "python", python: "/rcc/bin/python"};
+    assert.equal(await resolve(missing), undefined);
+    assert.equal(missing.type, "python");
+    assert.match(messages[0], /ms-python.python.*fabioz.vscode-pydev-python-debugger/);
+    let activated = false;
+    installed = {id: "fabioz.vscode-pydev-python-debugger", isActive: false, activate: async () => {activated = true;}};
+    const pydev = await resolve({type: "python", python: "/rcc/bin/python"});
+    assert.equal(activated, true);
+    assert.equal(pydev.type, "pydevd");
+    assert.equal(pydev.pythonExecutable, "/rcc/bin/python");
+});
 const vscode = {
     extensions: {getExtension: id => id === "ms-python.vscode-python-envs" ? environmentsExtension : extension},
     Uri: {file: fsPath => ({fsPath})},
