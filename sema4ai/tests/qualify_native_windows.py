@@ -171,11 +171,18 @@ def main():
         (controller / "package.json").write_text(json.dumps({"name": "windows-qualification",
             "publisher": "task-local", "version": "0.0.1", "engines": {"vscode": "^1.101.0"}}))
         test_path = extension / "tests/windows_installed_host.cjs"
+        driver_venv = root / "ui-driver"
+        run([sys.executable, "-m", "venv", str(driver_venv)], "ui-driver-venv")
+        ui_python = driver_venv / "Scripts/python.exe"
+        run([str(ui_python), "-m", "pip", "install", "--disable-pip-version-check", "--no-input", "playwright==1.52.0"], "ui-driver-dependencies")
         with (root / "extension-host.private.log").open("wb") as log:
             child = subprocess.Popen([str(code), f"--user-data-dir={profile}",
                 f"--extensions-dir={extensions}", f"--extensionDevelopmentPath={controller}",
                 f"--extensionTestsPath={test_path}", "--skip-welcome", "--skip-release-notes",
+                "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=18527",
                 str(workspace)], env=env, stdout=log, stderr=subprocess.STDOUT)
+            run([str(ui_python), str(extension / "tests/windows_workspace_trust.py"),
+                 "--state", str(root)], "workspace-trust-ui")
             try:
                 status = child.wait(timeout=2400)
             except subprocess.TimeoutExpired:

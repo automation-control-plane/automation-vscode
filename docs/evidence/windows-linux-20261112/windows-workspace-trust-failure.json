@@ -1,0 +1,27 @@
+{
+  "checked_at_utc": "2026-11-12T21:00:30.888890+00:00",
+  "run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43305220856",
+  "passed_gates": [
+    "Official Code identity",
+    "Native Windows VSIX installation",
+    "Public Python debugger prerequisite installation",
+    "752 installed/archive/source payload comparisons"
+  ],
+  "first_fatal_gate": "Workspace trust assertion in actual installed Windows Extension Host before any workload",
+  "cause": "Fresh isolated Code profile correctly treats the synthetic folder as untrusted; the driver had not granted trust through the native UI.",
+  "correction": "Use task-owned loopback Code UI to grant only the exact synthetic workspace. Require its exact path, reject selected parent trust, retain enabled security.workspace.trust and final isTrusted assertion. No trust-store edits, trust-disable flags or global changes.",
+  "native_ui_validation": "Pending next exact-head run; local syntax and five existing boundary/layout tests pass, not native Windows acceptance.",
+  "retained_native_artifact": {
+    "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+    "sha256": "293490da8c0427411201c10f94caf07fed21ac9af2e0fcd41ba940f2b09ebfab",
+    "size": 2223847
+  },
+  "actual_host_receipt": {
+    "platform": "win32",
+    "scope": "Actual installed Windows Code Extension Host, native registered debug adapters and SDK outputs; not a panel-button or Windows managed acceptance claim.",
+    "cases": [],
+    "checks": [],
+    "passed": false,
+    "blocker": "AssertionError [ERR_ASSERTION]: Synthetic test workspace must be trusted before execution"
+  }
+}

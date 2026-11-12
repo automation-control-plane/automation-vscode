@@ -41,3 +41,13 @@ or ambiguous layouts. The regression failed before the fix; all five harness
 boundary/layout checks pass afterward, including a check against the actual
 official archive. No acceptance guard was relaxed. Native acceptance still
 requires the next exact-head run; the failed artifact remains unqualified.
+
+## Native workspace trust setup
+
+[The second native receipt](windows-workspace-trust-failure.json) confirms VSIX
+installation and all752 installed/source payloads passed. The actual extension
+host then correctly refused the fresh untrusted synthetic workspace. The
+correction grants only that task-owned folder through Code UI, requires its
+exact path, rejects selected parent trust, and retains both trust enforcement
+and the isTrusted assertion. No trust-store edits or disable flags are used.
+Native validation of this UI setup remains pending the next exact-head run.

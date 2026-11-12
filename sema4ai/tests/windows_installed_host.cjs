@@ -42,7 +42,17 @@ exports.run = async () => {
     let terminal;
     try {
         assert.equal(process.platform, 'win32'); assert.equal(process.arch, 'x64');
+        const trustEnabled = vscode.workspace.getConfiguration('security.workspace.trust').get('enabled', true);
+        assert.equal(trustEnabled, true, 'Workspace trust enforcement must remain enabled');
+        report.workspaceTrust = {enabled: trustEnabled, initiallyTrusted: vscode.workspace.isTrusted}; save();
+        if (!vscode.workspace.isTrusted) {
+            // The external UI driver may trust only this owned synthetic workspace.
+            // No private trust-store edits or trust-disable flags are permitted.
+            await vscode.commands.executeCommand('workbench.trust.manage');
+            await waitFor(() => vscode.workspace.isTrusted, 120000);
+        }
         assert.ok(vscode.workspace.isTrusted, 'Synthetic test workspace must be trusted before execution');
+        report.workspaceTrust.currentWorkspaceGranted = true; save();
         const extension = vscode.extensions.getExtension('automation-control-plane.automation-vscode');
         assert.ok(extension && extension.extensionPath.toLowerCase().startsWith(path.join(root, 'extensions').toLowerCase()));
         report.version = extension.packageJSON.version;
