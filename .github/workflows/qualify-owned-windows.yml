@@ -1,0 +1,43 @@
+name: Qualify owned Windows VSIX
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/qualify-owned-windows.yml'
+      - 'sema4ai/**'
+      - 'sema4ai-python-ls-core/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: owned-windows-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  native-windows:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Package and qualify exact installed Windows VSIX
+        shell: pwsh
+        run: |
+          python sema4ai/tests/qualify_native_windows.py --state "$env:RUNNER_TEMP\owned-vscode"
+      - name: Retain only sanitized receipts and exact candidate
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owned-windows-vsix-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/owned-vscode/public/**
