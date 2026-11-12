@@ -16,6 +16,7 @@ from sema4ai_ls_core.jsonrpc.monitor import Monitor
 @pytest.mark.parametrize("platform,separator", [("win32", ";"), ("linux", ":")])
 def test_environment_order_keys_and_immutability(monkeypatch, platform, separator):
     monkeypatch.setattr(pythonpath.sys, "platform", platform)
+    monkeypatch.setattr(pythonpath.os, "pathsep", separator)
     monkeypatch.setenv("PYTHONPATH", "parent")
     shared = {"PythonPath": "interpreter", "OTHER": "kept"}
     original = shared.copy()
