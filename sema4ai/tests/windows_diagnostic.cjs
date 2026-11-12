@@ -17,4 +17,30 @@ function exceptionSummary(error, root) {
     return {name, code, message: scrubDiagnostic(error?.message || error, root)};
 }
 
-module.exports = {scrubDiagnostic, exceptionSummary};
+function collectAdapterFailures(root) {
+    const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
+    const directory = path.join(root, 'debugpy-private');
+    const names = fs.existsSync(directory) ? fs.readdirSync(directory).filter(name => /^debugpy\.[\w.-]+\.log$/.test(name)).slice(0, 20) : [];
+    const files = names.map(name => {
+        const file = path.join(directory, name), descriptor = fs.openSync(file, 'r');
+        let data;
+        try {
+            const size = fs.fstatSync(descriptor).size, length = Math.min(size, 512 * 1024);
+            data = Buffer.alloc(length); fs.readSync(descriptor, data, 0, length, size - length);
+        } finally {fs.closeSync(descriptor);}
+        const lines = data.toString('utf8').split(/\r?\n/).filter(line =>
+            /[A-Za-z_.]+(?:Error|Exception)|Fatal Python error|Traceback|uncaught|Unhandled|failed|cannot|not found|Errno|WinError|^E\+\d/i.test(line));
+        const fatalLines = lines.map(line => scrubDiagnostic(line, root)).filter(Boolean).slice(-30);
+        return {file: name, inspectedTailSha256: crypto.createHash('sha256').update(data).digest('hex'), fatalLines};
+    });
+    return {scope: 'Scrubbed fatal lines only; raw debugpy logs remain private', privateLogFilesFound: names.length, files};
+}
+
+module.exports = {scrubDiagnostic, exceptionSummary, collectAdapterFailures};
+
+if (require.main === module) {
+    const fs = require('node:fs'), path = require('node:path');
+    if (process.argv[2] !== '--collect' || !process.argv[3]) throw Error('Expected task-owned diagnostic directory');
+    const root = path.resolve(process.argv[3]);
+    fs.writeFileSync(path.join(root, 'public/adapter-log-diagnostics.json'), JSON.stringify(collectAdapterFailures(root), null, 2));
+}

@@ -29,7 +29,7 @@ def clean_environment(source, extra=None):
     result = {key: value for key, value in source.items() if key.upper() in SYSTEM_KEYS}
     result.update(PYTHONNOUSERSITE="1", PYTHONUTF8="1")
     if extra:
-        task_keys = {"HOME", "ACTIONS_HOME", "ROBOTS_HOME", "RCC_HOLOTREE_MODE", "AUTOMATION_WINDOWS_QA"}
+        task_keys = {"HOME", "ACTIONS_HOME", "ROBOTS_HOME", "RCC_HOLOTREE_MODE", "AUTOMATION_WINDOWS_QA", "DEBUGPY_LOG_DIR"}
         if any(key.upper() not in SYSTEM_KEYS | task_keys for key in extra):
             raise ValueError("Unapproved QA environment variable")
         result.update(extra)
@@ -81,10 +81,12 @@ def main():
         "HOME": str(root / "home"), "ACTIONS_HOME": str(root / "actions"),
         "ROBOTS_HOME": str(root / "robots"), "RCC_HOLOTREE_MODE": "private",
         "AUTOMATION_WINDOWS_QA": str(root),
+        "DEBUGPY_LOG_DIR": str(root / "debugpy-private"),
     })
-    for name in ("home", "actions", "robots"):
+    for name in ("home", "actions", "robots", "debugpy-private"):
         (root / name).mkdir()
     child = None
+    node = None
 
     def save():
         (public / "qualification.json").write_text(json.dumps(report, indent=2) + "\n")
@@ -205,6 +207,12 @@ def main():
         if child is not None and child.poll() is None:
             child.terminate()
             child.wait(timeout=30)
+        if node:
+            with (root / "adapter-log-collection.private.log").open("wb") as log:
+                collection = subprocess.run([node, str(extension / "tests/windows_diagnostic.cjs"),
+                    "--collect", str(root)], cwd=extension, env=env, stdout=log,
+                    stderr=subprocess.STDOUT, timeout=30)
+            report["private_adapter_log_collection_exit"] = collection.returncode
         save()
         (public / "SHA256SUMS.txt").write_text("".join(
             digest(p) + "  " + p.name + "\n" for p in sorted(public.iterdir()) if p.name != "SHA256SUMS.txt"))

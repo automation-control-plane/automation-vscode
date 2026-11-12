@@ -1,6 +1,6 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
-const {scrubDiagnostic, exceptionSummary} = require('./windows_diagnostic.cjs');
+const {scrubDiagnostic, exceptionSummary, collectAdapterFailures} = require('./windows_diagnostic.cjs');
 
 test('adapter error preserves the error code and approved diagnostic context', () => {
     const error = Object.assign(new Error('spawn D:\\qa\\python.exe ENOENT'), {code: 'ENOENT'});
@@ -16,4 +16,18 @@ test('diagnostic output is bounded without serializing exception properties', ()
     const result = exceptionSummary(error, 'D:\\qa');
     assert.ok(result.message.length <= 2000);
     assert.equal(JSON.stringify(result).includes('synthetic'), false);
+});
+test('private adapter log collection retains fatal lines without environment or opaque values', () => {
+    const fs = require('node:fs'), path = require('node:path'), os = require('node:os');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'adapter-diagnostic-'));
+    try {
+        fs.mkdirSync(path.join(root, 'debugpy-private'));
+        fs.writeFileSync(path.join(root, 'debugpy-private/debugpy.adapter-7.log'),
+            'Traceback (most recent call last):\nModuleNotFoundError: No module named debugpy\nError env: synthetic\nError Authorization: Bearer synthetic\nError ' + 'A'.repeat(48));
+        const result = collectAdapterFailures(root);
+        assert.equal(result.privateLogFilesFound, 1);
+        assert.ok(result.files[0].fatalLines.some(line => line.includes('ModuleNotFoundError')));
+        assert.equal(JSON.stringify(result).includes('synthetic'), false);
+        assert.equal(JSON.stringify(result).includes('A'.repeat(48)), false);
+    } finally {fs.rmSync(root, {recursive: true});}
 });

@@ -82,3 +82,13 @@ The next diagnostic run retains scrubbed exception/response/exit metadata and
 command names only. No launch environment/arguments are dumped and no workload
 assertion is relaxed. The underlying adapter cause remains unestablished until
 that actual receipt is available. Three diagnostic security regressions pass.
+
+## Adapter process failure boundary
+
+[Run43309267663](windows-adapter-read-error.json) identifies the first case as
+Action/File Run. The python adapter accepted initialize/launch, then reported
+read error and exited1. No lower-level exception was supplied by the tracker.
+The next run uses standard private debugpy logs and retains only bounded scrubbed
+fatal lines, never complete logs or launch environments. No SDK or adapter type
+change is guessed. Four diagnostic security tests and six harness boundary tests
+pass; actual native workload acceptance remains pending.

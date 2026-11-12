@@ -152,6 +152,11 @@ exports.run = async () => {
                 const tracker = vscode.debug.registerDebugAdapterTrackerFactory('*', {createDebugAdapterTracker: session => {
                     if (session.name !== name) return;
                     report.currentCase.adapterTypes.push(session.type); save();
+                    const selectedPython = Array.isArray(session.configuration.python) ? session.configuration.python[0] : session.configuration.python;
+                    report.currentCase.resolvedLaunch = {console: session.configuration.console,
+                        program: typeof session.configuration.program === 'string' ? path.basename(session.configuration.program) : undefined,
+                        targetPythonMatchesPackage: typeof selectedPython === 'string' && path.resolve(selectedPython).toLowerCase() === path.resolve(info.pythonExe).toLowerCase(),
+                        privateDebugLogDirectoryRetained: session.configuration.env?.DEBUGPY_LOG_DIR === process.env.DEBUGPY_LOG_DIR}; save();
                     return {onWillReceiveMessage(message) {
                         if (message.type === 'request' && /^[A-Za-z]{1,40}$/.test(message.command || '') && report.currentCase.commands.length < 30) {
                             report.currentCase.commands.push(message.command); save();
