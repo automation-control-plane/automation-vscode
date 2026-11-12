@@ -1,3 +1,6 @@
+> Latest exact-byte acceptance: [2.20.24 final installed ledger](2.20.24/README.md).
+> Earlier checkpoint evidence below remains version-specific and preserved.
+
 # Installed native Work Items checkpoint — 2.20.22
 
 Runtime payload commit: `a31a9dfd3e147d91ac37aca7d058c22135af4631`.
