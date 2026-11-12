@@ -47,7 +47,7 @@ def test_action_operations_reject_vendor_only_environment(tmp_path, script, args
         sdk(tmp_path, name)
     result = execute(tmp_path, script, args)
     assert result.returncode != 0
-    assert "actions-core==1.0.3" in result.stderr
+    assert "actions-core==1.1.0" in result.stderr
     assert "package.yaml" in result.stderr
     assert "CLI:" not in result.stdout
 
@@ -58,7 +58,7 @@ def test_lint_exposes_owned_dependency_diagnostic(tmp_path):
     assert result.returncode == 0, result.stderr
     diagnostics = json.loads(result.stdout)
     assert diagnostics[0]["severity"] == 1
-    assert "actions-core==1.0.3" in diagnostics[0]["message"]
+    assert "actions-core==1.1.0" in diagnostics[0]["message"]
 
 
 def test_owned_sdk_is_used_when_vendor_sdks_also_exist(tmp_path):

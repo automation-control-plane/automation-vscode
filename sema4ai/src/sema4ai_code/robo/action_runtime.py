@@ -15,7 +15,7 @@ class ActionSDKError(RuntimeError):
 
 
 _INSTALL_HELP = (
-    "Add actions-core==1.0.3 to the Python dependencies in package.yaml and rebuild "
+    "Add actions-core==1.1.0 to the Python dependencies in package.yaml and rebuild "
     "the selected Action Package environment. Legacy vendor Action SDKs are not substitutes."
 )
 

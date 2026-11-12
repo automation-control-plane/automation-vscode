@@ -2,14 +2,14 @@
 
 [[package]]
 name = "actions-core"
-version = "1.0.3"
+version = "1.1.0"
 description = "Actions Core"
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["dev"]
 files = [
-    {file = "actions_core-1.0.3-py3-none-any.whl", hash = "sha256:8e088b40c39fa3badf581e584e466d0aef3371aed220f6dc7dce130fd11c1265"},
-    {file = "actions_core-1.0.3.tar.gz", hash = "sha256:1df0ac65bf75103da654d7b3abe0c66da590af07bb24399613f83f20a24f0691"},
+    {file = "actions_core-1.1.0-py3-none-any.whl", hash = "sha256:38bd11c756cc60d0c028094d6e7f5f3859d724114e2abd48e54f0951e2a3dac6"},
+    {file = "actions_core-1.1.0.tar.gz", hash = "sha256:135bef2b94a45e25b1adff9358dc2082364afc12617e35efc33e78f32d461554"},
 ]
 
 [package.dependencies]
@@ -19,8 +19,7 @@ docstring_parser_fork = ">=0.0.5,<0.0.6"
 psutil = ">=5.0,<8.0"
 pydantic = ">=2.11.7,<3.0.0"
 pyyaml = ">=6.0,<7.0"
-robocorp-log = ">=2.4,<4"
-robocorp-truststore = ">=0.8.0"
+truststore = ">=0.10,<1.0"
 
 [[package]]
 name = "actions-http-helper"
@@ -1439,33 +1438,6 @@ files = [
 ]
 
 [[package]]
-name = "robocorp-log"
-version = "2.9.6"
-description = "Automatic trace logging for Python"
-optional = false
-python-versions = "<4.0,>=3.9"
-groups = ["dev"]
-files = [
-    {file = "robocorp_log-2.9.6-py3-none-any.whl", hash = "sha256:389515a0d8754d6fbb9355b24f871201b28d0214a889a65ba13c631a3edf94c7"},
-    {file = "robocorp_log-2.9.6.tar.gz", hash = "sha256:67f88dba5ce626b42e645e7dfe60abd78edd50d17a1a2f6c554c78c1d2ca1176"},
-]
-
-[package.dependencies]
-psutil = ">=5.9,<6.0"
-
-[[package]]
-name = "robocorp-truststore"
-version = "0.9.1"
-description = "Verify certificates using native system trust stores"
-optional = false
-python-versions = ">=3.10"
-groups = ["dev"]
-files = [
-    {file = "robocorp_truststore-0.9.1-py3-none-any.whl", hash = "sha256:dfdd4812dffce8a91134e8b69a3c55072fc9785dbdd583d4047f323779ac2f39"},
-    {file = "robocorp_truststore-0.9.1.tar.gz", hash = "sha256:a1abfd9c5b7fe22152a8eeb9510812800dca741851c720742c598c0f78ee4f3f"},
-]
-
-[[package]]
 name = "ruamel-yaml"
 version = "0.18.17"
 description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
@@ -1861,4 +1833,4 @@ zstd = ["backports-zstd (>=1.0.0) ; python_version < \"3.14\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "09d60e433a0a80363c415b20107c5feceadefdbbfa25d7ceeda9c570f30708ef"
+content-hash = "ab3142e15159a73be3769d56962a17d9f12fdab68785a4eae9cb3f095652637d"

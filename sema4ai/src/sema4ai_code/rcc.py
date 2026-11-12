@@ -114,7 +114,7 @@ def download_rcc(
     """
     from sema4ai_code.tools import download_tool
 
-    RCC_VERSION = "v18.19.7"
+    RCC_VERSION = "v18.19.8"
     download_tool(
         Tool.RCC,
         location,

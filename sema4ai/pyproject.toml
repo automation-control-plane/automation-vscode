@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sema4ai-vscode-extension"
-version = "2.20.24"
+version = "2.20.25"
 description = "Sema4.ai: Visual Studio Code Extension for AI Actions and Robot Tasks development"
 authors = ["Fabio Zadrozny <fabio@robocorp.com>"]
 readme = "README.md"
@@ -51,7 +51,7 @@ sema4ai-python-ls-core = { path = "../sema4ai-python-ls-core/", develop = true }
 
 fire = "*"
 
-actions-core = "1.0.3"  # Published owned API for local regression fixtures.
+actions-core = "1.1.0"  # Published owned API for local regression fixtures.
 # Historical vendor fixtures use tests/legacy-sdk-requirements.txt in a separate
 # opt-in test environment. They are never extension bootstrap dependencies.
 

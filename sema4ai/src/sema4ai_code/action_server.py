@@ -29,7 +29,7 @@ from sema4ai_code.protocols import (
 log = get_logger(__name__)
 
 ONE_MINUTE_S = 60
-ACTION_SERVER_VERSION = "1.0.4"
+ACTION_SERVER_VERSION = "1.1.0"
 
 if typing.TYPE_CHECKING:
     from sema4ai_code.vendored_deps.url_callback_server import LastRequestInfoTypedDict
@@ -688,7 +688,7 @@ class ActionServer:
             package_yaml["name"] = name
             import re
 
-            pins = {"actions-core": "1.0.3", "actions-work-items": "0.4.4"}
+            pins = {"actions-core": "1.1.0", "actions-work-items": "0.4.4"}
             for group in ("dependencies", "dev-dependencies"):
                 dependencies = package_yaml.get(group, {}).get("pypi", [])
                 for index, dependency in enumerate(dependencies):
