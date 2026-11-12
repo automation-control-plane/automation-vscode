@@ -47,7 +47,15 @@ secure connection and queue selection pass. Read-only `canvas_open` returns an
 explicit error, so execution discovery and all native managed mutations remain
 unqualified. No enqueue, claim or invoke was sent. The Actions owner is inspecting
 the fixture's canonical discovery setup; no client authority/schema guard changed.
-[Live read-only receipts](managed-readonly.json) retain the exact scope. The NVIDIA source Runtime/direct Robot probe is separate
+[Live read-only receipts](managed-readonly.json) retain the exact scope. The owner then
+corrected its fixture at `b3e20f961b5a8c8170c8bf35f1cf82657ccd9205`: it now authors a
+real active Canvas application and exact admitted Robot binding. Read-only
+application/descriptor discovery succeeds, but the genuine snapshot has runtime
+kind `direct`. The installed selector deliberately supports `rcc` only and refuses
+that selection. [Direct-scope refusal evidence](managed-direct-scope-refusal.json)
+is separate from managed RCC acceptance. No direct expansion was compiled,
+packaged, installed, committed, or pushed. The owner is preparing a genuinely
+pinned RCC 18.19.8 fixture; no direct receipt is relabeled as RCC. The NVIDIA source Runtime/direct Robot probe is separate
 evidence, not this extension's native Run acceptance or installed Runtime/RCC
 proof. No historical endpoint is adopted. Negotiate live tools, schemas, protocol,
 model authority and queue-specific capabilities before execution. Preserve

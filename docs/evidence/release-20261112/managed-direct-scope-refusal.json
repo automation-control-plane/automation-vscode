@@ -1,0 +1,179 @@
+{
+  "endpoint": "http://127.0.0.1:37699",
+  "source_commit": "b3e20f961b5a8c8170c8bf35f1cf82657ccd9205",
+  "versions": {
+    "actions-runtime": "1.1.0",
+    "actions-core": "1.1.0",
+    "actions-work-items": "0.5.0"
+  },
+  "invocations": 0,
+  "capabilities": {
+    "schema_version": "actions.managed-work-items/v1",
+    "runtime_version": "1.1.0",
+    "sdk_version": "0.5.0",
+    "workspace_id": "3c2928b7-c787-415a-8297-14fffbbdf5c7",
+    "operations": [
+      "queues.list",
+      "items.list",
+      "items.get",
+      "runs.get",
+      "runs.logs",
+      "items.enqueue",
+      "reviews.list",
+      "reviews.decide",
+      "items.claim",
+      "items.renew",
+      "items.cancel",
+      "artifacts.read",
+      "items.complete"
+    ],
+    "permissions": [
+      "work_items.read",
+      "work_items.enqueue",
+      "work_items.claim",
+      "work_items.complete",
+      "work_items.retry",
+      "work_items.cancel",
+      "work_items.review",
+      "work_items.artifact.read"
+    ],
+    "backend": "sqlite",
+    "time_authority": "database",
+    "modes": [
+      "reviewed",
+      "consumer"
+    ]
+  },
+  "applications": [
+    {
+      "activeRevisionId": "sha256:31a38060525f93fc405a56381e2bda5f459a829b268b7ae932fcd579a1f822f8",
+      "applicationId": "502a88e2-23ca-4f09-ab9b-9965da0bb30d",
+      "title": "Owned managed Robot acceptance"
+    }
+  ],
+  "descriptors": [],
+  "accepted": false,
+  "error": "Canonical execution selection is invalid or outside the selected scope.",
+  "read_only_inspection": {
+    "activeRevisionId": "sha256:31a38060525f93fc405a56381e2bda5f459a829b268b7ae932fcd579a1f822f8",
+    "applicationId": "502a88e2-23ca-4f09-ab9b-9965da0bb30d",
+    "invocationAvailability": "authorized",
+    "invocationDescriptors": [
+      {
+        "bindingId": "run",
+        "inputMode": "claim",
+        "inputQueue": {
+          "deployment": {
+            "deployment_id": "502a88e2-23ca-4f09-ab9b-9965da0bb30d",
+            "revision_id": "sha256:31a38060525f93fc405a56381e2bda5f459a829b268b7ae932fcd579a1f822f8",
+            "workspace_id": "3c2928b7-c787-415a-8297-14fffbbdf5c7"
+          },
+          "queue_id": "vscode-input",
+          "workspace_id": "3c2928b7-c787-415a-8297-14fffbbdf5c7"
+        },
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "type": "object"
+        },
+        "mode": "generic",
+        "snapshot": {
+          "action_id": "1e4eb94c-13bc-58b0-af36-1b913df4ee67",
+          "canvas_application": {
+            "app_id": "502a88e2-23ca-4f09-ab9b-9965da0bb30d",
+            "revision_id": "sha256:3c8f15ea3514bcb91784819a90d6d7cd22bce7b15575a17b2dca9af3a176dc2a",
+            "workspace_id": "3c2928b7-c787-415a-8297-14fffbbdf5c7"
+          },
+          "capability": {
+            "capability_id": "robot.task",
+            "package_revision": {
+              "package_id": "f62c77da-fb59-568f-88df-41a442393620",
+              "revision_id": "sha256:eff571f9b40d955a51f45b45964b6dbb24e0abdfa2e6251bdc9703ad7d49e8ec",
+              "workspace_id": "3c2928b7-c787-415a-8297-14fffbbdf5c7"
+            }
+          },
+          "capability_authority": "package-revision",
+          "capability_schema_digest": "sha256:12ed9447fbbb261381b19f521a226cefef9dd3f6250b42a14873a051886c18e7",
+          "data_binding": null,
+          "deployment": {
+            "deployment_id": "502a88e2-23ca-4f09-ab9b-9965da0bb30d",
+            "revision_id": "sha256:31a38060525f93fc405a56381e2bda5f459a829b268b7ae932fcd579a1f822f8",
+            "workspace_id": "3c2928b7-c787-415a-8297-14fffbbdf5c7"
+          },
+          "output_provider": {
+            "provider_profile_id": "05762dcf-c306-4977-affb-6623fe5d14f7",
+            "revision_id": "sha256:08c081394a0be06660bdf50344d40b8fca1800f3f65b455ee6c3d910ebef600e",
+            "workspace_id": "3c2928b7-c787-415a-8297-14fffbbdf5c7"
+          },
+          "policy": {
+            "policy_id": "b7732060-13e2-45c5-a8cd-2feef7c7fa2d",
+            "revision_id": "sha256:08c081394a0be06660bdf50344d40b8fca1800f3f65b455ee6c3d910ebef600e",
+            "workspace_id": "3c2928b7-c787-415a-8297-14fffbbdf5c7"
+          },
+          "runtime_kind": "direct",
+          "runtime_plan": {
+            "package_revision": {
+              "package_id": "f62c77da-fb59-568f-88df-41a442393620",
+              "revision_id": "sha256:eff571f9b40d955a51f45b45964b6dbb24e0abdfa2e6251bdc9703ad7d49e8ec",
+              "workspace_id": "3c2928b7-c787-415a-8297-14fffbbdf5c7"
+            },
+            "plan_digest": "sha256:ffa1032b21d7f8e32a6bbb53a0fe38e9537e378799379d58f6eee73b1dcf54ed"
+          },
+          "worker": {
+            "revision_id": "sha256:08c081394a0be06660bdf50344d40b8fca1800f3f65b455ee6c3d910ebef600e",
+            "worker_profile_id": "d0d99dfe-04d5-4ccd-8a0a-af2b359c38ce",
+            "workspace_id": "3c2928b7-c787-415a-8297-14fffbbdf5c7"
+          }
+        },
+        "standaloneAllowed": false
+      }
+    ],
+    "invocationReadiness": "not-checked",
+    "revisions": [
+      {
+        "active": true,
+        "admissionVerification": "source-and-plan-verified",
+        "backendKind": "robot",
+        "backendValidationStatus": "passed",
+        "executionQualification": "not-qualified",
+        "revisionId": "sha256:31a38060525f93fc405a56381e2bda5f459a829b268b7ae932fcd579a1f822f8",
+        "runtimeKind": "direct",
+        "spec": {
+          "bindingIds": [
+            "run"
+          ],
+          "root": {
+            "bindingId": "run",
+            "fields": [
+              {
+                "label": "Synthetic input",
+                "name": "value",
+                "required": true,
+                "type": "text"
+              }
+            ],
+            "id": "managed-robot",
+            "submitLabel": "Run selected input",
+            "type": "form"
+          },
+          "schemaVersion": "actions.canvas-spec/v1",
+          "title": "Owned managed Robot acceptance",
+          "visibility": [
+            "model",
+            "app"
+          ]
+        },
+        "validationKind": "robot-dryrun",
+        "validationStatus": "passed"
+      }
+    ]
+  },
+  "scope_disposition": "Intentional RCC-only selector refusal of genuine direct Robot. No client expansion, relabeling, mutation or invocation."
+}

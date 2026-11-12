@@ -35,6 +35,10 @@ test('Discovery refuses cross-workspace/revision/queue descriptors and unknown a
         f=>f.descriptor.inputQueue.workspace_id=I,
         f=>f.descriptor.inputQueue.deployment.deployment_id=I,
         f=>f.descriptor.mode='detached',
+        f=>{
+            Object.assign(f.descriptor.snapshot,{runtime_kind:'direct',capability_authority:'package-revision'});
+            f.descriptor.snapshot.capability.capability_id='robot.task';
+        },
         f=>f.descriptor.inputMode='future',
         f=>f.descriptor.snapshot.capability_authority='future',
         f=>f.descriptor.worker_id=I,
