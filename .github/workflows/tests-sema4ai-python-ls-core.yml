@@ -1,15 +1,9 @@
 name: Tests - Python Language Server Core (sema4ai-python-ls-core)
 
+# Historical vendor/integration jobs are explicit opt-in. Owned qualification
+# must not fan out these matrices or request their historical secrets.
 on:
-  push:
-    paths:
-      - sema4ai-python-ls-core/**
-      - .github/**
-
-  pull_request:
-    paths:
-      - sema4ai-python-ls-core/**
-      - .github/**
+  workflow_dispatch:
 
 jobs:
   build:

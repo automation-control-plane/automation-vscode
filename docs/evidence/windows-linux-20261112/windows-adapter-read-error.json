@@ -1,0 +1,39 @@
+{
+  "checked_at_utc": "2026-11-12T21:29:15.127144+00:00",
+  "run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43309267663",
+  "precise_observation": "First Action/File Run: python adapter accepted initialize/launch, then tracker reported read error and adapter exit1. No completed case or failed DAP response was retained.",
+  "adapter_failure": {
+    "adapterType": "python",
+    "error": {
+      "name": "Error",
+      "message": "read error"
+    }
+  },
+  "adapter_exit": {
+    "adapterType": "python",
+    "code": 1
+  },
+  "case": {
+    "kind": "action",
+    "mode": "file",
+    "operation": "run",
+    "stage": "native-debugging-started",
+    "adapterTypes": [
+      "python"
+    ],
+    "commands": [
+      "initialize",
+      "launch",
+      "disconnect"
+    ]
+  },
+  "premise_tested": "Tracker exception alone does not expose the adapter process root cause; no target SDK/type/interpreter defect is assumed.",
+  "next_diagnostic_boundary": "Enable standard DEBUGPY_LOG_DIR only in isolated job environment. Keep raw logs private; upload only bounded scrubbed fatal lines from adapter logs and nonsecret resolved-launch identity booleans.",
+  "security": "No raw logs, launch args or environment dumps in public artifact. Four scrub/collector tests pass; six existing harness boundary/layout tests pass. Native workload and all trust/identity guards unchanged.",
+  "failed_native_artifact": {
+    "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+    "sha256": "ef3a01c2d14cd628014b1daf17332d18d3be4a9210593000bd9959703d7069bb",
+    "size": 2223847
+  },
+  "native_windows_acceptance": "Pending actual passing native workloads."
+}

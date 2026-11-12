@@ -1,0 +1,173 @@
+{
+  "checked_at_utc": "2026-11-12T21:55:01.844860+00:00",
+  "run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43313656256",
+  "proved_change": "After canonical fixture fix, private adapter/launcher protocols show target exit0 and terminated; earlier fixture failure had exit1.",
+  "remaining_harness_failure": "Unconditional native onError read-error classification aborts the case. The old host receipt did not record callback state at error time.",
+  "protocol_metadata": {
+    "debugpy.adapter-1272.log": [
+      {
+        "field": "event",
+        "value": "output"
+      },
+      {
+        "field": "event",
+        "value": "output"
+      },
+      {
+        "field": "event",
+        "value": "debugpySockets"
+      },
+      {
+        "field": "command",
+        "value": "initialize"
+      },
+      {
+        "field": "success",
+        "value": true
+      },
+      {
+        "field": "command",
+        "value": "initialize"
+      },
+      {
+        "field": "command",
+        "value": "launch"
+      },
+      {
+        "field": "event",
+        "value": "debugpySockets"
+      },
+      {
+        "field": "event",
+        "value": "debugpySockets"
+      },
+      {
+        "field": "command",
+        "value": "runInTerminal"
+      },
+      {
+        "field": "success",
+        "value": true
+      },
+      {
+        "field": "command",
+        "value": "runInTerminal"
+      },
+      {
+        "field": "command",
+        "value": "launch"
+      },
+      {
+        "field": "event",
+        "value": "process"
+      },
+      {
+        "field": "success",
+        "value": true
+      },
+      {
+        "field": "command",
+        "value": "launch"
+      },
+      {
+        "field": "event",
+        "value": "debugpySockets"
+      },
+      {
+        "field": "success",
+        "value": true
+      },
+      {
+        "field": "command",
+        "value": "launch"
+      },
+      {
+        "field": "event",
+        "value": "process"
+      },
+      {
+        "field": "event",
+        "value": "exited"
+      },
+      {
+        "field": "exitCode",
+        "value": 0
+      },
+      {
+        "field": "event",
+        "value": "terminated"
+      },
+      {
+        "field": "event",
+        "value": "exited"
+      },
+      {
+        "field": "exitCode",
+        "value": 0
+      },
+      {
+        "field": "event",
+        "value": "terminated"
+      },
+      {
+        "field": "event",
+        "value": "debugpySockets"
+      },
+      {
+        "field": "command",
+        "value": "disconnect"
+      },
+      {
+        "field": "success",
+        "value": true
+      },
+      {
+        "field": "command",
+        "value": "disconnect"
+      },
+      {
+        "field": "event",
+        "value": "debugpySockets"
+      }
+    ],
+    "debugpy.launcher-1284.log": [
+      {
+        "field": "command",
+        "value": "launch"
+      },
+      {
+        "field": "event",
+        "value": "process"
+      },
+      {
+        "field": "success",
+        "value": true
+      },
+      {
+        "field": "command",
+        "value": "launch"
+      },
+      {
+        "field": "event",
+        "value": "exited"
+      },
+      {
+        "field": "exitCode",
+        "value": 0
+      },
+      {
+        "field": "event",
+        "value": "terminated"
+      }
+    ]
+  },
+  "bounded_classifier": "Only exact read error when the tracker has ALREADY observed target exit0 AND DAP terminated is recorded as post-completion transport closure. Early errors remain sticky fatal; missing markers, nonzero exits, other errors fail. Native session termination and all workload/output/attachment/lineage/replay assertions remain required.",
+  "native_evidence_needed": "Next run records observed-at-error markers and must pass actual outputs; protocol-log success alone never marks the host passed. Adapter process exit and any completion closure remain disclosed separately from target exit.",
+  "regression": "Positive completion-classification test failed before fix;6 classifier/scrub/collector tests pass after, including negative early/missing/nonzero/other-error cases.",
+  "failed_native_artifact": {
+    "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+    "sha256": "74061b3accb71d56dcb18920a9d5b04150047b4fe5ec42de7b599f23a6f54bc5",
+    "size": 2223847
+  },
+  "windows_qualified": false
+}

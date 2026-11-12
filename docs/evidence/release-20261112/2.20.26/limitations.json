@@ -1,0 +1,33 @@
+{
+  "published_sdk_direct_json_failure": {
+    "status": "Known uncorrected upstream limitation; not certified by happy-path acceptance",
+    "owner_verified": true,
+    "independently_reproduced_here": false,
+    "public_versions_affected": [
+      "0.4.4",
+      "0.5.0"
+    ],
+    "description": "Direct JSON-file failure cleanup can raise AttributeError str has no attribute value and mask the original task exception. Input.fail stores exception type as string; helper uses split arguments while _DirectFileAdapter expects enum.value. SDK0.5.0 alone is not a fix.",
+    "owner_reported_identical_members": [
+      "_support.py",
+      "_workitem.py",
+      "_adapters/_file.py"
+    ],
+    "owner_remote_receipt": "NVIDIA /var/tmp/codex-actions-qualification-20261112-0r0sofn6/sdk-published-failure-contract-probe.json",
+    "contract_bound": "Core1.1.0 declares no actions-work-items minimum; no blanket ABI claim. Directory/dict FileAdapter is a distinct exception= contract and was not substituted.",
+    "safe_handling": "A failure is not success or proof of nonexecution. Do not blindly retry or clear uncertain work from the secondary error.",
+    "new_backend_or_sdk_stream": false
+  },
+  "windows_runtime_reload_recovery": "Fail-closed unavailable: process-identity verifier remains Linux-only. Live-terminal startup/stop separately passed.",
+  "windows_unqualified_surfaces": [
+    "Work Items panel-button interaction",
+    "Managed Windows UI/server happy/failure/reconciliation acceptance",
+    "Java inspector",
+    "Broad image/recording/external integration acceptance"
+  ],
+  "generic_managed_invocation_recovery": "No generic original-request lookup; unknown invocation remains uncertain and blocks replacement mutations;404 is not nonexecution proof.",
+  "standalone_only_execution": "Not exposed by queue editor",
+  "mac": "No extension or new Runtime Mac artifact in this release",
+  "legacy_holotree_archive": "Isolated legacy shared archive export remains unsupported",
+  "marketplaces": "No Marketplace/OpenVSX account/publication claim"
+}

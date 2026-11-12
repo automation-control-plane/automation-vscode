@@ -1,0 +1,56 @@
+{
+  "checked_at_utc": "2026-11-12T20:38:28.421595+00:00",
+  "status": "Implementation prepared; native Windows acceptance BLOCKED, not passed.",
+  "repository_actions_enabled": false,
+  "registered_self_hosted_runners": 0,
+  "linked_windows_environment": false,
+  "preserved_linux_release": "https://github.com/automation-control-plane/automation-vscode/releases/tag/automation-vscode-v2.20.25",
+  "candidate_version": "2.20.26",
+  "upstream": {
+    "repository": "Sema4AI/vscode-extension",
+    "head_observed": "0f9812dd303ca31d748826f211ab0520aee93367",
+    "workflow": ".github/workflows/release-sema4ai-sdk.yml",
+    "pattern": "Separate win32-x64 and linux-x64 VSIXs, then vendor Marketplace/OpenVSX publication. Owned fork retains GitHub VSIX releases and adds no accounts/scopes."
+  },
+  "planned_native_windows_gates": [
+    "Official Code archive digest and native win32-x64 identity",
+    "Exact installed/archive/source payload match",
+    "Cold installed RCC bootstrap with isolated Action/Robot homes",
+    "Actual extension-host/LSP activation and Windows executable downloads",
+    "Eight native Action/Robot File/SQLite Run/Debug cases, four real breakpoints",
+    "Actual output/attachment lineage and edited replay through installed bridge",
+    "Scoped Win32/COM inspector probe against one test-owned window",
+    "Runtime live-terminal start/stop and occupied listener refusal"
+  ],
+  "not_claimed": [
+    "Windows native acceptance before a successful run",
+    "Managed Windows UI/server acceptance",
+    "Windows process recovery after reload; Linux-only verifier remains fail-closed",
+    "Java inspector, Mac or Marketplace acceptance"
+  ],
+  "approval_needed": {
+    "reason": "User explicitly requires approval for unanticipated persistent permissions.",
+    "proposed_repository_actions_permission": {
+      "enabled": true,
+      "allowed_actions": "selected"
+    },
+    "proposed_selected_actions_permission": {
+      "github_owned_allowed": false,
+      "verified_allowed": false,
+      "patterns_allowed": [
+        "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+        "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
+      ]
+    },
+    "new_credentials": false,
+    "publisher_accounts": false,
+    "repository_visibility_changes": false,
+    "job_permissions": "contents:read"
+  },
+  "portable_harness_checks": {
+    "passed": 3,
+    "scope": "Environment allowlist, archive traversal and symlink refusal. Not Windows acceptance."
+  }
+}

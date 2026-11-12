@@ -1,0 +1,43 @@
+{
+  "checked_at_utc": "2026-11-12T21:12:54.633477+00:00",
+  "run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43307242916",
+  "observed_progress": "Actual native trust UI passed with exact single-workspace binding, parent trust rejected and enforcement enabled;752 installation payload comparisons passed.",
+  "next_failed_gate": "Combined getExtension/install-prefix assertion before activation. Prior receipt cannot distinguish absent registry entry from path mismatch.",
+  "diagnostic_change": "Record exact installed id/version/directory/manifest digest, bounded post-trust registry synchronization and sanitized registry identity snapshots. Replace ambiguous prefix assertion with exact canonical verified directory and manifest-digest checks.",
+  "root_cause_claim": "Discovery timing versus path mismatch is not yet established. Next exact-head run must distinguish it; no speculative cause is reported as proven.",
+  "trust_receipt": {
+    "scope": "Trust only the task-owned synthetic workspace through native Code UI",
+    "parent_trust_selected": false,
+    "trust_enforcement_disabled": false,
+    "passed": true,
+    "exact_workspace_bound_by_native_api": true,
+    "loopback_code_ui_connected": true,
+    "exact_workspace_path_visible": false,
+    "author_trust_button_count": 0,
+    "trust_button_count": 1,
+    "native_trust_button_clicked": true,
+    "observed_native_workspace_trusted": true
+  },
+  "host_receipt": {
+    "platform": "win32",
+    "scope": "Actual installed Windows Code Extension Host, native registered debug adapters and SDK outputs; not a panel-button or Windows managed acceptance claim.",
+    "cases": [],
+    "checks": [],
+    "passed": false,
+    "workspaceTrust": {
+      "enabled": true,
+      "initiallyTrusted": false,
+      "folderCount": 1,
+      "exactSyntheticWorkspace": true,
+      "canonicalWorkspaceSha256": "ba77e48d990c2f3204b4b6dedef8ebcdf541c28dc29e98cd2397b45907c36aae",
+      "currentWorkspaceGranted": true
+    },
+    "blocker": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(extension && extension.extensionPath.toLowerCase().startsWith(path.join(root, 'extensions').toLowerCase()))\n"
+  },
+  "retained_native_artifact": {
+    "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+    "sha256": "4a774a93ade5b0c55b28ac399f26089ab14e1d1595cb3ea617edbe311fc5e132",
+    "size": 2223847
+  },
+  "validation": "Six portable boundary/layout/binding checks and Python/Node syntax pass. No actual workload or Windows release acceptance claimed."
+}

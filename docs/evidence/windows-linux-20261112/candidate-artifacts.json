@@ -1,0 +1,28 @@
+{
+  "candidate": "2.20.26",
+  "prior_linux_sha256": "02aecf7d5068f53234296cedd26bf183fdc2610fbf4fba04d07de826f5aee59d",
+  "payload_count": 752,
+  "linux_changes_from_2_20_25": [
+    "extension/package.json",
+    "extension/src/sema4ai_code/__init__.py"
+  ],
+  "windows_linux_extension_payloads_identical": true,
+  "artifacts": [
+    {
+      "filename": "automation-vscode-2.20.26-linux-x64.vsix",
+      "sha256": "1a4879e427623928704e72ca906373b8eaf5f8d022d2bddefaa17b546eb8b43e",
+      "size": 2216866,
+      "target": "linux-x64",
+      "native_acceptance": "Unchanged runtime payload carried from2.20.25; only version metadata changed."
+    },
+    {
+      "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+      "sha256": "f12add3c4273d358d8448d3ae89bc7e61a29c331f46dd453242d7f49abe2922f",
+      "size": 2216866,
+      "target": "win32-x64",
+      "native_acceptance": "pending Windows runner"
+    }
+  ],
+  "windows_qualified": false,
+  "native_windows_blocker": "Actions disabled; explicit persistent permission approval required."
+}

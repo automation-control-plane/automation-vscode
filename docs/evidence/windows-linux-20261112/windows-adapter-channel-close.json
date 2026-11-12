@@ -1,0 +1,57 @@
+{
+  "checked_at_utc": "2026-11-12T21:39:13.711571+00:00",
+  "run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43310745992",
+  "observed_failure": "First Action/File Run again reports adapter read error and exit1. Configured target Python matches the resolved package interpreter.",
+  "log_evidence": {
+    "scope": "Scrubbed fatal lines only; raw debugpy logs remain private",
+    "privateLogFilesFound": 2,
+    "files": [
+      {
+        "file": "debugpy.adapter-2400.log",
+        "inspectedTailSha256": "209bb853a83d707e4e85e63ed191391454693abc0fe8bc2a1a5753d0fc19c810",
+        "fatalLines": [
+          "D+00009.562: Exiting message loop for channel Launcher[1]: [WinError 10038] An operation was attempted on something that is not a socket"
+        ]
+      },
+      {
+        "file": "debugpy.launcher-8916.log",
+        "inspectedTailSha256": "20a3d3101e4cf10af8d26974c674725a34e538dbd522d931cafc2a00c0a27ea9",
+        "fatalLines": []
+      }
+    ]
+  },
+  "case": {
+    "kind": "action",
+    "mode": "file",
+    "operation": "run",
+    "stage": "native-debugging-started",
+    "adapterTypes": [
+      "python"
+    ],
+    "commands": [
+      "initialize",
+      "launch",
+      "disconnect"
+    ],
+    "resolvedLaunch": {
+      "console": "integratedTerminal",
+      "program": "launch_actions.py",
+      "targetPythonMatchesPackage": true,
+      "privateDebugLogDirectoryRetained": false
+    }
+  },
+  "cause_boundary": "Only retained fatal-pattern line is a Launcher channel socket closure WinError10038. It does not establish the initiating failure. No SDK/type/interpreter change is inferred.",
+  "collector_gap": "JSON-encoded diagnostic output was discarded by generic quote-line filtering; owned Code ptyhost diagnostics were not inspected. A regression reproduced this gap before correction.",
+  "bounded_changes": [
+    "Decode only allowlisted diagnostic scalar fields, exit codes and command/event names; never decode environment/argument objects.",
+    "Read only bounded tails of known task-owned debugpy and ptyhost logs. Raw logs remain private.",
+    "Observe new/previously owned native test terminals through stable shell-integration API while the case runs; retain only scrubbed fatal lines/exit status, never command-line data."
+  ],
+  "validation": "Structured-output/ptyhost regression failed before correction; five diagnostic scrub/collector tests and JS syntax pass afterward.",
+  "failed_native_artifact": {
+    "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+    "sha256": "e8b5110335b9cccaac44282373e61f7ed98560850e202040250fa13d266d7230",
+    "size": 2223847
+  },
+  "acceptance": "Native Windows workload acceptance and publication still pending; all original gates unchanged."
+}

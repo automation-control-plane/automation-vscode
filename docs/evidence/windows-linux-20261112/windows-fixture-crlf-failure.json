@@ -1,0 +1,28 @@
+{
+  "checked_at_utc": "2026-11-12T21:46:43.052337+00:00",
+  "run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43312390408",
+  "initiating_failure": "Authored copy_attachment ValueError: Expected the supplied synthetic attachment-proof.txt bytes.",
+  "root_cause": "Repository *.txt text rule converted the attachment fixture to CRLF on Windows. The authored Action/Robot require canonical LF bytes. Reproduced with Git core.autocrlf=true checkout filters. Bridge attachment round-trip matched its supplied input; the admitted source fixture was wrong.",
+  "canonical_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+  "before_windows_sha256": "cbda6c725900e12c7c7d8c6459609e2332d31efd0e26fb7b87856aefc3455d50",
+  "after_windows_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+  "fix": "Exact fixture -text attribute preserves canonical admitted bytes. No byte normalization, weakened expectation, workload bypass or product execution change.",
+  "regression": "Real Git Windows-checkout filter test failed before the attribute; all7 portable boundary/layout/binding/fixture checks pass after.",
+  "secondary_failure": "During the authored failure, local SDK0.4.4 release_input also raised AttributeError str has no attribute value. Not counted as accepted error handling; existing Actions owner asked for published contract clarification, no new backend workstream.",
+  "native_terminal_fatal": [
+    "Traceback (most recent call last):",
+    "    release_input(self._adapter, self.id, State.FAILED, exception)",
+    "AttributeError: 'str' object has no attribute 'value'",
+    "Unexpected error (ValueError)",
+    "=================== Full Traceback (running copy_attachment) ===================",
+    "Traceback (most recent call last):",
+    "    raise ValueError(\"Expected the supplied synthetic attachment-proof.txt bytes\")",
+    "ValueError: Expected the supplied synthetic attachment-proof.txt bytes"
+  ],
+  "failed_native_artifact": {
+    "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+    "sha256": "14b312d1144bd74cc9a9c52bb37bdb6ca15b1f25d86a044270a9ed27575d7bff",
+    "size": 2223847
+  },
+  "acceptance": "Next exact-head native run must pass all original workloads. Windows publication remains gated."
+}
