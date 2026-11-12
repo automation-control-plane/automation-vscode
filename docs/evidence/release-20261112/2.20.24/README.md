@@ -69,10 +69,18 @@ claimed from local tests or agent review.
 
 ## Publication hold and supported scope
 
-No extension merge, tag or publication has occurred. The last official PyPI
-checks still return 404 for Runtime/Core 1.1.0 and SDK 0.5.0. Verify actual
-published hashes/metadata and integrate the owned composition before release;
-source versions and candidate wheels are not publication proof.
+No extension merge, tag or publication has occurred. SDK 0.5.0 is now public:
+[verified PyPI bytes, metadata and source-tag provenance](published-sdk-0.5.0.json)
+confirm the wheel is byte-identical to Dakota's qualified candidate, the sdist
+matches its official digest, and the annotated tag resolves to merged commit
+`739da0897447167f0d4f2dff79567fce2146e007`. No tag-signature claim is made. The
+qualification JSON and original QA packet preserve their earlier dependency
+check rather than being relabeled as current publication evidence.
+
+Official target-version endpoints still return 404 for Runtime/Core 1.1.0.
+Verify their actual published hashes/metadata and frozen-source comparison, then
+integrate/requalify the owned composition as required before release. Source
+versions and candidate wheels are not publication proof.
 
 Configured consumer-queue proof does not certify every merged workspace operation
 or reviewed-queue variant. Unsupported operations remain denied. The generic
