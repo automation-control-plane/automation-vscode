@@ -1,0 +1,10 @@
+{
+  "platform": "linux-x64",
+  "version": "2.20.26",
+  "code_version": "1.146.0",
+  "official_code_archive_sha256": "cbdb7bde3d358c7297cf1d9d6adc16dfb1d0179501fb2c152df48593e39e3600",
+  "vsix_sha256": "1a4879e427623928704e72ca906373b8eaf5f8d022d2bddefaa17b546eb8b43e",
+  "actual_code_cli_install_passed": true,
+  "installed_archive_payloads_matched": 752,
+  "scope": "Fresh isolated actual Linux install/payload check only; unchanged runtime acceptance carried from2.20.25, not rerun or relabeled."
+}

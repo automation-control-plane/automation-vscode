@@ -1,0 +1,60 @@
+{
+  "candidate": "2.20.26",
+  "checked_at_utc": "2026-11-12T22:06:56.605563+00:00",
+  "qualified_branch_head": "2c953f38add0af309dd9bcc8994d0a13d05c0c71",
+  "native_ci_source": "da8e155b58a4e8997b18e4fc9b8af35698f3a14c",
+  "qualified_complete_tree": "3768f51cebc64db04dfef9a9409849ac92a92b8b",
+  "ci_source_and_branch_complete_trees_identical": true,
+  "native_run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43314945520",
+  "native_run_conclusion": "success",
+  "github_reported_artifact_digest": "sha256:345dc7b75c1a017e94b0b81ad64b93133dac0c43e9e9510809cc5e74984ec2cf",
+  "github_artifact_digest_scope": "Reported by GitHub; actual extracted VSIX and public-file checksums independently verified.",
+  "assets": [
+    {
+      "filename": "automation-vscode-2.20.26-linux-x64.vsix",
+      "platform": "linux-x64",
+      "sha256": "1a4879e427623928704e72ca906373b8eaf5f8d022d2bddefaa17b546eb8b43e",
+      "size": 2216866
+    },
+    {
+      "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+      "platform": "win32-x64",
+      "sha256": "4bdf474c9785599e7f73accf217d8f5553bbc46715068655f9a96803bd4bb9a5",
+      "size": 2223847
+    }
+  ],
+  "windows": {
+    "actual_installed_host_passed": true,
+    "payloads_matched": 752,
+    "native_cases": 8,
+    "real_breakpoints": 4,
+    "outputs_attachments_edited_replay_verified": true,
+    "cold_rcc_bootstrap": true,
+    "pinned_windows_tool_downloads": true,
+    "scoped_owned_win32_inspection": true,
+    "runtime_start_stop_occupied_listener_refusal": true,
+    "workspace_trust_enforced": true,
+    "parent_trust_selected": false,
+    "post_completion_read_closures": 8,
+    "closure_qualification": "Each recorded exact read error occurred only after native target exit0 and DAP terminated were already observed. Native session end and all SDK output/lineage assertions still required. Adapter transport exit is not relabeled target exit."
+  },
+  "linux": {
+    "fresh_actual_code_install_passed": true,
+    "installed_payloads_matched": 752,
+    "carried_from": "2.20.25, plus2.20.24 native UI/managed evidence",
+    "payload_change": "Only package.json/__init__.py version metadata changed. No unchanged Linux workload matrix rerun or relabeling."
+  },
+  "byte_identity": "Original Windows CI VSIX retained unchanged. Windows/Linux source-content differences are only CRLF in319 text members; actual assets were not normalized/repacked.",
+  "composition": {
+    "runtime": "1.1.0",
+    "core": "1.1.0",
+    "rcc": "18.19.8",
+    "local_work_items_sdk": "0.4.4",
+    "managed_backend_sdk": "0.5.0",
+    "helper": "1.0.3",
+    "extension_id": "automation-control-plane.automation-vscode"
+  },
+  "limits": "limitations.json",
+  "reviews": "Coordinator source/evidence verification and actual hosted Windows acceptance; no new agent or formal GitHub approval claimed. Existing product implementation review history retained.",
+  "publication": "Qualified for owned private GitHub Windows/Linux asset release within explicit limits; merge/tag/actual asset URLs are verified separately after publication."
+}

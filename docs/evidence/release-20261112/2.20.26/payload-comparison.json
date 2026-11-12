@@ -1,0 +1,12 @@
+{
+  "payload_count": 752,
+  "linux_vs_qualified_2_20_25_changed_files": [
+    "extension/package.json",
+    "extension/src/sema4ai_code/__init__.py"
+  ],
+  "windows_vs_linux_byte_differing_files": 319,
+  "windows_linux_differences_only_crlf": true,
+  "assets_not_normalized_or_repacked": true,
+  "linux_sha256": "1a4879e427623928704e72ca906373b8eaf5f8d022d2bddefaa17b546eb8b43e",
+  "windows_sha256": "4bdf474c9785599e7f73accf217d8f5553bbc46715068655f9a96803bd4bb9a5"
+}

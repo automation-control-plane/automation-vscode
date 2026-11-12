@@ -1,0 +1,281 @@
+{
+  "platform": "win32",
+  "scope": "Actual installed Windows Code Extension Host, native registered debug adapters and SDK outputs; not a panel-button or Windows managed acceptance claim.",
+  "cases": [
+    {
+      "kind": "action",
+      "mode": "file",
+      "operation": "run",
+      "nativeExit": 0,
+      "realBreakpoint": false,
+      "outputAndAttachmentVerified": true,
+      "editedReplayPreservesOriginal": true
+    },
+    {
+      "kind": "action",
+      "mode": "file",
+      "operation": "debug",
+      "nativeExit": 0,
+      "realBreakpoint": true,
+      "outputAndAttachmentVerified": true,
+      "editedReplayPreservesOriginal": true
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "operation": "run",
+      "nativeExit": 0,
+      "realBreakpoint": false,
+      "outputAndAttachmentVerified": true,
+      "editedReplayPreservesOriginal": true
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "operation": "debug",
+      "nativeExit": 0,
+      "realBreakpoint": true,
+      "outputAndAttachmentVerified": true,
+      "editedReplayPreservesOriginal": true
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "operation": "run",
+      "nativeExit": 0,
+      "realBreakpoint": false,
+      "outputAndAttachmentVerified": true,
+      "editedReplayPreservesOriginal": true
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "operation": "debug",
+      "nativeExit": 0,
+      "realBreakpoint": true,
+      "outputAndAttachmentVerified": true,
+      "editedReplayPreservesOriginal": true
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "operation": "run",
+      "nativeExit": 0,
+      "realBreakpoint": false,
+      "outputAndAttachmentVerified": true,
+      "editedReplayPreservesOriginal": true
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "operation": "debug",
+      "nativeExit": 0,
+      "realBreakpoint": true,
+      "outputAndAttachmentVerified": true,
+      "editedReplayPreservesOriginal": true
+    }
+  ],
+  "checks": [
+    "Installed cold RCC Windows bootstrap and real language-server activation",
+    {
+      "tool": "rcc",
+      "version": "v18.19.8",
+      "sha256": "f5e868af05382731f6675d98ed6ead7c7e95b250466bc5fee054b41817280a89"
+    },
+    {
+      "tool": "action-server",
+      "version": "1.1.0",
+      "sha256": "44507e8dcd82fb367c616c699957611096bc05ff2ae5e0f41a11b98a98332098"
+    },
+    "Windows Runtime live-terminal startup/stop; occupied listener refused untouched"
+  ],
+  "passed": true,
+  "workspaceTrust": {
+    "enabled": true,
+    "initiallyTrusted": false,
+    "folderCount": 1,
+    "exactSyntheticWorkspace": true,
+    "canonicalWorkspaceSha256": "ba77e48d990c2f3204b4b6dedef8ebcdf541c28dc29e98cd2397b45907c36aae",
+    "currentWorkspaceGranted": true
+  },
+  "extensionDiscovery": {
+    "initiallyAvailable": false,
+    "initialRegistry": [
+      {
+        "id": "ms-python.vscode-pylance",
+        "version": "2026.4.1",
+        "directory": "ms-python.vscode-pylance-2026.4.1"
+      },
+      {
+        "id": "task-local.windows-qualification",
+        "version": "0.0.1",
+        "directory": "controller"
+      }
+    ],
+    "expectedDirectory": "automation-control-plane.automation-vscode-2.20.26",
+    "expectedVersion": "2.20.26",
+    "actualDirectory": "automation-control-plane.automation-vscode-2.20.26",
+    "exactCanonicalDirectoryMatch": true,
+    "exactManifestMatch": true
+  },
+  "version": "2.20.26",
+  "debugger": [
+    {
+      "id": "ms-python.python",
+      "version": "2026.10.0"
+    },
+    {
+      "id": "ms-python.debugpy",
+      "version": "2026.6.0"
+    }
+  ],
+  "windowsIntegration": {
+    "native_win32": true,
+    "comtypes_import": true,
+    "installed_windows_inspector_found_owned_window": true,
+    "scope": "One owned Tk/Win32 window; no Java or broad inspector acceptance"
+  },
+  "currentCase": {
+    "kind": "robot",
+    "mode": "sqlite",
+    "operation": "debug",
+    "stage": "native-debugging-started",
+    "adapterTypes": [
+      "python"
+    ],
+    "commands": [
+      "initialize",
+      "launch",
+      "setBreakpoints",
+      "setFunctionBreakpoints",
+      "setExceptionBreakpoints",
+      "configurationDone",
+      "threads",
+      "threads",
+      "threads",
+      "setBreakpoints",
+      "continue",
+      "threads",
+      "threads",
+      "threads",
+      "disconnect"
+    ],
+    "nativeTerminalStreamSupported": true,
+    "resolvedLaunch": {
+      "console": "integratedTerminal",
+      "targetPythonMatchesPackage": true,
+      "privateDebugLogDirectoryRetained": false
+    },
+    "nativeTargetExitCode": 0,
+    "nativeDapTerminated": true,
+    "nativeSessionTerminated": true
+  },
+  "postCompletionTransportClosures": [
+    {
+      "kind": "action",
+      "mode": "file",
+      "operation": "run",
+      "adapterType": "python",
+      "error": {
+        "name": "Error",
+        "message": "read error"
+      },
+      "targetExitCodeAlreadyObserved": 0,
+      "dapTerminationAlreadyObserved": true
+    },
+    {
+      "kind": "action",
+      "mode": "file",
+      "operation": "debug",
+      "adapterType": "python",
+      "error": {
+        "name": "Error",
+        "message": "read error"
+      },
+      "targetExitCodeAlreadyObserved": 0,
+      "dapTerminationAlreadyObserved": true
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "operation": "run",
+      "adapterType": "python",
+      "error": {
+        "name": "Error",
+        "message": "read error"
+      },
+      "targetExitCodeAlreadyObserved": 0,
+      "dapTerminationAlreadyObserved": true
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "operation": "debug",
+      "adapterType": "python",
+      "error": {
+        "name": "Error",
+        "message": "read error"
+      },
+      "targetExitCodeAlreadyObserved": 0,
+      "dapTerminationAlreadyObserved": true
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "operation": "run",
+      "adapterType": "sema4ai",
+      "error": {
+        "name": "Error",
+        "message": "read error"
+      },
+      "targetExitCodeAlreadyObserved": 0,
+      "dapTerminationAlreadyObserved": true
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "operation": "debug",
+      "adapterType": "python",
+      "error": {
+        "name": "Error",
+        "message": "read error"
+      },
+      "targetExitCodeAlreadyObserved": 0,
+      "dapTerminationAlreadyObserved": true
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "operation": "run",
+      "adapterType": "sema4ai",
+      "error": {
+        "name": "Error",
+        "message": "read error"
+      },
+      "targetExitCodeAlreadyObserved": 0,
+      "dapTerminationAlreadyObserved": true
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "operation": "debug",
+      "adapterType": "python",
+      "error": {
+        "name": "Error",
+        "message": "read error"
+      },
+      "targetExitCodeAlreadyObserved": 0,
+      "dapTerminationAlreadyObserved": true
+    }
+  ],
+  "nativeAdapterExit": {
+    "adapterType": "python",
+    "code": 1
+  },
+  "nativeProtocolFailure": {
+    "adapterType": "python",
+    "command": "threads",
+    "message": "Server[pid=5336] disconnected unexpectedly"
+  },
+  "runtimeRecovery": "Windows recovery after host reload remains fail-closed: process identity backend is Linux-only. No ownership or cancellation authority inferred from HTTP."
+}

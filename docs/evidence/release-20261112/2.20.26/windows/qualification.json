@@ -1,0 +1,26 @@
+{
+  "platform": "win32-x64",
+  "passed": true,
+  "checks": [
+    "Environment and archive boundaries pass on native Windows",
+    "Windows x64 VSIX packaged on native Windows",
+    "Actual installed Extension Host completed all required native gates"
+  ],
+  "limitations": [
+    "Native debug API/registered adapter acceptance; no fabricated Work Items button or managed-server acceptance.",
+    "Windows managed UI/server, Java inspector, image/recording and external integrations require separate acceptance.",
+    "No Mac or Marketplace publication. No system registry/firewall/service changes."
+  ],
+  "source": "da8e155b58a4e8997b18e4fc9b8af35698f3a14c",
+  "artifact": {
+    "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+    "sha256": "4bdf474c9785599e7f73accf217d8f5553bbc46715068655f9a96803bd4bb9a5",
+    "size": 2223847
+  },
+  "payloads_verified": 752,
+  "code": {
+    "version": "1.146.0",
+    "sha256": "0d47f5bbff72499c6a4a92f6d72dd8cc5ba4606185f624465032626614119d61"
+  },
+  "private_adapter_log_collection_exit": 0
+}
