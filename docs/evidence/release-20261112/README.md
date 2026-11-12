@@ -1,0 +1,54 @@
+# Installed native Work Items checkpoint — 2.20.22
+
+Runtime payload commit: `a31a9dfd3e147d91ac37aca7d058c22135af4631`.
+The exact VSIX is 2,213,794 bytes, SHA-256
+`af8ab7b68c3533be7f2ffbb02f1385f7fbb104fa249239c785cb38a54581ba91`.
+All 752 archive payloads match the installed extension and source. VSCE normalizes
+`README.md` to `readme.md`; Code adds only installation metadata to package.json.
+The immutable 2.20.20 and intermediate 2.20.21 VSIX artifacts are preserved.
+
+## Executed acceptance
+
+Official Code 1.146.0, isolated task-owned profile, normal Extension Host mode,
+sandboxed headless Electron; no sandbox-disable flags or workspace-trust bypass.
+Only the synthetic workspace was trusted through the ordinary native trust UI.
+The acceptance controller selects real package-tree entries and opens the actual
+installed extension. Playwright drives its actual webview and native pickers;
+no VS Code host, SDK, queue, or workload substitute supplies these results.
+
+The supported Microsoft Python/debugger extensions are installed in that private
+profile. Both Action and Robot File/SQLite Run and Debug pass: eight distinct
+native launches, four real breakpoint events and continues, exit zero, exact
+output values, and SQLite COMPLETED inputs with authoritative output parent_id.
+[Exact receipts, output projections, hashes, and test scope](qualification.json)
+are retained separately from earlier CLI/DAP attachment/replay evidence.
+
+Source checks: 163 Node tests pass. Focused Python checks pass 56 with one
+historical workflow-retirement skip. Three historical vendor-service tests could
+not configure CI_ENDPOINT; they are not passing acceptance. Both new missing-
+debugger regressions failed before their respective fixes and passed afterward.
+Read-only review found a second code-lens caller needing the same cancellation
+guard; it is fixed and covered. The native source did not require a broader UI
+change. Headless viewport and post-debug frame errors were harness defects;
+completed executions were inspected by their original receipts, never retried
+for a screenshot.
+
+## Remaining release gates
+
+Managed native acceptance awaits the Actions owner's secret-free local fixture
+recipe and exact source. The NVIDIA source Runtime/direct Robot probe is separate
+evidence, not this extension's native Run acceptance or installed Runtime/RCC
+proof. No historical endpoint is adopted. Negotiate live tools, schemas, protocol,
+model authority and queue-specific capabilities before execution. Preserve
+uncertain requests after dropped responses or reload, with no duplicate invoke.
+
+The Actions Runtime/Core 1.1.0 and Work Items 0.5.0 artifacts remain planned rather
+than verified published dependencies at this checkpoint. Existing published Core
+1.0.3 transitive libraries, Runtime 1.0.4/RCC composition mismatch, standalone-only
+invocation not exposed by this queue editor, Windows/macOS/Java acceptance, and
+isolated Holotree archive export remain explicitly bounded. This is not a full-
+scope or cross-platform release claim.
+
+The owned release path is [manual GitHub VSIX assets](../../release.md), with an
+`automation-vscode-v<version>` tag. No legacy vendor publication workflow was
+run. This checkpoint is not merged or published.

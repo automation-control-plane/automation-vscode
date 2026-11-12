@@ -1,0 +1,331 @@
+{
+  "identity": {
+    "candidate": "2.20.22",
+    "payload_commit": "a31a9dfd3e147d91ac37aca7d058c22135af4631",
+    "vsix": "automation-vscode-2.20.22-linux-x64.vsix",
+    "sha256": "af8ab7b68c3533be7f2ffbb02f1385f7fbb104fa249239c785cb38a54581ba91",
+    "size": 2213794,
+    "matched_payloads": 752,
+    "installed_mismatches": [],
+    "source_mismatches": [],
+    "archive_path_mapping": {
+      "readme.md": "README.md"
+    }
+  },
+  "native_matrix": [
+    {
+      "kind": "action",
+      "mode": "file",
+      "value": 201,
+      "operation": "run",
+      "workload": "consume",
+      "candidate": "2.20.22",
+      "receipt": {
+        "id": "cecc68ea9c3545a8a54262b0df28c2fb",
+        "mode": "file",
+        "input": "devdata/work-items-in/native-action-file-201-1794498451933-f4c8d1de944d/work-items.json#0",
+        "queue": "input",
+        "state": "EXITED",
+        "input_binding": "Immutable selected fixture snapshot",
+        "created_at": "2026-11-12T15:47:33.697186+00:00",
+        "output": "/tmp/automation-vscode-qualification-20261112/desktop-workspace/action/devdata/work-items-out/native-cecc68ea9c3545a8a54262b0df28c2fb/work-items.json",
+        "authority": "VS Code local execution receipt; not Runtime Run/Attempt",
+        "updated_at": "2026-11-12T15:47:34.778717+00:00",
+        "session": "9fb1db7a-4197-42a0-bdba-d3eb1a42f4fc",
+        "exit_code": 0
+      },
+      "native_ui": true,
+      "breakpoint": null,
+      "output": [
+        {
+          "payload": {
+            "observed": 201
+          },
+          "files": {}
+        }
+      ]
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "value": 202,
+      "operation": "run",
+      "workload": "consume",
+      "candidate": "2.20.22",
+      "receipt": {
+        "id": "e35664f7c17d466783e43d7488633dbc",
+        "mode": "sqlite",
+        "input": "cf539905-2444-4292-9767-64f877168ee7",
+        "queue": "input",
+        "state": "EXITED",
+        "input_binding": "FIFO preview, not exclusive reservation; SDK parent_id is authoritative. Do not share this development queue with another consumer.",
+        "created_at": "2026-11-12T15:47:36.770030+00:00",
+        "output": null,
+        "authority": "VS Code local execution receipt; not Runtime Run/Attempt",
+        "updated_at": "2026-11-12T15:47:37.650702+00:00",
+        "session": "975c3cb0-7c80-4db9-9ad9-d1aae98f2df5",
+        "exit_code": 0
+      },
+      "native_ui": true,
+      "breakpoint": null,
+      "input_projection": {
+        "id": "cf539905-2444-4292-9767-64f877168ee7",
+        "state": "COMPLETED",
+        "payload": {
+          "value": 202
+        },
+        "parent_id": null
+      },
+      "output_projection": {
+        "id": "a39c5f86-7600-4527-8354-a8f7c37166f0",
+        "state": "PENDING",
+        "payload": {
+          "observed": 202
+        },
+        "parent_id": "cf539905-2444-4292-9767-64f877168ee7"
+      }
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "value": 203,
+      "operation": "run",
+      "workload": "consume",
+      "candidate": "2.20.22",
+      "receipt": {
+        "id": "4d8d433a145147fea6e4bc23369fb82a",
+        "mode": "file",
+        "input": "devdata/work-items-in/native-robot-file-203-1794498458239-638b2e7e69b8/work-items.json#0",
+        "queue": "input",
+        "state": "EXITED",
+        "input_binding": "Immutable selected fixture snapshot",
+        "created_at": "2026-11-12T15:47:39.700401+00:00",
+        "output": "/tmp/automation-vscode-qualification-20261112/desktop-workspace/robot/devdata/work-items-out/native-4d8d433a145147fea6e4bc23369fb82a/work-items.json",
+        "authority": "VS Code local execution receipt; not Runtime Run/Attempt",
+        "updated_at": "2026-11-12T15:47:42.520599+00:00",
+        "session": "038fa935-cf06-4eb2-8c20-d410209719f1",
+        "exit_code": 0
+      },
+      "native_ui": true,
+      "breakpoint": null,
+      "output": [
+        {
+          "payload": {
+            "observed": 203
+          },
+          "files": {}
+        }
+      ]
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "value": 204,
+      "operation": "run",
+      "workload": "consume",
+      "candidate": "2.20.22",
+      "receipt": {
+        "id": "3d5f9ba699ec45839dccaaa54b15c387",
+        "mode": "sqlite",
+        "input": "4e100d7c-cc58-4ed2-ae8a-dd3bb9867d40",
+        "queue": "input",
+        "state": "EXITED",
+        "input_binding": "FIFO preview, not exclusive reservation; SDK parent_id is authoritative. Do not share this development queue with another consumer.",
+        "created_at": "2026-11-12T15:47:44.322514+00:00",
+        "output": null,
+        "authority": "VS Code local execution receipt; not Runtime Run/Attempt",
+        "updated_at": "2026-11-12T15:47:46.898875+00:00",
+        "session": "98657930-3839-4f95-a0ed-a9b6972f4ba7",
+        "exit_code": 0
+      },
+      "native_ui": true,
+      "breakpoint": null,
+      "input_projection": {
+        "id": "4e100d7c-cc58-4ed2-ae8a-dd3bb9867d40",
+        "state": "COMPLETED",
+        "payload": {
+          "value": 204
+        },
+        "parent_id": null
+      },
+      "output_projection": {
+        "id": "11467cfe-ff3e-44dc-92d4-53f350fdbccb",
+        "state": "PENDING",
+        "payload": {
+          "observed": 204
+        },
+        "parent_id": "4e100d7c-cc58-4ed2-ae8a-dd3bb9867d40"
+      }
+    },
+    {
+      "kind": "action",
+      "mode": "file",
+      "value": 205,
+      "operation": "debug",
+      "workload": "consume",
+      "candidate": "2.20.22",
+      "receipt": {
+        "id": "0799d142c84c4b16b0b38ef83b82b613",
+        "mode": "file",
+        "input": "devdata/work-items-in/native-action-file-205-1794498467257-7072563fc10c/work-items.json#0",
+        "queue": "input",
+        "state": "EXITED",
+        "input_binding": "Immutable selected fixture snapshot",
+        "created_at": "2026-11-12T15:47:48.974482+00:00",
+        "output": "/tmp/automation-vscode-qualification-20261112/desktop-workspace/action/devdata/work-items-out/native-0799d142c84c4b16b0b38ef83b82b613/work-items.json",
+        "authority": "VS Code local execution receipt; not Runtime Run/Attempt",
+        "updated_at": "2026-11-12T15:47:51.292247+00:00",
+        "session": "7592dca3-3248-4e9f-97c7-95104f5c6dcc",
+        "exit_code": 0
+      },
+      "native_ui": true,
+      "breakpoint": {
+        "event": "stopped",
+        "reason": "breakpoint",
+        "session": "Work Item 0799d142c84c4b16b0b38ef83b82b613"
+      },
+      "output": [
+        {
+          "payload": {
+            "observed": 205
+          },
+          "files": {}
+        }
+      ]
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "value": 206,
+      "operation": "debug",
+      "workload": "consume",
+      "candidate": "2.20.22",
+      "receipt": {
+        "id": "9d0b144a70f542f7bb889753320c436f",
+        "mode": "sqlite",
+        "input": "031ef5ce-b14c-4739-8ae0-dc3938f73350",
+        "queue": "input",
+        "state": "EXITED",
+        "input_binding": "FIFO preview, not exclusive reservation; SDK parent_id is authoritative. Do not share this development queue with another consumer.",
+        "created_at": "2026-11-12T15:48:03.901754+00:00",
+        "output": null,
+        "authority": "VS Code local execution receipt; not Runtime Run/Attempt",
+        "updated_at": "2026-11-12T15:48:06.401742+00:00",
+        "session": "ed533343-c75a-4c10-af7a-5d7dbc0a6e08",
+        "exit_code": 0
+      },
+      "native_ui": true,
+      "breakpoint": {
+        "event": "stopped",
+        "reason": "breakpoint",
+        "session": "Work Item 9d0b144a70f542f7bb889753320c436f"
+      },
+      "input_projection": {
+        "id": "031ef5ce-b14c-4739-8ae0-dc3938f73350",
+        "state": "COMPLETED",
+        "payload": {
+          "value": 206
+        },
+        "parent_id": null
+      },
+      "output_projection": {
+        "id": "a9572e2f-ce69-4279-91c9-e31cd8583b9b",
+        "state": "PENDING",
+        "payload": {
+          "observed": 206
+        },
+        "parent_id": "031ef5ce-b14c-4739-8ae0-dc3938f73350"
+      }
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "value": 207,
+      "operation": "debug",
+      "workload": "consume",
+      "candidate": "2.20.22",
+      "receipt": {
+        "id": "2e17bec8b02144ca82478e436bb5af4f",
+        "mode": "file",
+        "input": "devdata/work-items-in/native-robot-file-207-1794498497472-60c3812b3db7/work-items.json#0",
+        "queue": "input",
+        "state": "EXITED",
+        "input_binding": "Immutable selected fixture snapshot",
+        "created_at": "2026-11-12T15:48:18.915462+00:00",
+        "output": "/tmp/automation-vscode-qualification-20261112/desktop-workspace/robot/devdata/work-items-out/native-2e17bec8b02144ca82478e436bb5af4f/work-items.json",
+        "authority": "VS Code local execution receipt; not Runtime Run/Attempt",
+        "updated_at": "2026-11-12T15:48:21.521738+00:00",
+        "session": "c6d8762f-320f-4e10-852e-39b7bfcaf0fd",
+        "exit_code": 0
+      },
+      "native_ui": true,
+      "breakpoint": {
+        "event": "stopped",
+        "reason": "breakpoint",
+        "session": "Work Item 2e17bec8b02144ca82478e436bb5af4f"
+      },
+      "output": [
+        {
+          "payload": {
+            "observed": 207
+          },
+          "files": {}
+        }
+      ]
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "value": 208,
+      "operation": "debug",
+      "workload": "consume",
+      "candidate": "2.20.22",
+      "receipt": {
+        "id": "c4dd86858ac34c15adfbc7fd19aba474",
+        "mode": "sqlite",
+        "input": "f717824e-f5ff-47ff-a64c-afe64dcb332e",
+        "queue": "input",
+        "state": "EXITED",
+        "input_binding": "FIFO preview, not exclusive reservation; SDK parent_id is authoritative. Do not share this development queue with another consumer.",
+        "created_at": "2026-11-12T15:48:33.936671+00:00",
+        "output": null,
+        "authority": "VS Code local execution receipt; not Runtime Run/Attempt",
+        "updated_at": "2026-11-12T15:48:35.916228+00:00",
+        "session": "1c78a24b-2a74-4c89-87c1-9106ab2bff02",
+        "exit_code": 0
+      },
+      "native_ui": true,
+      "breakpoint": {
+        "event": "stopped",
+        "reason": "breakpoint",
+        "session": "Work Item c4dd86858ac34c15adfbc7fd19aba474"
+      },
+      "input_projection": {
+        "id": "f717824e-f5ff-47ff-a64c-afe64dcb332e",
+        "state": "COMPLETED",
+        "payload": {
+          "value": 208
+        },
+        "parent_id": null
+      },
+      "output_projection": {
+        "id": "cbd2ce01-b5ef-4714-aa3d-6aff41420bf4",
+        "state": "PENDING",
+        "payload": {
+          "observed": 208
+        },
+        "parent_id": "f717824e-f5ff-47ff-a64c-afe64dcb332e"
+      }
+    }
+  ],
+  "source_tests": {
+    "node_passed": 163,
+    "python_focused_passed": 56,
+    "python_skipped": 1,
+    "historical_vendor_service_setup_errors": 3,
+    "note": "Historical service tests require CI_ENDPOINT; not claimed as qualified."
+  },
+  "managed_acceptance": "Pending local fixture recipe/source from Actions owner; no native managed acceptance yet",
+  "publication": "Not merged or published; validated checkpoint only",
+  "platform": "Linux x64 only. Windows/macOS/Java unqualified."
+}
