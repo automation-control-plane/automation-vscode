@@ -1,0 +1,27 @@
+name: Package runtime Python paths
+on:
+  pull_request:
+    paths:
+      - 'sema4ai/src/sema4ai_code/**'
+      - 'sema4ai/tests/test_package_pythonpath.py'
+      - '.github/workflows/test-package-pythonpath.yml'
+permissions:
+  contents: read
+jobs:
+  discovery:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pytest pyyaml actions-core==1.1.0
+      - name: Runtime discovery, metadata, input defaults and environment contracts
+        shell: python
+        run: |
+          import os, subprocess, sys
+          env = {**os.environ, 'PYTHONPATH': os.pathsep.join(['sema4ai/src', 'sema4ai-python-ls-core/src'])}
+          subprocess.run([sys.executable, '-m', 'pytest', '--noconftest', 'sema4ai/tests/test_package_pythonpath.py', '-q'], env=env, check=True)
