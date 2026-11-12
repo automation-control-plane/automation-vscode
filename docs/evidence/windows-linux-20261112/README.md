@@ -51,3 +51,13 @@ correction grants only that task-owned folder through Code UI, requires its
 exact path, rejects selected parent trust, and retains both trust enforcement
 and the isTrusted assertion. No trust-store edits or disable flags are used.
 Native validation of this UI setup remains pending the next exact-head run.
+
+## Native trust UI binding correction
+
+[The retained UI receipt](windows-trust-binding-failure.json) confirms loopback
+UI connection but no rendered full-path match or trust-button click. The
+corrected helper requires a matching canonical path digest from the real Code
+workspace API, which first asserts one exact synthetic folder. Display text
+remains diagnostic. Parent trust is refused, trust enforcement stays enabled,
+and the actual isTrusted assertion remains mandatory. Six portable boundary/
+layout/binding tests pass; native execution remains pending the next run.

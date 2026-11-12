@@ -42,9 +42,16 @@ exports.run = async () => {
     let terminal;
     try {
         assert.equal(process.platform, 'win32'); assert.equal(process.arch, 'x64');
+        const folders = vscode.workspace.workspaceFolders || [];
+        assert.equal(folders.length, 1, 'Only the synthetic workspace may be opened');
+        const canonicalWorkspace = fs.realpathSync(folders[0].uri.fsPath).replace(/\//g, '\\').toLowerCase();
+        const expectedWorkspace = fs.realpathSync(path.join(root, 'workspace')).replace(/\//g, '\\').toLowerCase();
+        assert.equal(canonicalWorkspace, expectedWorkspace, 'Native workspace must match the exact owned fixture');
         const trustEnabled = vscode.workspace.getConfiguration('security.workspace.trust').get('enabled', true);
         assert.equal(trustEnabled, true, 'Workspace trust enforcement must remain enabled');
-        report.workspaceTrust = {enabled: trustEnabled, initiallyTrusted: vscode.workspace.isTrusted}; save();
+        report.workspaceTrust = {enabled: trustEnabled, initiallyTrusted: vscode.workspace.isTrusted,
+            folderCount: folders.length, exactSyntheticWorkspace: true,
+            canonicalWorkspaceSha256: crypto.createHash('sha256').update(canonicalWorkspace).digest('hex')}; save();
         if (!vscode.workspace.isTrusted) {
             // The external UI driver may trust only this owned synthetic workspace.
             // No private trust-store edits or trust-disable flags are permitted.

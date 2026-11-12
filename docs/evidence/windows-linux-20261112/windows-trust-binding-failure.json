@@ -1,0 +1,33 @@
+{
+  "checked_at_utc": "2026-11-12T21:08:12.494857+00:00",
+  "run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43306061405",
+  "verified_progress": "752 installed/source payloads matched; loopback Code UI connected.",
+  "first_failed_gate": "Workspace trust UI precondition; exact full path was not found by rendered-text/title matching, so no trust button was clicked.",
+  "correction": "Bind only to the single canonical workspace folder asserted by the real VS Code extension-host API and a matching SHA256 of its canonical path. Require trust enforcement enabled and reject selected parent trust. Rendered path text is diagnostic, not authority. Native isTrusted assertion remains required.",
+  "ui_receipt": {
+    "scope": "Trust only the task-owned synthetic workspace through native Code UI",
+    "parent_trust_selected": false,
+    "trust_enforcement_disabled": false,
+    "passed": false,
+    "loopback_code_ui_connected": true,
+    "blocker_category": "RuntimeError"
+  },
+  "host_receipt": {
+    "platform": "win32",
+    "scope": "Actual installed Windows Code Extension Host, native registered debug adapters and SDK outputs; not a panel-button or Windows managed acceptance claim.",
+    "cases": [],
+    "checks": [],
+    "passed": false,
+    "workspaceTrust": {
+      "enabled": true,
+      "initiallyTrusted": false
+    }
+  },
+  "failed_native_candidate": {
+    "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+    "sha256": "c662d366ad0daa5cfe5f3cf914125f003af0eefe4d0d666317dea2a65bc42565",
+    "size": 2223847
+  },
+  "local_validation": "Six boundary/layout/binding tests pass; changed Python and JS syntax checks pass.",
+  "acceptance": "Native UI correction awaits exact-head Windows run; no workloads or Windows publication claimed."
+}

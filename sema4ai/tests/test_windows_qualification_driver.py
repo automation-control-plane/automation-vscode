@@ -1,5 +1,6 @@
 """Portable checks of the Windows harness's subprocess and archive boundaries."""
 import importlib.util
+import hashlib
 from pathlib import Path
 import tempfile
 import unittest
@@ -8,9 +9,23 @@ import zipfile
 spec = importlib.util.spec_from_file_location("windows_driver", Path(__file__).with_name("qualify_native_windows.py"))
 driver = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(driver)
+trust_spec = importlib.util.spec_from_file_location("trust_driver", Path(__file__).with_name("windows_workspace_trust.py"))
+trust_driver = importlib.util.module_from_spec(trust_spec)
+trust_spec.loader.exec_module(trust_driver)
 
 
 class WindowsQualificationBoundaries(unittest.TestCase):
+    def test_trust_requires_exact_native_workspace_binding(self):
+        folder = Path("D:/owned/workspace")
+        digest = hashlib.sha256(str(folder).replace("/", "\\").lower().encode()).hexdigest()
+        trust = {"enabled": True, "folderCount": 1, "exactSyntheticWorkspace": True,
+                 "canonicalWorkspaceSha256": digest}
+        self.assertTrue(trust_driver.native_workspace_bound({"workspaceTrust": trust}, folder))
+        for changed in [{"enabled": False}, {"folderCount": 2}, {"exactSyntheticWorkspace": False},
+                        {"canonicalWorkspaceSha256": "wrong-folder"}]:
+            self.assertFalse(trust_driver.native_workspace_bound({"workspaceTrust": {**trust, **changed}}, folder))
+        self.assertFalse(trust_driver.native_workspace_bound({}, folder))
+
     def test_official_versioned_cli_layout_is_resolved(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
