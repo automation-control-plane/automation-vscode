@@ -119,6 +119,8 @@ def main():
         run([node, "--test", str(extension / "tests/windows_diagnostic.test.cjs")], "diagnostic-boundaries")
         run([node, str(npm_cli), "ci"], "npm-ci")
         run([node, str(npm_cli), "run", "vsce:package", "--", "--target", "win32-x64", "--out", str(vsix)], "package")
+        run([node, "--test", str(extension / "tests/python_integration.test.js")], "optional-python-unit-tests")
+        report["checks"].append("Optional Python integration unit contracts pass on native Windows (not installed-host proof)")
         report["artifact"] = {"filename": vsix.name, "sha256": digest(vsix), "size": vsix.stat().st_size}
         report["checks"].append("Windows x64 VSIX packaged on native Windows")
         save()

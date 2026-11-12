@@ -23,6 +23,14 @@ import { getActionServerTerminal, isActionServerAlive, restartActionServer } fro
 
 const dirtyWorkspaceFiles = new Set<string>();
 let packagePythonStatus: StatusBarItem | undefined;
+const optionalIntegrationMessages = new Set<string>();
+
+function optionalIntegrationStatus(key: string, message: string) {
+    if (!optionalIntegrationMessages.has(key)) {
+        optionalIntegrationMessages.add(key);
+        OUTPUT_CHANNEL.appendLine(message);
+    }
+}
 
 // Subset of Microsoft's public API, with the legacy exports retained for older installations.
 interface MicrosoftPythonApi {
@@ -103,21 +111,49 @@ export async function autoUpdateInterpreter(docUri: Uri): Promise<boolean> {
         packagePythonStatus.show();
     }
 
-    // Now, set the interpreter.
-    let pythonExecutable = await getPythonExecutable(docUri, true, false);
-    if (pythonExecutable != interpreter.pythonExe) {
-        await setPythonInterpreterForPythonExtension(interpreter.pythonExe, docUri);
+    // Optional editor providers must not affect RCC resolution or each other.
+    if (extensions.getExtension("ms-python.python")) {
+        try {
+            const pythonExecutable = await getPythonExecutable(docUri, true, false);
+            if (pythonExecutable != interpreter.pythonExe) {
+                await setPythonInterpreterForPythonExtension(interpreter.pythonExe, docUri);
+            }
+        } catch (error) {
+            optionalIntegrationStatus("python-update", `Optional Python interpreter update failed: ${error}. Check the Python extension output; RCC Python remains resolved.`);
+        }
+    } else {
+        optionalIntegrationStatus("python-absent", "Optional Python interpreter integration unavailable. Install ms-python.python to enable it; RCC Python remains resolved.");
     }
 
     const additional = interpreter.additionalPythonpathEntries;
     if (additional && additional.length > 0) {
-        await workspace.getConfiguration("python", docUri).update(
-            "analysis.extraPaths",
-            additional.map((el) => {
-                return el.replaceAll("\\", "/");
-            }),
-            ConfigurationTarget.WorkspaceFolder
-        );
+        try {
+            const config = workspace.getConfiguration("python", docUri);
+            if (!config.inspect<string[]>("analysis.extraPaths")) {
+                optionalIntegrationStatus("analysis-absent", "Optional python.analysis.extraPaths is not registered. Install an analysis provider to enable editor import analysis; Automation runtime discovery is independent.");
+            } else {
+                // Additive ownership: retain all effective user/provider paths in order.
+                // Never remove old paths because they may also be owned by the user.
+                const existing = config.get<string[]>("analysis.extraPaths", []);
+                const merged = [...existing];
+                const normalized = (entry: string) => {
+                    const path = entry.replaceAll("\\", "/");
+                    return process.platform === "win32" ? path.toLowerCase() : path;
+                };
+                const known = new Set(existing.map(normalized));
+                for (const entry of additional) {
+                    if (!known.has(normalized(entry))) {
+                        merged.push(entry.replaceAll("\\", "/"));
+                        known.add(normalized(entry));
+                    }
+                }
+                if (merged.length !== existing.length) {
+                    await config.update("analysis.extraPaths", merged, ConfigurationTarget.WorkspaceFolder);
+                }
+            }
+        } catch (error) {
+            optionalIntegrationStatus("analysis-update", `Optional Python analysis update failed: ${error}. Check the analysis provider output; RCC Python remains resolved.`);
+        }
     }
     return true;
 }

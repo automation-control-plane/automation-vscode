@@ -2,6 +2,7 @@ const {test} = require("node:test");
 const assert = require("node:assert/strict");
 const Module = require("node:module");
 let extension, environmentsExtension, resolvedInterpreter, resourceConfig, environmentsEnabled;
+let analysisRegistered = false, analysisPaths = [], analysisWrites = [], analysisFailure;
 const output = [];
 const resource = {fsPath: "/work/action-package/package.yaml", toString: () => "file:///work/action-package/package.yaml"};
 
@@ -64,8 +65,15 @@ const vscode = {
     Uri: {file: fsPath => ({fsPath})},
     workspace: {
         getConfiguration: (_, uri) => {resourceConfig = uri; return {
-            get: key => key === "useEnvironmentsExtension" ? false : "/legacy/python",
-            inspect: () => ({globalValue: environmentsEnabled}), update: async () => {},
+            get: key => key === "analysis.extraPaths" ? analysisPaths : key === "useEnvironmentsExtension" ? false : "/legacy/python",
+            inspect: key => key === "analysis.extraPaths" ? (analysisRegistered ? {defaultValue: []} : undefined) : ({globalValue: environmentsEnabled}),
+            update: async (key, value, target) => {
+                if (key !== "analysis.extraPaths") return;
+                assert.equal(analysisRegistered, true, "Unregistered configuration must never be written");
+                if (analysisFailure) throw analysisFailure;
+                analysisWrites.push({value, target});
+                analysisPaths = value;
+            },
         };},
         getWorkspaceFolder: () => ({}),
     },
@@ -186,4 +194,66 @@ test("Explicitly disabled Python Environments keeps the scoped legacy API withou
         await integration.setPythonInterpreterForPythonExtension("/rcc/bin/python", resource);
         assert.deepEqual(calls, [["/rcc/bin/python", resource]]);
     } finally {environmentsExtension = undefined; environmentsEnabled = undefined;}
+});
+
+
+test("Absent Python tooling skips unregistered analysis on repeated document updates", async () => {
+    extension = undefined;
+    analysisRegistered = false; analysisWrites = [];
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["/work/src"]}};
+    const start = output.length;
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.deepEqual(analysisWrites, []);
+    assert.equal(output.slice(start).filter(line => line.includes("analysis.extraPaths")).length, 1);
+    assert.equal(output.slice(start).filter(line => line.includes("Install ms-python.python")).length, 1);
+});
+
+test("Python API selection succeeds with an unregistered analysis setting", async () => {
+    analysisRegistered = false; analysisWrites = [];
+    let selected = 0;
+    extension = {isActive: true, exports: {environments: {updateActiveEnvironmentPath: async () => selected++}}};
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["/work/src"]}};
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.equal(selected, 1);
+    assert.deepEqual(analysisWrites, []);
+});
+
+test("Registered analysis works independently of Python and preserves existing paths without repeated writes", async () => {
+    extension = undefined;
+    analysisRegistered = true;
+    analysisPaths = ["user/path", "C:\\work\\src"];
+    const original = analysisPaths;
+    analysisWrites = [];
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["C:/work/src", "/work/support", "/work/support"]}};
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.deepEqual(original, ["user/path", "C:\\work\\src"]);
+    assert.deepEqual(analysisWrites, [{value: ["user/path", "C:\\work\\src", "/work/support"], target: 3}]);
+    resolvedInterpreter.result.additionalPythonpathEntries = ["/work/new"];
+    await integration.autoUpdateInterpreter(resource);
+    assert.deepEqual(analysisPaths, ["user/path", "C:\\work\\src", "/work/support", "/work/new"]);
+});
+
+test("Failing Python API does not prevent registered analysis integration", async () => {
+    analysisRegistered = true; analysisPaths = []; analysisWrites = [];
+    extension = {isActive: true, exports: {environments: {updateActiveEnvironmentPath: async () => {throw Error("fixture provider unavailable");}}}};
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["/work/src"]}};
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.deepEqual(analysisPaths, ["/work/src"]);
+});
+
+test("Failing analysis does not invalidate RCC resolution or repeat diagnostics", async () => {
+    analysisRegistered = true; analysisPaths = []; analysisWrites = [];
+    let selected = 0;
+    extension = {isActive: true, exports: {environments: {updateActiveEnvironmentPath: async () => selected++}}};
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["/work/src"]}};
+    analysisFailure = Error("fixture analysis unavailable");
+    const start = output.length;
+    try {
+        assert.equal(await integration.autoUpdateInterpreter(resource), true);
+        assert.equal(await integration.autoUpdateInterpreter(resource), true);
+        assert.equal(selected, 2);
+        assert.equal(output.slice(start).filter(line => line.includes("Optional Python analysis update failed")).length, 1);
+    } finally {analysisFailure = undefined;}
 });
