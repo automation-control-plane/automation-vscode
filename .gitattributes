@@ -50,3 +50,6 @@
 *.jpg           binary
 *.pdf           binary
 *.png           binary
+
+# These admitted attachment bytes are compared verbatim by Action/Robot tasks.
+sema4ai/tests/fixtures/native_work_items/attachment-proof.txt -text

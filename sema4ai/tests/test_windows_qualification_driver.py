@@ -1,6 +1,9 @@
 """Portable checks of the Windows harness's subprocess and archive boundaries."""
 import importlib.util
 import hashlib
+import ast
+import os
+import subprocess
 from pathlib import Path
 import tempfile
 import unittest
@@ -15,6 +18,19 @@ trust_spec.loader.exec_module(trust_driver)
 
 
 class WindowsQualificationBoundaries(unittest.TestCase):
+    def test_attachment_fixture_survives_windows_checkout_byte_for_byte(self):
+        repository = Path(__file__).resolve().parents[2]
+        relative = "sema4ai/tests/fixtures/native_work_items/attachment-proof.txt"
+        action = repository / "sema4ai/tests/fixtures/native_work_items/action/work_items_actions.py"
+        expected = next(node.value for node in ast.walk(ast.parse(action.read_text()))
+                        if isinstance(node, ast.Constant) and isinstance(node.value, bytes)
+                        and node.value.startswith(b"Automation Work Items"))
+        windows = subprocess.check_output(["git", "-c", "core.autocrlf=true", "cat-file", "--filters",
+            "--path=" + relative, "HEAD:" + relative], cwd=repository,
+            env=driver.clean_environment(os.environ))
+        self.assertEqual(windows, expected, "Git checkout must preserve admitted attachment bytes")
+        self.assertEqual((repository / relative).read_bytes(), expected)
+
     def test_trust_requires_exact_native_workspace_binding(self):
         folder = Path("D:/owned/workspace")
         digest = hashlib.sha256(str(folder).replace("/", "\\").lower().encode()).hexdigest()

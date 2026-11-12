@@ -103,3 +103,14 @@ ptyhost tails. Stable shell-integration observation retains scrubbed fatal lines
 from test-owned terminals without reading command-line data. The regression
 failed before the collector fix; all five diagnostic tests pass afterward.
 This remains diagnosis, not a speculative product fix or Windows acceptance.
+
+## Initiating workload failure identified
+
+[Run43312390408](windows-fixture-crlf-failure.json) finally captures the initiating
+authored attachment mismatch. Git Windows checkout converted the text fixture
+to CRLF, while both tasks admit exact LF bytes. The real Git filter regression
+failed before the exact -text attribute and all seven harness checks pass after.
+No input normalization or assertion weakening is used. A secondary SDK0.4.4
+error while releasing the failed input is separately recorded and routed to the
+existing Actions owner for contract clarification, not accepted as correct
+failure handling. Native Windows acceptance still awaits the next full gate.
