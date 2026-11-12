@@ -77,10 +77,19 @@ matches its official digest, and the annotated tag resolves to merged commit
 qualification JSON and original QA packet preserve their earlier dependency
 check rather than being relabeled as current publication evidence.
 
-Official target-version endpoints still return 404 for Runtime/Core 1.1.0.
-Verify their actual published hashes/metadata and frozen-source comparison, then
-integrate/requalify the owned composition as required before release. Source
-versions and candidate wheels are not publication proof.
+Core 1.1.0 is also public. Its independently downloaded
+[wheel, sdist, metadata and source-tag provenance](published-core-1.1.0.json)
+confirm byte identity with Dakota's qualified Core wheel. The annotated tag
+resolves to the same merged commit recorded above. Requires-Python is
+`>=3.10,<4.0`; actual wheel metadata retains `truststore>=0.10,<1.0` and has no
+`robocorp-log` or `robocorp-truststore` distribution dependency.
+
+At 19:42 UTC, the official Runtime 1.1.0 target-version endpoint still returns
+404. The Actions owner reports successful Linux/Windows preparation; public
+Runtime artifacts, frozen-source comparison and final composition qualification
+remain required before extension merge/release. Preserve the approved
+Linux/Windows-only Runtime scope, with Mac absent. The unchanged 2.20.24 VSIX and
+original QA packet were not rebuilt or retested for this publication checkpoint.
 
 Configured consumer-queue proof does not certify every merged workspace operation
 or reviewed-queue variant. Unsupported operations remain denied. The generic
