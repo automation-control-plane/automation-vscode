@@ -1,0 +1,10 @@
+.header { padding-bottom: 16px; }
+.prepare-note { color: var(--automation-muted); margin: 14px 0 0; font-size: 12px; }
+.selection-heading { padding: 24px 0; }
+.selection-heading #save { margin-left: auto; }
+#cases { margin-top: 12px; }
+#schema-help { color: var(--automation-muted); font-size: 12px; margin: 12px 0; overflow-wrap: anywhere; }
+#schema-help p + p { margin-top: 6px; }
+.file-path { margin-top: 26px; overflow-wrap: anywhere; }
+#metadata { margin-bottom: 16px; }
+@media (max-width:650px) { .sidebar { display: block; } .sidebar .context-section:nth-child(2) { border-bottom: 1px solid var(--automation-border); } #cases { max-height: 170px; overflow: auto; } }

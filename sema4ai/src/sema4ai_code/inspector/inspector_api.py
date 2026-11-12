@@ -54,6 +54,7 @@ class _WebInspectorThread(threading.Thread):
         self._finish = False
         self._web_inspector: WebInspector | None = None
         self._shutdown_callback = shutdown_callback
+        self._shutdown_lock = threading.Lock()
 
         self._configuration = configuration
 
@@ -62,10 +63,16 @@ class _WebInspectorThread(threading.Thread):
         return self._web_inspector
 
     def shutdown(self) -> None:
-        if self._shutdown_callback is not None:
-            self._shutdown_callback()
-        # signal the run to finish
-        self._finish = True
+        # Teardown callbacks can re-enter shutdown after a replacement starts.
+        # Release this worker's manager reference only once.
+        with self._shutdown_lock:
+            if self._finish:
+                return
+            self._finish = True
+            callback = self._shutdown_callback
+            self._shutdown_callback = None
+        if callback is not None:
+            callback()
         self.queue.put(None)
         if self._web_inspector:
             self._web_inspector.shutdown()
@@ -109,8 +116,9 @@ class _WebInspectorThread(threading.Thread):
                     clear_all_callback,
                 )
 
-                if self._web_inspector.page(auto_create=False):
-                    clear_all_callback()
+                # Playwright may have started before page creation failed.
+                # Cleanup is thread-local and never creates a page/browser.
+                clear_all_callback()
             except Exception as e:
                 log.exception(f"Clearing callbacks raised Exception:", e)
             log.debug("Exited from Web Inspector Thread!")
@@ -1031,14 +1039,15 @@ class InspectorApi(PythonLanguageServer):
     def m_open_browser(self, url: str, wait: bool = False) -> None:
         self._enqueue_web(_WebOpenUrlCommand(url), wait)
 
-    def m_start_pick(self, url_if_new: str = "", wait: bool = False) -> None:
+    def m_start_pick(self, url_if_new: str = "", wait: bool = False) -> ActionResultDict:
         # configure
         if self.__web_inspector_configuration:
             self.__web_inspector_configuration["url"] = url_if_new
         else:
             self.__web_inspector_configuration = {"url": url_if_new}
         # command
-        self._enqueue_web(_WebAsyncPickCommand(self._endpoint, url_if_new), wait)
+        result = self._enqueue_web(_WebAsyncPickCommand(self._endpoint, url_if_new), wait)
+        return result if result is not None else {"success": True, "message": None, "result": None}
 
     def m_stop_pick(self, wait: bool = False) -> None:
         self._enqueue_web(_WebAsyncStopCommand(), wait)
@@ -1054,19 +1063,20 @@ class InspectorApi(PythonLanguageServer):
         wait=False,
         viewport_size: tuple | None = None,
         url: str | None = None,
-    ) -> None:
+    ) -> ActionResultDict:
         # configure
         self.__web_inspector_configuration["browser_config"]["viewport_size"] = (
             viewport_size
         )
         self.__web_inspector_configuration["url"] = url
         # command
-        self._enqueue_web(
+        result = self._enqueue_web(
             _WebBrowserConfigureCommand(
                 self.__web_inspector_configuration["browser_config"]
             ),
             wait,
         )
+        return result if result is not None else {"success": True, "message": None, "result": None}
 
     def m_shutdown(self, **_kwargs) -> None:
         self._enqueue_web(_WebShutdownCommand(), wait=False)

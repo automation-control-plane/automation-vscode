@@ -1,0 +1,183 @@
+/*
+ * Presentation adapter for the frozen Inspector and Output compatibility engines.
+ * See legacy-surfaces.md for the small, hash-pinned structural contract. Never
+ * target generated styled-components class names or edit the bundled engines.
+ */
+body[data-automation-surface] {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: var(--automation-bg) !important;
+  color: var(--automation-text) !important;
+  font: 13px/1.5 var(--automation-font) !important;
+  --color-content-primary: 230, 237, 245;
+  --color-content-primary-hovered: 255, 255, 255;
+  --color-content-subtle: 178, 192, 207;
+  --color-content-subtle-hovered: 230, 237, 245;
+  --color-content-subtle-light: 178, 192, 207;
+  --color-content-subtle-light-hovered: 230, 237, 245;
+  --color-content-accent: 255, 191, 36;
+  --color-content-accent-hovered: 255, 208, 87;
+  --color-content-control-primary: 24, 27, 30;
+  --color-content-control-primary-hovered: 24, 27, 30;
+  --color-content-inversed: 21, 29, 36;
+  --color-content-disabled: 130, 145, 159;
+  --color-content-error: 255, 133, 139;
+  --color-content-error-hovered: 255, 154, 160;
+  --color-content-success: 73, 219, 124;
+  --color-content-success-hovered: 105, 234, 148;
+  --color-border-primary: 50, 65, 78;
+  --color-border-primary-hovered: 83, 108, 128;
+  --color-border-subtle: 50, 65, 78;
+  --color-border-subtle-hovered: 83, 108, 128;
+  --color-border-accent: 255, 191, 36;
+  --color-border-accent-hovered: 255, 208, 87;
+  --color-border-disabled: 50, 65, 78;
+  --color-background-primary: 21, 29, 36;
+  --color-background-subtle: 34, 46, 57;
+  --color-background-subtle-hovered: 44, 58, 70;
+  --color-background-subtle-light: 28, 37, 46;
+  --color-background-subtle-light-hovered: 34, 46, 57;
+  --color-background-control-primary: 255, 191, 36;
+  --color-background-control-primary-hovered: 255, 208, 87;
+  --color-background-accent: 255, 191, 36;
+  --color-background-accent-hovered: 255, 208, 87;
+  --color-background-accent-light: 64, 54, 32;
+  --color-background-accent-light-hovered: 78, 64, 33;
+  --color-background-disabled: 34, 46, 57;
+  --color-background-panel: 28, 37, 46;
+  --color-background-input: 21, 29, 36;
+  --color-background-hero: 28, 37, 46;
+  --color-background-tab-interactive: 34, 46, 57;
+  --color-outline: 255, 191, 36;
+  --color-tag-purple-background: 64, 54, 32;
+  --color-tag-magenta-background: 64, 54, 32;
+}
+body.vscode-light[data-automation-surface] {
+  --color-content-primary: 23, 35, 47;
+  --color-content-primary-hovered: 23, 35, 47;
+  --color-content-subtle: 76, 96, 115;
+  --color-content-subtle-light: 76, 96, 115;
+  --color-content-subtle-hovered: 23, 35, 47;
+  --color-content-subtle-light-hovered: 23, 35, 47;
+  --color-content-accent: 167, 96, 0;
+  --color-content-accent-hovered: 135, 76, 0;
+  --color-content-control-primary: 255, 255, 255;
+  --color-content-control-primary-hovered: 255, 255, 255;
+  --color-content-disabled: 110, 122, 134;
+  --color-content-error: 187, 36, 54;
+  --color-content-success: 22, 132, 62;
+  --color-border-primary: 200, 210, 220;
+  --color-border-subtle: 200, 210, 220;
+  --color-border-accent: 167, 96, 0;
+  --color-background-primary: 247, 249, 251;
+  --color-background-subtle: 238, 242, 246;
+  --color-background-subtle-hovered: 226, 233, 240;
+  --color-background-subtle-light: 255, 255, 255;
+  --color-background-subtle-light-hovered: 238, 242, 246;
+  --color-background-control-primary: 167, 96, 0;
+  --color-background-control-primary-hovered: 135, 76, 0;
+  --color-background-accent: 167, 96, 0;
+  --color-background-accent-hovered: 135, 76, 0;
+  --color-background-accent-light: 255, 239, 206;
+  --color-background-disabled: 238, 242, 246;
+  --color-background-panel: 255, 255, 255;
+  --color-background-input: 255, 255, 255;
+  --color-background-hero: 238, 242, 246;
+  --color-background-tab-interactive: 238, 242, 246;
+  --color-outline: 167, 96, 0;
+  --color-tag-purple-background: 255, 239, 206;
+  --color-tag-magenta-background: 255, 239, 206;
+}
+body[data-automation-surface] #root,
+body[data-automation-surface] #root input,
+body[data-automation-surface] #root button,
+body[data-automation-surface] #root textarea,
+body[data-automation-surface] #root select {
+  font-family: var(--automation-font) !important;
+}
+body[data-automation-surface] #root input,
+body[data-automation-surface] #root button,
+body[data-automation-surface] #root textarea,
+body[data-automation-surface] #root select { font-size: 13px !important; }
+body[data-automation-surface] #root input,
+body[data-automation-surface] #root button { min-height: 30px; }
+body[data-automation-surface] #root button:focus-visible,
+body[data-automation-surface] #root input:focus-visible { outline: 2px solid var(--automation-accent); outline-offset: 2px; }
+body[data-automation-surface] #root pre,
+body[data-automation-surface] #root code { font-family: var(--automation-code-font) !important; }
+
+.automation-surface-eyebrow { color: var(--automation-muted); font-size: 12px; margin-bottom: 8px; }
+.automation-surface-eyebrow span { opacity: .8; }
+.automation-inspector-header { padding: 24px 28px 18px; border-bottom: 1px solid var(--automation-border); }
+.automation-inspector-header h1 { margin: 0 0 6px; font: 600 28px/1.2 var(--automation-font); letter-spacing: -.3px; }
+.automation-inspector-header p { margin: 0; color: var(--automation-muted); font-size: 13px; }
+.automation-inspector-package-context { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 18px; min-width: 0; }
+.automation-inspector-package-context > .codicon { color: var(--automation-accent); font-size: 18px; }
+.automation-inspector-package-context strong { font-weight: 600; overflow-wrap: anywhere; }
+.automation-kind { border: 1px solid var(--automation-border); border-radius: 4px; padding: 1px 7px; font-size: 11px; color: var(--automation-muted); white-space: nowrap; }
+#automation-inspector-path { color: var(--automation-muted); font-size: 12px; overflow-wrap: anywhere; }
+.automation-inspector-tabs { display: flex; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid var(--automation-border); padding: 0 24px; }
+.automation-inspector-tabs button { border: 0; border-bottom: 2px solid transparent; color: var(--automation-muted); background: transparent; border-radius: 0; padding: 13px 12px; min-height: 48px; display: flex; align-items: center; gap: 8px; }
+.automation-inspector-tabs button[aria-selected="true"] { color: var(--automation-accent); border-bottom-color: var(--automation-accent); font-weight: 600; }
+.automation-inspector-tabs button:hover { color: var(--automation-text); background: var(--automation-surface); }
+.automation-inspector-error { margin: 16px 24px; padding: 12px 16px; border: 1px solid var(--automation-danger); border-left-width: 3px; border-radius: 4px; color: var(--automation-text); background: var(--automation-surface); }
+.automation-inspector-error[hidden] { display: none; }
+.automation-inspector-error h2 { font-size: 14px; margin: 0 0 8px; color: var(--automation-danger); }
+.automation-inspector-error p { margin: 0 0 8px; line-height: 1.5; }
+.automation-inspector-error summary { cursor: pointer; }
+.automation-inspector-error pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 200px; overflow: auto; font-size: 12px; }
+
+/* Frozen Inspector frame: header / optional info / divider / content. The
+ * source shell replaces only its header and the misleading Robot path row.
+ * All locator toolbar controls, capture, validation and code generation stay. */
+body[data-automation-surface="inspector"] #root > div { padding: 20px 28px !important; gap: 18px !important; height: auto !important; min-height: 0; }
+body[data-automation-surface="inspector"] #root > div > div:first-child { display: none; }
+body[data-inspector-route="/locators-manager/"] #root > div > div:nth-child(2) > div > div > div:first-child { display: none; }
+body[data-automation-surface="inspector"] #root div { font-family: var(--automation-font); }
+body[data-automation-surface="inspector"] #root img { max-width: 100%; object-fit: contain; }
+
+.automation-output-header { min-height: 38px; display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid var(--automation-border); background: var(--automation-surface); }
+.automation-output-header > .codicon { color: var(--automation-accent); }
+.automation-output-header strong { font-size: 13px; font-weight: 600; white-space: nowrap; }
+#automation-output-selection { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--automation-muted); font-size: 12px; }
+.automation-output-context { color: var(--automation-accent); margin-left: auto; font-size: 12px; }
+.automation-output-empty { padding: 24px; max-width: 680px; }
+.automation-output-empty h2 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
+.automation-output-empty p { color: var(--automation-muted); font-size: 13px; }
+body[data-output-has-run="false"] #root { display: none; }
+body[data-automation-surface="output"] #base-header { padding: 12px 16px 0 !important; }
+body[data-automation-surface="output"] .base-header-container { gap: 10px; flex-wrap: wrap; }
+body[data-automation-surface="output"] .columnTitles { border-color: var(--automation-border); }
+body[data-automation-surface="output"] .locationLink { color: var(--automation-link); }
+body[data-automation-surface="output"] .selection-visible-dark,
+body[data-automation-surface="output"] .selection-visible-light { background: var(--automation-surface-raised); outline: 1px solid var(--automation-accent); }
+
+body.vscode-high-contrast[data-automation-surface] #root,
+body.vscode-high-contrast-light[data-automation-surface] #root { color: var(--automation-text); }
+body.vscode-high-contrast[data-automation-surface] #root button,
+body.vscode-high-contrast-light[data-automation-surface] #root button { outline: 1px solid var(--automation-border); }
+@media (max-width: 650px) {
+  .automation-inspector-header { padding: 18px 16px 14px; }
+  .automation-inspector-header h1 { font-size: 24px; }
+  .automation-inspector-tabs { padding: 0 8px; gap: 0; }
+  .automation-inspector-tabs button { padding: 10px 9px; min-height: 42px; }
+  body[data-automation-surface="inspector"] #root > div { padding: 16px !important; }
+  .automation-output-header { padding: 7px 10px; }
+}
+
+.automation-inspector-validation {
+  margin: 0 16px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--automation-border);
+  border-left: 3px solid var(--automation-accent);
+  border-radius: 4px;
+  background: var(--automation-surface);
+  font-size: 12px;
+}
+.automation-inspector-validation[hidden] { display: none; }
+.automation-inspector-validation strong,
+.automation-inspector-validation code,
+.automation-inspector-validation span { display: block; margin-top: 4px; overflow-wrap: anywhere; }
+.automation-inspector-validation span { color: var(--vscode-descriptionForeground); }
+.automation-inspector-validation p { white-space: pre-wrap; max-height: 160px; overflow: auto; }
+.automation-inspector-validation p:empty { display: none; }

@@ -1,0 +1,62 @@
+{
+  "project_url": "https://pypi.org/project/actions-work-items/0.5.0/",
+  "files": [
+    {
+      "filename": "actions_work_items-0.5.0-py3-none-any.whl",
+      "sha256": "0aaea32c8e3b9f25a1de40083909d684418e8b4288fd504383233f53b95dcbb4",
+      "url": "https://files.pythonhosted.org/packages/d6/ce/5c97f58b3edb4afbee1e0b80176d3a79fae09e4edebb3fe6c701d24fbb32/actions_work_items-0.5.0-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "filename": "actions_work_items-0.5.0.tar.gz",
+      "sha256": "957366932bfc9adef1808b95a84d3cf0c3a1ba68e1db3ba5c77f9d34ceb983f9",
+      "url": "https://files.pythonhosted.org/packages/34/75/7129b1cd4691d5ba1624dea8463a432927ad0f87dbbabf63ac315bbed1a2/actions_work_items-0.5.0.tar.gz",
+      "yanked": false
+    }
+  ],
+  "download_verified": true,
+  "metadata": {
+    "name": "actions-work-items",
+    "version": "0.5.0",
+    "requires_python": ">=3.10,<4.0",
+    "requires_dist": [
+      "certifi (>=2026.10.19) ; extra == \"all\"",
+      "certifi (>=2026.10.19) ; extra == \"yorko\"",
+      "dnspython (>=2.9.0) ; (python_version >= \"3.11\") and (extra == \"all\")",
+      "dnspython (>=2.9.0) ; (python_version >= \"3.11\") and (extra == \"docdb\")",
+      "dnspython (>=2.9.0) ; (python_version >= \"3.11\") and (extra == \"documentdb\")",
+      "psycopg[binary] (>=3.2,<4) ; extra == \"postgres\"",
+      "pymongo (>=4.18.3) ; extra == \"all\"",
+      "pymongo (>=4.18.3) ; extra == \"docdb\"",
+      "pymongo (>=4.18.3) ; extra == \"documentdb\"",
+      "redis (>=4.5.0) ; extra == \"all\"",
+      "redis (>=4.5.0) ; extra == \"redis\"",
+      "requests (>=2.31.0) ; extra == \"all\"",
+      "requests (>=2.31.0) ; extra == \"yorko\"",
+      "typing-extensions (>=4.6.0)",
+      "urllib3 (>=2.8.0) ; extra == \"all\"",
+      "urllib3 (>=2.8.0) ; extra == \"yorko\""
+    ]
+  },
+  "qualified_dakota_wheel_sha256": "0aaea32c8e3b9f25a1de40083909d684418e8b4288fd504383233f53b95dcbb4",
+  "public_wheel_matches_dakota_archive_bytes": true,
+  "public_vs_dakota_member_differences": [],
+  "remaining_public_targets": {
+    "actions-runtime": {
+      "status": 404,
+      "files": []
+    },
+    "actions-core": {
+      "status": 404,
+      "files": []
+    }
+  },
+  "source_tag_expected": "actions-work-items-0.5.0",
+  "source_commit_expected": "739da0897447167f0d4f2dff79567fce2146e007",
+  "gate": "Partial publication only; Runtime/Core and final composition integration remain required.",
+  "sdist_download_verified": true,
+  "verified_source_tag_object": "473367948d5e4717b22f1cd6390361e7353ea69e",
+  "verified_source_commit": "739da0897447167f0d4f2dff79567fce2146e007",
+  "checked_at_utc": "2026-11-12T18:39:09.640903+00:00",
+  "source_tag_signature_claim": "No signature verification claim; GitHub annotated tag object resolves to the stated commit."
+}

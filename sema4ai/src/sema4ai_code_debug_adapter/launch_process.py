@@ -84,6 +84,7 @@ class LaunchProcess:
         "_env",
         "_rcc_config_location",
         "_on_exit_callbacks",
+        "_exit_receipt",
     ]
 
     def __init__(  # pylint: disable=return-in-init
@@ -128,6 +129,7 @@ class LaunchProcess:
         self._sent_terminated = threading.Event()
         self._rcc_config_location = rcc_config_location
         self._on_exit_callbacks: list[Callable] = []
+        self._exit_receipt: Path | None = None
 
         def mark_invalid(message):
             launch_response.success = False
@@ -332,13 +334,16 @@ class LaunchProcess:
                 cmdline.append(use_path)
 
             cmdline.append("--bundled")
-            cmdline.append("--sema4ai")
+            cmdline.append("--robocorp")
             cmdline.append("--controller")
-            cmdline.append("Sema4aiCode")
+            cmdline.append("AutomationCode")
 
         self._cmdline = cmdline
 
     MANAGED_ENV_VARIABLES = [
+        "RC_WORKITEM_OUTPUT_PATH",
+        "RC_WORKITEM_INPUT_PATH",
+        "RC_WORKITEM_ADAPTER",
         "RPA_OUTPUT_WORKITEM_PATH",
         "RPA_INPUT_WORKITEM_PATH",
         "RPA_WORKITEMS_ADAPTER",
@@ -400,12 +405,19 @@ class LaunchProcess:
         try:
             self._sent_terminated.set()
             from sema4ai_ls_core.debug_adapter_core.dap.dap_schema import (
+                ExitedEvent,
+                ExitedEventBody,
                 TerminatedEvent,
                 TerminatedEventBody,
             )
 
             debug_adapter_comm = self._weak_debug_adapter_comm()
             if debug_adapter_comm is not None:
+                exit_code = self._actual_exit_code()
+                if exit_code is not None:
+                    debug_adapter_comm.write_to_client_message(
+                        ExitedEvent(body=ExitedEventBody(exitCode=exit_code))
+                    )
                 restart = False
                 terminated_event = TerminatedEvent(
                     body=TerminatedEventBody(restart=restart)
@@ -417,6 +429,27 @@ class LaunchProcess:
                     c()
                 except:
                     log.exception("Error on exit callback.")
+
+    def _actual_exit_code(self) -> int | None:
+        if self._popen is not None:
+            try:
+                return self._popen.wait(timeout=2)
+            except Exception:
+                return None
+        if self._exit_receipt is not None:
+            import json
+            import time
+
+            deadline = time.monotonic() + 2
+            while time.monotonic() < deadline:
+                try:
+                    value = json.loads(self._exit_receipt.read_text())
+                    if value.get("pid") == self._track_process_pid and type(value.get("exit_code")) is int:
+                        return value["exit_code"]
+                    return None
+                except (OSError, ValueError):
+                    time.sleep(0.02)
+        return None
 
     def launch(self):
         import tempfile
@@ -501,7 +534,19 @@ class LaunchProcess:
             debug_adapter_comm = weak_debug_adapter_comm()
             cmdline = self._cmdline
             if debug_adapter_comm is not None:
-                env = self._env
+                env = dict(self._env)
+                receipt_dir = Path(tempfile.mkdtemp(prefix="automation-dap-"))
+                self._exit_receipt = receipt_dir / "exit.json"
+                env["AUTOMATION_DAP_EXIT_FILE"] = str(self._exit_receipt)
+
+                def remove_owned_receipt():
+                    try:
+                        self._exit_receipt.unlink(missing_ok=True)
+                        receipt_dir.rmdir()
+                    except OSError:
+                        log.debug("Unable to remove task-owned completion receipt.")
+
+                self._on_exit_callbacks.append(remove_owned_receipt)
 
                 write_pid_to = tempfile.mktemp(".pid", "rf_")
                 try:

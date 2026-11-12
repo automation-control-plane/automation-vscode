@@ -115,6 +115,8 @@ def _execute_within_user_env(
 ) -> ActionResult:
     from sema4ai_ls_core.basic import launch_and_return_future
 
+    command_name = " ".join(args[:3])
+
     try:
         for ep in pm.get_implementations(EPResolveInterpreter):
             interpreter_info: IInterpreterInfo = ep.get_interpreter_info_for_doc_uri(
@@ -145,17 +147,16 @@ def _execute_within_user_env(
                         else:
                             return ActionResult.make_success(result.stdout)
                 if result.stderr:
-                    error_msg = (
-                        f"Found errors while running {args[2]} errors: {result.stderr}"
-                    )
+                    error_msg = f"Found errors while running {command_name} errors: {result.stderr}"
                     log.info(error_msg)
+                    return ActionResult.make_failure(error_msg)
                 break
     except BaseException as e:
-        message = f"Unable to execute {args[2]} command. Error: {e}"
+        message = f"Unable to execute {command_name} command. Error: {e}"
         log.exception(message)
         return ActionResult.make_failure(message)
 
-    return ActionResult.make_failure(f"Unable to execute {args[2]} command")
+    return ActionResult.make_failure(f"Unable to execute {command_name} command")
 
 
 def _call_sema4ai_actions(
@@ -184,8 +185,7 @@ def _call_sema4ai_actions(
     path = Path(uris.to_fs_path(uri))
     file_name = path.name
     args = [
-        "-m",
-        "sema4ai.actions",
+        str(Path(__file__).with_name("action_runtime.py")),
         argument,
         "--skip-lint",
     ]
@@ -221,8 +221,8 @@ def _get_actions_version(
 
     from sema4ai_ls_core import uris
 
-    libname = "sema4ai.actions"
-    args = ["-c", f"import {libname};print({libname}.__version__)"]
+    libname = "actions-core"
+    args = [str(Path(__file__).with_name("action_runtime.py")), "--library-version"]
 
     path = Path(uris.to_fs_path(uri))
     if not path.is_dir():
@@ -244,7 +244,7 @@ def _get_actions_version(
         except Exception:
             return ActionResult.make_failure(error_msg)
     else:
-        return ActionResult.make_failure(error_msg)
+        return ActionResult.make_failure(error_msg + "\n" + (result.message or ""))
 
     return result
 
@@ -261,7 +261,7 @@ def get_metadata(pm: PluginManager, uri: str, monitor: IMonitor) -> ActionResult
     actions_library_result = _get_actions_version(pm, uri, monitor)
     if not actions_library_result.success:
         return ActionResult.make_failure(
-            actions_library_result.message or "Unable to get `sema4ai.actions` version"
+            actions_library_result.message or "Unable to get actions-core version"
         )
 
     if actions_library_result.result and actions_library_result.result > (1, 0, 1):

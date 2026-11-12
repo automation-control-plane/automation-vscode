@@ -1,0 +1,157 @@
+{
+  "root": "/tmp/automation-release-20261024/runtime-restart-S4BRIR",
+  "extension": "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11",
+  "version": "2.20.11",
+  "source_sha": "aec537ebaadbf80aa95f22bf4a466fb514be2683",
+  "scope": "Actual published wrapper, Linux process/socket ownership and compiled extension; simulated Code terminals, Memento and module reload, not Extension Host/GUI acceptance",
+  "port": 39085,
+  "events": [
+    {
+      "event": "spawn",
+      "pid": 3623,
+      "at": 1792872392336,
+      "argv": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+        "start",
+        "--address=127.0.0.1",
+        "--port=39085",
+        "--datadir=/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/action-server/vscode-842e8de4ae30"
+      ]
+    },
+    {
+      "event": "terminal-shown",
+      "pid": 3623,
+      "at": 1792872392336
+    },
+    {
+      "event": "output",
+      "text": "Starting Actions Runtime (in terminal): /workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64; URL: http://127.0.0.1:39085",
+      "at": 1792872392336
+    },
+    {
+      "event": "first-ready",
+      "pid": 3623,
+      "at": 1792872397272
+    },
+    {
+      "event": "simulated-extension-reload",
+      "pid": 3623,
+      "at": 1792872397273
+    },
+    {
+      "event": "terminal-shown",
+      "pid": 3623,
+      "at": 1792872397303
+    },
+    {
+      "event": "verified-reconnected",
+      "pid": 3623,
+      "at": 1792872397310
+    },
+    {
+      "event": "restart-confirmed",
+      "at": 1792872397316
+    },
+    {
+      "event": "terminal-closed",
+      "pid": 3623,
+      "at": 1792872397317
+    },
+    {
+      "event": "output",
+      "text": "Waiting for owned Actions Runtime to exit and release 127.0.0.1:39085.",
+      "at": 1792872397317
+    },
+    {
+      "event": "process-exited",
+      "pid": 3623,
+      "code": 1,
+      "signal": null,
+      "at": 1792872397628
+    },
+    {
+      "event": "spawn",
+      "pid": 3698,
+      "at": 1792872397724,
+      "argv": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+        "start",
+        "--address=127.0.0.1",
+        "--port=39085",
+        "--datadir=/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/action-server/vscode-842e8de4ae30"
+      ]
+    },
+    {
+      "event": "terminal-shown",
+      "pid": 3698,
+      "at": 1792872397725
+    },
+    {
+      "event": "output",
+      "text": "Starting Actions Runtime (in terminal): /workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64; URL: http://127.0.0.1:39085",
+      "at": 1792872397725
+    },
+    {
+      "event": "terminal-closed",
+      "pid": 3698,
+      "at": 1792872401210
+    },
+    {
+      "event": "process-exited",
+      "pid": 3698,
+      "code": 1,
+      "signal": null,
+      "at": 1792872401561
+    }
+  ],
+  "errors": [],
+  "unknown_listener": {
+    "status": {
+      "port": 39085,
+      "packageDirectory": "/tmp/automation-release-20261024/runtime-restart-S4BRIR/package",
+      "kind": "unknown-listener",
+      "message": "This port is unavailable and there is no verified launch record for this package. Existing listeners are left running."
+    },
+    "contacts": 0,
+    "expected_errors": [
+      "This port is unavailable and there is no verified launch record for this package. Existing listeners are left running."
+    ]
+  },
+  "old_pid": 3623,
+  "original_ownership": {
+    "version": 1,
+    "launchId": "4803501a-e4db-4e24-8eca-15ef04344a58",
+    "processId": 3623,
+    "processStart": "67562",
+    "bootId": "1749ab27-21a2-4071-9adb-85e0dc1602b2",
+    "directory": "/tmp/automation-release-20261024/runtime-restart-S4BRIR/package",
+    "executable": "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+    "dataDirectory": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/action-server/vscode-842e8de4ae30",
+    "port": 39085,
+    "launchedAt": 1792872392340
+  },
+  "reloaded_status": {
+    "port": 39085,
+    "packageDirectory": "/tmp/automation-release-20261024/runtime-restart-S4BRIR/package",
+    "kind": "owned-running",
+    "endpoint": "http://127.0.0.1:39085",
+    "canReconnect": true,
+    "terminalAvailable": true,
+    "message": "Your Runtime survived the window reload. Reconnect to its existing terminal."
+  },
+  "new_pid": 3698,
+  "replacement_ownership": {
+    "version": 1,
+    "launchId": "6b40090d-0e83-483f-8414-05ab3dd9bb56",
+    "processId": 3698,
+    "processStart": "68101",
+    "bootId": "1749ab27-21a2-4071-9adb-85e0dc1602b2",
+    "directory": "/tmp/automation-release-20261024/runtime-restart-S4BRIR/package",
+    "executable": "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+    "dataDirectory": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/action-server/vscode-842e8de4ae30",
+    "port": 39085,
+    "launchedAt": 1792872397726
+  },
+  "action_result": "Hello Restart QA",
+  "result": "PASS"
+}

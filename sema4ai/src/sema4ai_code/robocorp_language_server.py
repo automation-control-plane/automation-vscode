@@ -35,7 +35,7 @@ from sema4ai_ls_core.python_ls import BaseLintManager, PythonLanguageServer
 from sema4ai_ls_core.watchdog_wrapper import IFSObserver
 
 from sema4ai_code import commands
-from sema4ai_code.action_server import get_default_sema4ai_home
+from sema4ai_code.runtime_paths import vendor_studio_home
 from sema4ai_code.agents.agent_spec_handler import ErrorCode
 from sema4ai_code.inspector.inspector_language_server import InspectorLanguageServer
 from sema4ai_code.protocols import (
@@ -274,7 +274,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         )
         from sema4ai_code.resolve_interpreter import register_plugins
 
-        self._prefix_to_last_run_number_and_time: dict[str, tuple[int, float]] = {}
+        self._prefix_to_last_run_number_and_time: dict[tuple[str, str], tuple[int, float]] = {}
 
         self._pypi_cloud = PyPiCloud(weakref.WeakMethod(self._get_pypi_base_urls))  # type: ignore
         self._cache_dir = cache_dir
@@ -517,6 +517,9 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         return []
 
     def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
+        from sema4ai_code.legacy_integrations import DISABLED, commands, enabled
+        if command in commands() and not enabled(self.config):
+            return ActionResult.make_failure(DISABLED).as_dict()
         return command_dispatcher.dispatch(self, command, arguments)
 
     @overrides(PythonLanguageServer.m_text_document__did_save)
@@ -1073,11 +1076,13 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
             log.exception(message)
             return dict(success=False, message=message, result=None)
 
-        robot_yaml = self._find_robot_yaml_path_from_path(path, stat)
+        from sema4ai_code.find_robot_yaml import find_package_yaml_path_from_path
+
+        robot_yaml = find_package_yaml_path_from_path(path, stat)
         if not robot_yaml:
             return dict(
                 success=False,
-                message=f"Unable to find robot.yaml from {robot}.",
+                message=f"Unable to find package.yaml or robot.yaml from {robot}.",
                 result=None,
             )
 
@@ -1101,7 +1106,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         if work_items_out_dir.is_dir():
             output_work_items.extend(self._collect_work_items(work_items_out_dir))
             output_work_items.sort(key=sort_by_number_postfix)
-            if increment_output:
+            if increment_output and params.get("prune_output", False):
                 output_work_items = self._schedule_output_work_item_removal(
                     output_work_items, output_prefix
                 )
@@ -1135,9 +1140,8 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         output_work_items: list[WorkItem],
         output_prefix: str,
     ):
-        max_run, last_time = self._prefix_to_last_run_number_and_time.get(
-            output_prefix, (0, 0)
-        )
+        package_prefix = (str(work_items_out_dir), output_prefix)
+        max_run, last_time = self._prefix_to_last_run_number_and_time.get(package_prefix, (0, 0))
 
         if max_run > 0:
             if time.time() - last_time > self.TIMEOUT_TO_CONSIDER_LAST_RUN_FRESH:
@@ -1159,7 +1163,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
                         max_run = run_number
 
         next_run = max_run + 1
-        self._prefix_to_last_run_number_and_time[output_prefix] = (
+        self._prefix_to_last_run_number_and_time[package_prefix] = (
             next_run,
             time.time(),
         )
@@ -1231,7 +1235,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         )
 
     def m_get_external_api_url(self) -> str | None:
-        home = get_default_sema4ai_home()
+        home = vendor_studio_home(self._rcc.get_robocorp_home_from_settings())
         external_api_pid = home / "sema4ai-studio" / "external-api-server.pid"
 
         if not external_api_pid.exists():
@@ -2162,7 +2166,10 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         location = params["location"] if params else self._rcc.get_rcc_location(False)
 
         try:
-            download_rcc(location, endpoint=self._endpoint)
+            if params:
+                download_rcc(location, endpoint=self._endpoint)
+            else:
+                location = self._rcc.get_rcc_location()
         except Exception as e:
             return {
                 "success": False,
@@ -2185,7 +2192,10 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         )
 
         try:
-            download_action_server(location, endpoint=self._endpoint)
+            if params:
+                download_action_server(location, endpoint=self._endpoint)
+            else:
+                location = self._action_server.get_action_server_location()
         except Exception as e:
             return {
                 "success": False,
@@ -2211,7 +2221,10 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         )
 
         try:
-            download_agent_cli(location, endpoint=self._endpoint)
+            if params:
+                download_agent_cli(location, endpoint=self._endpoint)
+            else:
+                location = self._agent_cli.get_agent_cli_location()
         except Exception as e:
             return {
                 "success": False,
@@ -2647,9 +2660,15 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         return self._gallery_action_packages
 
     def m_list_gallery_action_packages(self) -> ActionResultDict:
+        from sema4ai_code.legacy_integrations import DISABLED, enabled
+        if not enabled(self.config):
+            return ActionResult.make_failure(DISABLED).as_dict()
         return require_monitor(partial(self._list_gallery_action_packages))
 
     def _list_gallery_action_packages(self, monitor: IMonitor) -> ActionResultDict:
+        from sema4ai_code.legacy_integrations import DISABLED, enabled
+        if not enabled(self.config):
+            return ActionResult.make_failure(DISABLED).as_dict()
         from sema4ai_ls_core.progress_report import progress_context
 
         with progress_context(
@@ -2662,6 +2681,9 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
     def m_import_gallery_action_package(
         self, package_key: str, target_dir: str
     ) -> ActionResultDict:
+        from sema4ai_code.legacy_integrations import DISABLED, enabled
+        if not enabled(self.config):
+            return ActionResult.make_failure(DISABLED).as_dict()
         return require_monitor(
             partial(
                 self._import_gallery_action_package_threaded, package_key, target_dir
@@ -2671,6 +2693,9 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
     def _import_gallery_action_package_threaded(
         self, package_key: str, target_dir: str, monitor: IMonitor
     ) -> ActionResultDict:
+        from sema4ai_code.legacy_integrations import DISABLED, enabled
+        if not enabled(self.config):
+            return ActionResult.make_failure(DISABLED).as_dict()
         from sema4ai_ls_core.progress_report import progress_context
 
         with progress_context(

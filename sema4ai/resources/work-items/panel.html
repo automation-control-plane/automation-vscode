@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-{{nonce}}'; style-src 'nonce-{{nonce}}'; font-src data:;">
+  <style nonce="{{nonce}}">{{style}}</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-top">
+    <div class="identity"><p class="eyebrow">Automation Control Plane · Runbook</p><h1 id="runbook-title">Work Items</h1><p id="package" class="muted"></p></div>
+    <div class="header-tools">
+      <label class="mode-control"><span class="muted">Storage</span><select id="mode" aria-label="Work Item storage"><option value="file">Local inputs</option><option value="sqlite">Local queue</option><option value="published">Runtime storage</option><option value="managed">Managed queues</option></select></label>
+      <button id="connect" hidden>Connect Runtime…</button><button id="refresh" class="quiet">Refresh</button>
+      <details class="overflow"><summary aria-label="Storage settings and details">Storage details</summary><div class="overflow-content">
+        <label id="local-queue-label" hidden>Queue <input id="queue" value="input" maxlength="80"></label><button id="apply-queue" hidden>Load queue</button>
+        <button id="recover" hidden>Recover expired claims…</button><p id="authority"></p><p id="package-path" class="hint"></p>
+      </div></details>
+    </div>
+  </div>
+  <nav class="journey" aria-label="Runbook stages">
+    <button id="stage-prepare" class="stage" aria-current="step"><span class="stage-number">1</span>Prepare</button><span class="stage-line" aria-hidden="true"></span>
+    <button id="stage-run" class="stage"><span class="stage-number">2</span>Run</button><span class="stage-line" aria-hidden="true"></span>
+    <button id="stage-inspect" class="stage"><span class="stage-number">3</span>Inspect</button>
+  </nav>
+</header>
+<div id="status" role="status" aria-live="polite">Loading package…</div>
+<main id="local-root" class="layout">
+  <aside class="sidebar" aria-label="Work Item context">
+    <section class="context-section"><h2>Run context</h2>
+      <dl class="context-list"><div><dt><span class="codicon codicon-file-text" aria-hidden="true"></span> <span id="context-item-label">Input</span></dt><dd id="context-item">New input</dd></div><div><dt><span class="codicon codicon-files" aria-hidden="true"></span> Attachments</dt><dd id="context-files">No attachments</dd></div><div><dt><span class="codicon codicon-database" aria-hidden="true"></span> Storage</dt><dd id="context-storage">Local inputs</dd></div></dl>
+    </section>
+    <details id="context-extra" class="context-extra" open><summary class="context-toggle">Run details and lineage</summary><section class="context-section"><h2>Run details</h2><dl class="context-list"><div><dt>Execution</dt><dd id="context-receipt">No execution receipt</dd></div><div><dt>Started</dt><dd id="context-started">Not run</dd></div><div><dt>Duration</dt><dd id="context-duration">Not available</dd></div><div><dt>Exit code</dt><dd id="context-exit">Not available</dd></div></dl></section>
+    <section class="context-section"><h2>Lineage</h2><div id="context-lineage" class="context-links"></div><details id="item-details"><summary>Exact item record</summary><pre id="details"></pre></details></section>
+    </details><nav class="context-section item-picker" aria-label="Work Items">
+      <div class="sidebar-heading"><h2>Work Items</h2><button id="new" class="quiet">New input</button></div>
+      <div class="tabs item-tabs" aria-label="Item kind"><button id="show-inputs" class="quiet" aria-pressed="true">Inputs</button><button id="show-outputs" class="quiet" aria-pressed="false">Outputs</button></div><div id="items"></div>
+    </nav>
+  </aside>
+  <section class="detail" aria-label="Selected Work Item">
+    <div class="workspace-toolbar">
+      <nav class="tabs detail-tabs" aria-label="Work Item details"><button id="tab-result" class="quiet" aria-pressed="false">Result</button><button id="tab-files" class="quiet" aria-pressed="false">Files</button><button id="tab-inputs" class="quiet" aria-pressed="true">Prepare inputs</button></nav>
+      <div class="actions"><button id="create" class="primary">Create input</button><button id="run" class="primary" hidden>Run</button><button id="debug" hidden>Debug</button><button id="replay" hidden>Replay as new input</button><button id="open-logs"><span class="codicon codicon-output" aria-hidden="true"></span> Open run logs</button></div>
+    </div>
+    <div class="selection-heading"><h2 id="selection">New input</h2><span id="selection-state" class="badge">Draft</span></div>
+    <p id="selection-note" class="hint notice"></p>
+    <section id="inputs-view" class="workspace-panel" aria-label="Prepare input fields">
+      <label id="name-label" class="name-field">Input name <input id="name" value="input" maxlength="80"></label>
+      <section class="block" aria-label="Payload"><div class="block-heading"><h3>Fields</h3><span id="field-count" class="muted"></span></div>
+        <p class="hint block-intro">Add named values, nested objects and lists. No JSON or schema is required.</p>
+        <div class="field-columns" aria-hidden="true"><span>Name</span><span>Type</span><span>Value</span></div>
+        <div id="payload-fields" aria-label="Payload field editor"></div><p id="validation" role="alert"></p><p id="validation-hints" class="hint"></p>
+        <div class="secondary-tools"><button id="save" hidden>Save changes</button><button id="reload-payload" class="quiet" hidden>Reload saved values</button><button id="discard-draft" class="quiet">Discard draft…</button></div>
+      </section>
+      <div class="editor-extras">
+        <details id="parameters-section"><summary>Action inputs</summary><p class="hint">Arguments passed to the Action, separately from these Work Item fields.</p><div id="parameters-fields" aria-label="Action parameter field editor"></div><p id="parameters-validation" role="alert"></p><details><summary>Advanced Action input JSON</summary><textarea id="parameters">{}</textarea><button id="parameters-apply-json">Apply to form</button></details></details>
+        <details id="payload-advanced"><summary>Advanced payload JSON</summary><textarea id="payload" aria-label="Advanced payload JSON"></textarea><button id="payload-apply-json">Apply to form</button></details>
+        <div id="local-proposal-slot"><details id="proposal-tools"><summary>Suggest fields with AI…</summary><p class="hint">Use an existing VS Code model. Review before applying; nothing runs automatically.</p><label>Describe the fields and values<textarea id="proposal-instructions" placeholder="Describe the input fields your package needs"></textarea></label><button id="propose-fields">Generate proposal…</button><p id="proposal-status" role="status"></p><div id="proposal-review" hidden><h3>Review proposed fields</h3><div id="proposal-fields"></div><button id="apply-proposal">Apply to draft</button></div></details></div>
+      </div>
+    </section>
+    <section id="files-view" class="workspace-panel" aria-label="Attachments" hidden><div class="block-heading"><h3>Attachments</h3><button id="attach" class="quiet" hidden>Add attachment…</button></div><p class="hint block-intro">Open a file to save a copy. Existing attachments and output files are never overwritten.</p><div id="files"></div><p id="attachment-hint" class="hint"></p></section>
+    <section id="result-view" class="workspace-panel" aria-label="Execution result" hidden>
+      <div id="result-banner" class="result-banner"><div class="result-copy"><span id="result-icon" class="codicon codicon-play-circle" aria-hidden="true"></span><div><h2 id="result-outcome">Ready to run</h2><p id="last-execution" role="status">Not run</p></div></div><span id="result-time" class="muted"></span></div>
+      <div class="block-heading"><h3 id="result-heading">Result</h3><span id="result-count" class="muted"></span></div><p id="result-explanation" class="hint block-intro"></p><div id="result-data"></div><div id="latest-outputs" class="output-links"></div>
+      <details class="execution-history"><summary>Execution history for this package</summary><p class="hint">Local receipts are not managed Runtime Runs or Attempts.</p><div id="receipts"></div></details>
+      <p class="hint logs-note">Open run logs shows the Output view. Choose the matching run there; its log stream has a separate identity.</p>
+    </section>
+  </section>
+</main>
+<main id="managed-root" class="layout managed-layout" hidden>
+  <aside class="sidebar" aria-label="Managed queue context">
+    <section class="context-section"><h2>Runtime authority</h2><p id="managed-status" role="status">Connect a compatible Runtime to view authorized queues.</p><details><summary>Connection identity and grants</summary><p id="managed-identity"></p></details><button id="managed-refresh" class="quiet">Refresh managed state</button></section>
+    <section class="context-section"><h2>Authorized queues</h2><p id="managed-queue-policy" class="hint"></p><div id="managed-queues"></div><p id="managed-queues-empty" class="empty">No authorized queues loaded.</p><button id="managed-more-queues" class="quiet">More queues</button></section>
+    <section class="context-section"><h2>Items</h2><div id="managed-items"></div><p id="managed-items-empty" class="empty">No items in this view.</p><button id="managed-more-items" class="quiet">More items</button></section>
+    <section class="context-section"><h2>Reviews</h2><div id="managed-reviews"></div><p id="managed-reviews-empty" class="empty">No reviews in this view.</p><button id="managed-more-reviews" class="quiet">More reviews</button></section>
+  </aside>
+  <section class="detail managed-detail">
+    <div class="selection-heading"><h2 id="managed-title">Managed Work Items</h2><span class="badge">Runtime authority</span></div>
+    <p class="hint block-intro">A compatible authenticated Runtime and live grants are required. No local queue is used as a managed fallback.</p>
+    <section class="block managed-execution-selection" aria-label="Authorized execution selection">
+      <div class="block-heading"><h3>Execution</h3><button id="managed-discover-executions" class="quiet">Discover executions</button></div>
+      <div class="managed-fields"><label>Application<select id="managed-application" disabled><option value="">Discover authorized applications</option></select></label><label>Capability<select id="managed-capability" disabled><option value="">Select an application</option></select></label></div>
+      <p id="managed-execution-status" class="hint" role="status">Discover an authorized capability to use its exact admitted revision.</p>
+    </section>
+    <section id="managed-prepare-view" class="workspace-panel" aria-label="Prepare managed input" hidden>
+      <h3>Create a managed input</h3><p class="hint block-intro">Select an authorized capability above, then prepare fields and enqueue. Reviewed queues require an exact review decision.</p>
+      <div id="managed-payload-fields"></div><p id="managed-payload-validation" role="alert"></p><details><summary>Advanced managed payload JSON</summary><textarea id="managed-payload">{}</textarea><button id="managed-payload-apply-json">Apply JSON to managed form</button></details><div id="managed-proposal-slot"></div><div class="secondary-tools"><button id="managed-enqueue" class="primary">Enqueue input</button></div><details><summary>Advanced · pinned execution snapshot</summary><p id="managed-snapshot-authority"></p><pre id="managed-snapshot-view"></pre><button id="managed-snapshot">Load admitted snapshot file…</button></details>
+    </section>
+    <section id="managed-run-view" class="workspace-panel" aria-label="Explicit managed operations" hidden>
+      <h3>Run the selected input</h3><p class="hint">Claim an input explicitly, then Run. The Runtime owns execution and permissions. Closing this editor does not cancel a running process.</p><div class="secondary-tools"><button id="managed-invoke" class="primary" disabled>Run claimed input</button></div><p id="managed-run-guidance" class="hint">Select a discovered capability and its claimed input.</p>
+      <h3>Authorized item operations</h3><p class="hint block-intro">Operations apply to the exact selected item and its actual claim. Nothing is executed by opening this view.</p><div class="managed-fields"><label>Intervention reason<input id="managed-reason" maxlength="1024"></label><label>Reconciliation receipt, when required<input id="managed-reconciliation" maxlength="128"></label></div><div class="secondary-tools"><button id="managed-retry">Retry</button><button id="managed-cancel">Cancel item</button></div>
+      <details><summary>Worker lifecycle · explicit operations</summary><div class="managed-fields"><label>Lease seconds<input id="managed-lease" type="number" min="1" max="3600" value="60"></label><label>Business outcome<select id="managed-outcome"><option value="done">Done</option><option value="business_failed">Business failure</option><option value="application_failed">Application failure</option></select></label></div><div class="secondary-tools"><button id="managed-claim">Claim next item</button><button id="managed-renew">Renew actual claim</button><button id="managed-complete">Complete with actual Run evidence</button></div></details>
+    </section>
+    <section id="managed-inspect-view" class="workspace-panel" aria-label="Inspect exact managed records">
+      <h3>Selected item and review binding</h3><p id="managed-selection-empty" class="empty">Select an authorized item or review to inspect its exact record.</p><div id="managed-summary" class="managed-summary"></div><div id="managed-selected-payload"></div><details><summary>Exact Runtime record and binding</summary><pre id="managed-details"></pre></details><div class="secondary-tools"><button id="managed-approve">Approve exact review</button><button id="managed-reject">Reject exact review</button></div>
+      <section class="block managed-results"><h3>Runs, Attempts and artifacts</h3><div id="managed-runs"></div><div id="managed-attempts"></div><details><summary>Run result, admission and provenance</summary><pre id="managed-run-details"></pre></details><div id="managed-artifacts"></div><pre id="managed-logs"></pre><button id="managed-more-logs" class="quiet">More logs</button></section>
+    </section>
+    <section id="managed-uncertain-execution" class="block" hidden><h3>Execution needs inspection</h3><p class="hint">A response was not confirmed. Inspect the original input and its linked Runs. This never invokes, claims, or retries execution.</p><div id="managed-invocations"></div></section>
+    <details class="pending-requests"><summary>Retained uncertain requests</summary><p class="hint">These are client request receipts, not Runtime queue state. Reconcile the exact key; do not create a replacement after a timeout.</p><div id="managed-pending"></div></details>
+  </section>
+</main>
+<script nonce="{{nonce}}">{{script}}</script>
+</body></html>

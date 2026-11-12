@@ -30,32 +30,32 @@ def get_json_contents():
     from sema4ai_code import __version__
 
     base_package_contents = {
-        "name": "sema4ai",
-        "publisher": "sema4ai",
-        "displayName": "Sema4.ai SDK",
-        "description": "Sema4.ai SDK: Visual Studio Code Extension for AI Agent, Actions and Automation Tasks development",
+        "name": "automation-vscode",
+        "publisher": "automation-control-plane",
+        "displayName": "Automation Control Plane",
+        "description": "Create, run and debug Action Packages and Robot Tasks with published RCC and Actions tooling.",
         "author": {
-            "name": "Sema4.ai",
-            "email": "dev@sema4.ai",
-            "url": "https://sema4.ai",
+            "name": "Automation Control Plane",
+            "url": "https://github.com/automation-control-plane/automation-vscode",
         },
-        "homepage": "https://sema4.ai",
+        "homepage": "https://github.com/automation-control-plane/automation-vscode",
         "repository": {
             "type": "git",
-            "url": "https://github.com/Sema4AI/vscode-extension/.git",
+            "url": "https://github.com/automation-control-plane/automation-vscode.git",
         },
-        "license": "SEE LICENSE",
+        "license": "Apache-2.0",
         "version": __version__,
-        "icon": "images/icon.png",
+        "icon": "images/automation-icon.png",
         "engines": {"vscode": f"^1.101.0"},
         "categories": ["Debuggers"],
         "scripts": {
             "setup": "npm install",
-            "vscode:prepublish": "cd vscode-client && npm run compile && cd ..",
+            "vscode:prepublish": "npm run compile && node scripts/prepare-package.js",
             "compile": "cd vscode-client && tsc -p ./ && cd ..",
             "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
             "pretest": "cd vscode-client && tsc -p ./ && cd ..",
-            "test": "node ./vscode-client/out/tests/runTests.js",
+            "test": "node --test tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js tests/runtime_restart.test.js tests/resources_tree.test.js tests/owned_workflow.test.js tests/work_items_editor.test.js tests/work_items_editor_state.test.js tests/work_items_runtime_client.test.js tests/managed_work_items_client.test.js tests/managed_execution_selection.test.js tests/managed_execution_client.test.js tests/managed_execution_view.test.js tests/owned_bootstrap.test.js tests/managed_work_items_view.test.js tests/managed_work_items_editor.test.js tests/work_items_form.test.js tests/work_item_proposals.test.js tests/runbook_workspace.test.js tests/runtime_reconnect.test.js tests/legacy_surfaces.test.js tests/inspector_shell.test.js tests/inspector_host_context.test.js tests/runbook_forms.test.js tests/runbook_host.test.js tests/language_server_startup.test.js tests/action_inputs_editor.test.js tests/action_inputs_editor_host.test.js tests/action_inputs_editor_ui.test.js tests/codegen_package_inventory.test.js",
+            "test:host": "node ./vscode-client/out/tests/runTests.js",
             "prettier": "npx prettier -c vscode-client/**/*.ts",
             "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
             "vsce:package": "vsce package",
@@ -78,7 +78,7 @@ def get_json_contents():
             "vscode-languageclient": "^7.0.0",
             "vscode-nls": "^4.1.2",
         },
-        "main": "./vscode-client/out/extension",
+        "main": "./vscode-client/out/extension.js",
         "prettier": {
             "tabWidth": 4,
             "printWidth": 120,
@@ -98,7 +98,7 @@ def get_json_contents():
         + ["onLanguage:json", "onLanguage:yaml", "onLanguage:python"],
         "contributes": {
             "configuration": {
-                "title": "Sema4.ai Language Server Configuration",
+                "title": "Automation Control Plane",
                 "type": "object",
                 "properties": get_settings_for_json(),
             },
@@ -109,7 +109,7 @@ def get_json_contents():
             "debuggers": [
                 {
                     "type": "sema4ai",
-                    "label": "Sema4.ai",
+                    "label": "Automation",
                     "languages": [],
                     "configurationAttributes": {
                         "launch": {
@@ -149,11 +149,11 @@ def get_json_contents():
                     },
                     "configurationSnippets": [
                         {
-                            "label": "Sema4.ai: Launch task from robot.yaml",
+                            "label": "Automation: Launch task from robot.yaml",
                             "description": "Add a new configuration for launching tasks from a robot.yaml.",
                             "body": {
                                 "type": "sema4ai",
-                                "name": "Sema4.ai: Launch task from robot.yaml",
+                                "name": "Automation: Launch task from robot.yaml",
                                 "request": "launch",
                                 # "terminal": "integrated",
                                 "robot": '^"\\${file}"',

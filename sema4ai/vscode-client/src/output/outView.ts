@@ -3,6 +3,8 @@ import * as vscode from "vscode";
 import { debounce } from "../common";
 import { getExtensionRelativeFile, isFile, uriExists } from "../files";
 import { globalOutputViewState } from "./outViewRunIntegration";
+import { readFileSync } from "fs";
+import { renderLegacySurface } from "../legacySurface";
 
 interface IContents {
     isPlaceholder: boolean;
@@ -127,7 +129,15 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
                 return;
             }
             const decoded = new TextDecoder("utf-8").decode(indexContents);
-            html = decoded;
+            const resource = (name: string) => readFileSync(getExtensionRelativeFile("../../resources/runbook/" + name, true), "utf8");
+            const runId = globalOutputViewState.currentRunUniqueId;
+            html = renderLegacySurface({
+                surface: "output", template: decoded,
+                theme: resource("theme.css") + resource("codicon.css"),
+                styles: resource("legacy-surfaces.css"), script: resource("legacy-shell.js"), markup: resource("output-shell.html"),
+                context: { runId, label: runId ? globalOutputViewState.runIdToContents.get(runId)?.label : undefined },
+                cspSource: webviewView.webview.cspSource,
+            });
         } catch (error) {
             html = "Error loading HTML: " + error;
         }

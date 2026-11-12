@@ -9,6 +9,8 @@ import {
     workspace,
     Terminal,
     TerminalOptions,
+    StatusBarAlignment,
+    StatusBarItem,
 } from "vscode";
 import { resolveInterpreter } from "./activities";
 import { logError, OUTPUT_CHANNEL } from "./channel";
@@ -20,6 +22,53 @@ import { refreshTreeView } from "./viewsCommon";
 import { getActionServerTerminal, isActionServerAlive, restartActionServer } from "./actionServer";
 
 const dirtyWorkspaceFiles = new Set<string>();
+let packagePythonStatus: StatusBarItem | undefined;
+
+// Subset of Microsoft's public API, with the legacy exports retained for older installations.
+interface MicrosoftPythonApi {
+    ready?: Promise<void>;
+    environments?: {
+        updateActiveEnvironmentPath?(python: string, resource?: Uri): Promise<void>;
+        getActiveEnvironmentPath?(resource?: Uri): { path: string } | undefined;
+        resolveEnvironment?(environment: { path: string }): Promise<{ executable: { uri?: Uri } } | undefined>;
+    };
+    environment?: {
+        setActiveEnvironment?(python: string, resource: Uri): Promise<void>;
+        setActiveInterpreter?(python: string, resource: Uri): Promise<void>;
+    };
+    settings?: { getExecutionDetails(resource?: Uri): { execCommand?: string[] | string } };
+}
+
+// Opaque environment item returned by Microsoft's public Environments API; never synthesize one.
+interface PythonEnvironmentSelection {
+    readonly envId: { id: string; managerId: string };
+    readonly execInfo: { run: { executable: string } };
+}
+
+interface PythonEnvironmentsApi {
+    resolveEnvironment?(python: Uri): Promise<PythonEnvironmentSelection | undefined>;
+    setEnvironment?(resource: Uri, environment: PythonEnvironmentSelection): Promise<void>;
+    getEnvironment?(resource: Uri): Promise<PythonEnvironmentSelection | undefined>;
+}
+
+async function getPythonEnvironmentsApi(resource: Uri): Promise<PythonEnvironmentsApi | undefined> {
+    const extension = extensions.getExtension<PythonEnvironmentsApi | undefined>("ms-python.vscode-python-envs");
+    if (!extension) {
+        return undefined;
+    }
+    // The companion ignores the legacy default=false; only explicit operator settings disable it.
+    const scopes = [resource, ...(workspace.workspaceFolders || []).map(folder => folder.uri)];
+    for (const scope of scopes) {
+        const setting = workspace.getConfiguration("python", scope).inspect<boolean>("useEnvironmentsExtension");
+        if (setting?.globalValue === false || setting?.workspaceValue === false || setting?.workspaceFolderValue === false) {
+            return undefined;
+        }
+    }
+    if (!extension.isActive) {
+        await extension.activate();
+    }
+    return extension.exports;
+}
 
 export function isEnvironmentFile(fsPath: string): boolean {
     return (
@@ -47,15 +96,22 @@ export async function autoUpdateInterpreter(docUri: Uri): Promise<boolean> {
         return false;
     }
 
+    // This labels the resolved package interpreter, independent of Microsoft's discovery classification.
+    if (packagePythonStatus && window.activeTextEditor?.document.uri.toString() === docUri.toString()) {
+        packagePythonStatus.text = "$(package) Automation: RCC Python";
+        packagePythonStatus.tooltip = `Resolved package interpreter\n${interpreter.pythonExe}\nPackage resource: ${docUri.fsPath}`;
+        packagePythonStatus.show();
+    }
+
     // Now, set the interpreter.
     let pythonExecutable = await getPythonExecutable(docUri, true, false);
     if (pythonExecutable != interpreter.pythonExe) {
-        setPythonInterpreterForPythonExtension(interpreter.pythonExe, docUri);
+        await setPythonInterpreterForPythonExtension(interpreter.pythonExe, docUri);
     }
 
     const additional = interpreter.additionalPythonpathEntries;
     if (additional && additional.length > 0) {
-        workspace.getConfiguration("python", docUri).update(
+        await workspace.getConfiguration("python", docUri).update(
             "analysis.extraPaths",
             additional.map((el) => {
                 return el.replaceAll("\\", "/");
@@ -67,11 +123,15 @@ export async function autoUpdateInterpreter(docUri: Uri): Promise<boolean> {
 }
 
 export async function installWorkspaceWatcher(context: ExtensionContext) {
+    packagePythonStatus = window.createStatusBarItem("automation.packagePython", StatusBarAlignment.Right, 99);
+    packagePythonStatus.name = "Automation package Python";
+    context.subscriptions.push(packagePythonStatus);
     // listen to editor change/switch (this should cause environment switching as well)
     const checkEditorSwitch = window.onDidChangeActiveTextEditor(async (event: TextEditor) => {
         try {
             // Whenever the active editor changes we update the Python interpreter used (if needed).
             let docURI = event?.document?.uri;
+            packagePythonStatus?.hide();
             if (docURI) {
                 await autoUpdateInterpreter(docURI);
             }
@@ -200,7 +260,7 @@ export async function disablePythonTerminalActivateEnvironment() {
 }
 
 export async function setPythonInterpreterForPythonExtension(pythonExe: string, uri: Uri) {
-    const extension = extensions.getExtension("ms-python.python");
+    const extension = extensions.getExtension<MicrosoftPythonApi>("ms-python.python");
     if (!extension) {
         return;
     }
@@ -209,7 +269,13 @@ export async function setPythonInterpreterForPythonExtension(pythonExe: string, 
     let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
 
     OUTPUT_CHANNEL.appendLine("Setting the python executable path for vscode-python to be:\n" + pythonExe);
-    if (extension?.exports?.environment?.setActiveEnvironment !== undefined) {
+    if (!extension.isActive) {
+        await extension.activate();
+    }
+    await extension.exports.ready;
+    if (extension.exports.environments?.updateActiveEnvironmentPath) {
+        await extension.exports.environments.updateActiveEnvironmentPath(pythonExe, uri);
+    } else if (extension?.exports?.environment?.setActiveEnvironment !== undefined) {
         await extension.exports.environment.setActiveEnvironment(pythonExe, uri);
         // OUTPUT_CHANNEL.appendLine("Is: " + (await extension.exports.environment.getActiveInterpreterPath(uri)));
     } else {
@@ -217,8 +283,9 @@ export async function setPythonInterpreterForPythonExtension(pythonExe: string, 
             await extension.exports.environment.setActiveInterpreter(pythonExe, uri);
             // OUTPUT_CHANNEL.appendLine("Is: " + (await extension.exports.environment.getActiveInterpreterPath(uri)));
         } else {
-            let config = workspace.getConfiguration("python");
-            await config.update("defaultInterpreterPath", pythonExe, configurationTarget);
+            let config = workspace.getConfiguration("python", uri);
+            const target = workspace.getWorkspaceFolder(uri) ? ConfigurationTarget.WorkspaceFolder : configurationTarget;
+            await config.update("defaultInterpreterPath", pythonExe, target);
 
             try {
                 await commands.executeCommand("python.clearWorkspaceInterpreter");
@@ -231,6 +298,16 @@ export async function setPythonInterpreterForPythonExtension(pythonExe: string, 
             }
         }
     }
+    // Python 2026.10's public path API updates legacy storage. Environments owns a separate selection.
+    const environments = await getPythonEnvironmentsApi(uri);
+    if (environments?.resolveEnvironment && environments.setEnvironment) {
+        const selected = await environments.resolveEnvironment(Uri.file(pythonExe));
+        if (!selected) {
+            OUTPUT_CHANNEL.appendLine(`Python Environments could not resolve ${pythonExe}; its selection was not changed.`);
+            return;
+        }
+        await environments.setEnvironment(uri, selected);
+    }
 }
 
 export async function getPythonExecutable(
@@ -239,7 +316,7 @@ export async function getPythonExecutable(
     showInOutput: boolean = true
 ): Promise<string | undefined | "config"> {
     try {
-        const extension = extensions.getExtension("ms-python.python");
+        const extension = extensions.getExtension<MicrosoftPythonApi>("ms-python.python");
         if (!extension) {
             OUTPUT_CHANNEL.appendLine(
                 "Unable to get python executable from vscode-python. ms-python.python extension not found."
@@ -247,10 +324,8 @@ export async function getPythonExecutable(
             return undefined;
         }
 
-        const usingNewInterpreterStorage = extension.packageJSON?.featureFlags?.usingNewInterpreterStorage;
-        if (usingNewInterpreterStorage) {
-            // Note: just this in not enough to know if the user is actually using the new API
-            // (i.e.: he may not be in the experiment).
+        // Detect the available API; current Python no longer needs the old experiment flag.
+        {
             if (!extension.isActive) {
                 const id = "activate-vscode-python-" + Date.now();
                 handleProgressMessage({
@@ -267,6 +342,35 @@ export async function getPythonExecutable(
                     });
                 }
             }
+            await extension.exports.ready;
+            const environmentsApi = await getPythonEnvironmentsApi(resource);
+            if (environmentsApi?.getEnvironment) {
+                const selected = await environmentsApi.getEnvironment(resource);
+                const executable = selected?.execInfo.run.executable;
+                if (showInOutput) {
+                    OUTPUT_CHANNEL.appendLine(`Python Environments selected executable: ${executable || "unresolved"}`);
+                }
+                return executable;
+            }
+            const environments = extension.exports.environments;
+            if (environments?.getActiveEnvironmentPath && environments.resolveEnvironment) {
+                const selected = environments.getActiveEnvironmentPath(resource);
+                if (!selected) {
+                    return undefined;
+                }
+                const resolved = await environments.resolveEnvironment(selected);
+                const executable = resolved?.executable.uri?.fsPath;
+                if (showInOutput) {
+                    OUTPUT_CHANNEL.appendLine(`vscode-python selected environment: ${selected.path}; resolved executable: ${executable || "unresolved"}`);
+                }
+                return executable;
+            }
+            if (!extension.exports.settings?.getExecutionDetails) {
+                if (!forceLoadFromConfig) {
+                    return "config";
+                }
+                return workspace.getConfiguration("python", resource).get<string>("defaultInterpreterPath");
+            }
             let execCommand = extension.exports.settings.getExecutionDetails(resource).execCommand;
             if (showInOutput) {
                 OUTPUT_CHANNEL.appendLine("vscode-python execution details: " + execCommand);
@@ -281,13 +385,6 @@ export async function getPythonExecutable(
                 return execCommand.join(" ");
             }
             return execCommand;
-        } else {
-            // Not using new interpreter storage (so, it should be queried from the settings).
-            if (!forceLoadFromConfig) {
-                return "config";
-            }
-            let config = workspace.getConfiguration("python");
-            return await config.get("defaultInterpreterPath");
         }
     } catch (error) {
         logError(

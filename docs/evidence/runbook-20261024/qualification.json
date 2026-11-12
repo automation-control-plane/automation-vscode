@@ -1,0 +1,18 @@
+{
+  "source_sha": "aec537ebaadbf80aa95f22bf4a466fb514be2683",
+  "version": "2.20.11",
+  "vsix_sha256": "0a4d50b4b5a1679ed62d064cf767f1be1e7302e659ff7d0dd37145bddc1a62cb",
+  "vsix_bytes": 2191400,
+  "payload_files": 747,
+  "node_tests": 116,
+  "python_tests": 45,
+  "skips": 0,
+  "cli_dap_workloads": 8,
+  "actual_breakpoints": 4,
+  "attachment_negative_checks": 8,
+  "cache_condition": "warm task-owned homes",
+  "native_gui": "BLOCKED on coding executor; parent supported desktop recovered, exact candidate not yet delivered or installed there",
+  "managed": "Runtime 1.0.4 authenticated storage passes; canonical managed queue incomplete",
+  "library_upload": "FAILED before transfer: hosted apps tools/list request failed: network; no confirmed ID",
+  "test_script_sha256": "aa9dfe1d2ee7dae79310fec1dc232379f019a6e8b400078233346dab5866e6ad"
+}

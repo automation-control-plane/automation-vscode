@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 import * as roboCommands from "./robocorpCommands";
 import { CloudEntry, treeViewIdToTreeDataProvider } from "./viewsCommon";
 import { SEMA4AI_SUBMIT_ISSUE } from "./robocorpCommands";
@@ -83,6 +84,9 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
     }
 
     async getChildren(element?: CloudEntry): Promise<CloudEntry[]> {
+        if (!legacyVendorIntegrationsEnabled()) {
+            return [];
+        }
         if (!element) {
             let ret: CloudEntry[] = [];
             try {
@@ -91,15 +95,15 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                     "label": "Documentation",
                     "iconPath": "book",
                     "command": {
-                        "title": "Open https://robocorp.com/docs",
+                        "title": "Open Automation compatibility documentation",
                         "command": "vscode.open",
-                        "arguments": [vscode.Uri.parse("https://robocorp.com/docs")],
+                        "arguments": [vscode.Uri.parse("https://github.com/automation-control-plane/automation-vscode/blob/port/published-rcc-actions-20261022/docs/compatibility-port.md")],
                     },
                 });
             } catch (error) {
                 logError("Error getting children", error, "VIEWS_CLOUD_COMPUTE_ROOTS");
                 ret.push({
-                    "label": "Error initializing. Click to see Output > Sema4.ai.",
+                    "label": "Error initializing. Click to see Output > Automation.",
                     "iconPath": "error",
                     "command": {
                         "title": "See output",
@@ -108,10 +112,10 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                 });
             }
             ret.push({
-                "label": "Submit issue to Sema4.ai",
+                "label": "Submit issue to Automation",
                 "iconPath": "report",
                 "command": {
-                    "title": "Submit issue to Sema4.ai",
+                    "title": "Submit issue to Automation",
                     "command": SEMA4AI_SUBMIT_ISSUE,
                 },
             });

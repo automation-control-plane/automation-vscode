@@ -1,0 +1,29 @@
+✖ Existing VS Code memento restores closed drafts, survives host recreation and isolates Action/Robot packages (5.452285ms)
+✔ Open run logs only focuses the existing Output view and does not resolve a package interpreter (1.218077ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94.377772
+
+✖ failing tests:
+
+test at tests/work_items_editor_state.test.js:24:1
+✖ Existing VS Code memento restores closed drafts, survives host recreation and isolates Action/Robot packages (5.452285ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/work_items_editor_state.test.js:29:81)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

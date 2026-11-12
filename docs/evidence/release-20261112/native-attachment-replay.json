@@ -1,0 +1,30 @@
+{
+  "candidate": "2.20.22",
+  "scope": "Actual installed native Files picker/upload, Run copy_attachment, read-only output, Save-to-new-file and edited replay form",
+  "receipt": {
+    "id": "d81fe9d89dcd4ef4a35ab42b90f05614",
+    "mode": "file",
+    "input": "devdata/work-items-in/native-attachment-proof-80ad04fa0ced/work-items.json#0",
+    "queue": "input",
+    "state": "EXITED",
+    "input_binding": "Immutable selected fixture snapshot",
+    "created_at": "2026-11-12T15:52:42.129765+00:00",
+    "output": "/tmp/automation-vscode-qualification-20261112/desktop-workspace/action/devdata/work-items-out/native-d81fe9d89dcd4ef4a35ab42b90f05614/work-items.json",
+    "authority": "VS Code local execution receipt; not Runtime Run/Attempt",
+    "updated_at": "2026-11-12T15:52:43.213441+00:00",
+    "session": "2c1cd3c8-22de-4dae-ae1c-5fce72fd91c1",
+    "exit_code": 0
+  },
+  "artifact_bytes": 47,
+  "artifact_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1",
+  "download_bytes_match": true,
+  "output_controls_read_only": true,
+  "replay": {
+    "id": "devdata/work-items-in/native-replay-proof-edited-8a229fa5c251/work-items.json#0",
+    "payload": {
+      "observed": 99
+    },
+    "attachment_sha256": "f99ed98ea2dbf6908dc185741fb7aedcc6b0d938c4f08a2014defb9f5ac799c1"
+  },
+  "original_output_unchanged": true
+}

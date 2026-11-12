@@ -1,0 +1,22 @@
+
+> automation-vscode@2.20.1 pretest
+> cd vscode-client && tsc -p ./ && cd ..
+
+
+> automation-vscode@2.20.1 test
+> node tests/runtime_paths.test.js
+
+✔ Unix defaults and explicit homes remain separate (3.604507ms)
+✔ Windows paths retain their drive and separators (1.500915ms)
+✔ Published artifacts have exact identity and no architecture fallback (1.171668ms)
+✔ Published Work Items receives FileAdapter paths and preserves explicit controls (0.193183ms)
+✔ Studio discovery keeps its original home while local environments stay separate (0.302202ms)
+✔ Optional Studio/Data backends preserve explicit operator environment (1.682829ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21.317433

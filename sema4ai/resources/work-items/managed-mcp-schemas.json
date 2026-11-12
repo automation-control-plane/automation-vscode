@@ -1,0 +1,627 @@
+{
+  "canvas_open": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "canvas_inspect": {
+    "type": "object",
+    "description": "Inspect authorized immutable revision history and identify the active revision. Each returned revision includes its authored CanvasSpec, not private binding targets or source.",
+    "properties": {
+      "appId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "Authorized Canvas application UUID."
+      }
+    },
+    "required": [
+      "appId"
+    ],
+    "additionalProperties": false
+  },
+  "capability_invoke": {
+    "$defs": {
+      "ReviewedDispatch": {
+        "additionalProperties": false,
+        "properties": {
+          "bindingId": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
+            "title": "Bindingid",
+            "type": "string"
+          },
+          "proposal": {
+            "$ref": "#/$defs/ReviewProposal"
+          }
+        },
+        "required": [
+          "bindingId",
+          "proposal"
+        ],
+        "title": "ReviewedDispatch",
+        "type": "object"
+      },
+      "ReviewProposal": {
+        "additionalProperties": false,
+        "properties": {
+          "binding": {
+            "$ref": "#/$defs/ReviewBinding"
+          },
+          "review_id": {
+            "title": "Review Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "review_id",
+          "binding"
+        ],
+        "title": "ReviewProposal",
+        "type": "object"
+      },
+      "ReviewBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "handle": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Handle",
+            "type": "string"
+          },
+          "input_digest": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Input Digest",
+            "type": "string"
+          },
+          "request_fingerprint": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Request Fingerprint",
+            "type": "string"
+          },
+          "result_digest": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Result Digest",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^[0-9a-f-]{36}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/$defs/CanvasResultScope"
+          },
+          "source_version": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Source Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "handle",
+          "run_id",
+          "result_digest",
+          "input_digest",
+          "source_version",
+          "request_fingerprint"
+        ],
+        "title": "ReviewBinding",
+        "type": "object"
+      },
+      "CanvasResultScope": {
+        "additionalProperties": false,
+        "description": "Trusted server binding; knowing these references grants no access.",
+        "properties": {
+          "application": {
+            "$ref": "#/$defs/CanvasApplicationRef"
+          },
+          "deployment": {
+            "$ref": "#/$defs/DeploymentRevisionRef"
+          }
+        },
+        "required": [
+          "deployment",
+          "application"
+        ],
+        "title": "CanvasResultScope",
+        "type": "object"
+      },
+      "CanvasApplicationRef": {
+        "additionalProperties": false,
+        "description": "Pinned application subject, not app registration or generation proof.",
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "string"
+          },
+          "revision_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Revision Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "app_id",
+          "revision_id"
+        ],
+        "title": "CanvasApplicationRef",
+        "type": "object"
+      },
+      "DeploymentRevisionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "deployment_id": {
+            "$ref": "#/$defs/DeploymentId"
+          },
+          "revision_id": {
+            "$ref": "#/$defs/DeploymentRevisionId"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "deployment_id",
+          "revision_id"
+        ],
+        "title": "DeploymentRevisionRef",
+        "type": "object"
+      },
+      "DeploymentId": {
+        "format": "uuid",
+        "title": "DeploymentId",
+        "type": "string"
+      },
+      "DeploymentRevisionId": {
+        "title": "DeploymentRevisionId",
+        "type": "string"
+      },
+      "WorkspaceId": {
+        "format": "uuid",
+        "title": "WorkspaceId",
+        "type": "string"
+      },
+      "GenericClaimInvocation": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "generic",
+            "title": "Mode",
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/$defs/ExecutionSnapshot"
+          },
+          "claim": {
+            "$ref": "#/$defs/ClaimRef"
+          }
+        },
+        "required": [
+          "mode",
+          "snapshot",
+          "claim"
+        ],
+        "title": "GenericClaimInvocation",
+        "type": "object"
+      },
+      "ExecutionSnapshot": {
+        "additionalProperties": false,
+        "description": "Trusted control-plane registration; this type is not compiler admission.",
+        "properties": {
+          "action_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "canvas_application": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CanvasApplicationRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "capability": {
+            "$ref": "#/$defs/CapabilityRef"
+          },
+          "capability_authority": {
+            "default": "legacy-action",
+            "enum": [
+              "legacy-action",
+              "package-revision"
+            ],
+            "title": "Capability Authority",
+            "type": "string"
+          },
+          "capability_schema_digest": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Capability Schema Digest",
+            "type": "string"
+          },
+          "data_binding": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/InvoiceBinding"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "deployment": {
+            "$ref": "#/$defs/DeploymentRevisionRef"
+          },
+          "output_provider": {
+            "$ref": "#/$defs/ProviderProfileRevisionRef"
+          },
+          "policy": {
+            "$ref": "#/$defs/WorkspacePolicyRevisionRef"
+          },
+          "runtime_kind": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Runtime Kind",
+            "type": "string"
+          },
+          "runtime_plan": {
+            "$ref": "#/$defs/RuntimePlanRef"
+          },
+          "worker": {
+            "$ref": "#/$defs/WorkerProfileRevisionRef"
+          }
+        },
+        "required": [
+          "deployment",
+          "capability",
+          "runtime_plan",
+          "worker",
+          "policy",
+          "output_provider",
+          "runtime_kind",
+          "capability_schema_digest",
+          "action_id"
+        ],
+        "title": "ExecutionSnapshot",
+        "type": "object"
+      },
+      "CapabilityRef": {
+        "additionalProperties": false,
+        "properties": {
+          "capability_id": {
+            "$ref": "#/$defs/CapabilityId"
+          },
+          "package_revision": {
+            "$ref": "#/$defs/PackageRevisionRef"
+          }
+        },
+        "required": [
+          "package_revision",
+          "capability_id"
+        ],
+        "title": "CapabilityRef",
+        "type": "object"
+      },
+      "CapabilityId": {
+        "title": "CapabilityId",
+        "type": "string"
+      },
+      "PackageRevisionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "package_id": {
+            "$ref": "#/$defs/PackageId"
+          },
+          "revision_id": {
+            "$ref": "#/$defs/PackageRevisionId"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "package_id",
+          "revision_id"
+        ],
+        "title": "PackageRevisionRef",
+        "type": "object"
+      },
+      "PackageId": {
+        "format": "uuid",
+        "title": "PackageId",
+        "type": "string"
+      },
+      "PackageRevisionId": {
+        "title": "PackageRevisionId",
+        "type": "string"
+      },
+      "InvoiceBinding": {
+        "additionalProperties": false,
+        "description": "Trusted immutable deployment binding; source version is an operator claim.",
+        "properties": {
+          "effect": {
+            "const": "read",
+            "default": "read",
+            "title": "Effect",
+            "type": "string"
+          },
+          "limits": {
+            "$ref": "#/$defs/InvoiceLimits"
+          },
+          "operation": {
+            "const": "invoices.overdue/v1",
+            "default": "invoices.overdue/v1",
+            "title": "Operation",
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/$defs/ProviderProfileRevisionRef"
+          },
+          "source_version": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Source Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "source_version"
+        ],
+        "title": "InvoiceBinding",
+        "type": "object"
+      },
+      "InvoiceLimits": {
+        "additionalProperties": false,
+        "properties": {
+          "max_bytes": {
+            "default": 4194304,
+            "maximum": 16777216,
+            "minimum": 1,
+            "title": "Max Bytes",
+            "type": "integer"
+          },
+          "max_rows": {
+            "default": 10000,
+            "maximum": 100000,
+            "minimum": 1,
+            "title": "Max Rows",
+            "type": "integer"
+          },
+          "timeout_ms": {
+            "default": 5000,
+            "maximum": 30000,
+            "minimum": 1,
+            "title": "Timeout Ms",
+            "type": "integer"
+          }
+        },
+        "title": "InvoiceLimits",
+        "type": "object"
+      },
+      "ProviderProfileRevisionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "provider_profile_id": {
+            "$ref": "#/$defs/ProviderProfileId"
+          },
+          "revision_id": {
+            "$ref": "#/$defs/ProviderProfileRevisionId"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "provider_profile_id",
+          "revision_id"
+        ],
+        "title": "ProviderProfileRevisionRef",
+        "type": "object"
+      },
+      "ProviderProfileId": {
+        "format": "uuid",
+        "title": "ProviderProfileId",
+        "type": "string"
+      },
+      "ProviderProfileRevisionId": {
+        "title": "ProviderProfileRevisionId",
+        "type": "string"
+      },
+      "WorkspacePolicyRevisionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "policy_id": {
+            "$ref": "#/$defs/PolicyId"
+          },
+          "revision_id": {
+            "$ref": "#/$defs/PolicyRevisionId"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "policy_id",
+          "revision_id"
+        ],
+        "title": "WorkspacePolicyRevisionRef",
+        "type": "object"
+      },
+      "PolicyId": {
+        "format": "uuid",
+        "title": "PolicyId",
+        "type": "string"
+      },
+      "PolicyRevisionId": {
+        "title": "PolicyRevisionId",
+        "type": "string"
+      },
+      "RuntimePlanRef": {
+        "additionalProperties": false,
+        "properties": {
+          "package_revision": {
+            "$ref": "#/$defs/PackageRevisionRef"
+          },
+          "plan_digest": {
+            "$ref": "#/$defs/PlanDigest"
+          }
+        },
+        "required": [
+          "package_revision",
+          "plan_digest"
+        ],
+        "title": "RuntimePlanRef",
+        "type": "object"
+      },
+      "PlanDigest": {
+        "title": "PlanDigest",
+        "type": "string"
+      },
+      "WorkerProfileRevisionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "revision_id": {
+            "$ref": "#/$defs/WorkerProfileRevisionId"
+          },
+          "worker_profile_id": {
+            "$ref": "#/$defs/WorkerProfileId"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "worker_profile_id",
+          "revision_id"
+        ],
+        "title": "WorkerProfileRevisionRef",
+        "type": "object"
+      },
+      "WorkerProfileRevisionId": {
+        "title": "WorkerProfileRevisionId",
+        "type": "string"
+      },
+      "WorkerProfileId": {
+        "format": "uuid",
+        "title": "WorkerProfileId",
+        "type": "string"
+      },
+      "ClaimRef": {
+        "additionalProperties": false,
+        "properties": {
+          "epoch": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Epoch",
+            "type": "integer"
+          },
+          "item_id": {
+            "title": "Item Id",
+            "type": "string"
+          },
+          "owner_id": {
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "queue": {
+            "$ref": "#/$defs/QueueRef"
+          }
+        },
+        "required": [
+          "queue",
+          "item_id",
+          "owner_id",
+          "epoch"
+        ],
+        "title": "ClaimRef",
+        "type": "object"
+      },
+      "QueueRef": {
+        "additionalProperties": false,
+        "properties": {
+          "deployment": {
+            "$ref": "#/$defs/DeploymentRevisionRef"
+          },
+          "queue_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$",
+            "title": "Queue Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "$ref": "#/$defs/WorkspaceId"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "deployment",
+          "queue_id"
+        ],
+        "title": "QueueRef",
+        "type": "object"
+      },
+      "GenericStandaloneInvocation": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "generic",
+            "title": "Mode",
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/$defs/ExecutionSnapshot"
+          },
+          "inputs": {
+            "additionalProperties": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "title": "Inputs",
+            "type": "object"
+          },
+          "idempotencyKey": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Idempotencykey",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "snapshot",
+          "inputs",
+          "idempotencyKey"
+        ],
+        "title": "GenericStandaloneInvocation",
+        "type": "object"
+      },
+      "JsonValue": {}
+    },
+    "anyOf": [
+      {
+        "$ref": "#/$defs/ReviewedDispatch"
+      },
+      {
+        "$ref": "#/$defs/GenericClaimInvocation"
+      },
+      {
+        "$ref": "#/$defs/GenericStandaloneInvocation"
+      }
+    ],
+    "type": "object",
+    "description": "Invoke an exact immutable generic capability as the authenticated model, or preserve the explicit human-reviewed invocation variant. Generic input is either an exact existing claim or standalone inputs and an idempotency key. No request chooses worker identity, source, credentials or profiles. An existing uncertain launch requires reconciliation; it is not retried."
+  }
+}

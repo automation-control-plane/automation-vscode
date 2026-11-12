@@ -68,3 +68,15 @@ node_modules/**/*.map
 node_modules/**/LICENSE*
 node_modules/**/license*
 node_modules/**/.github/**
+# Executables are acquired by verified platform-specific download after activation.
+bin/rcc*
+bin/actions-runtime*
+bin/action-server*
+bin/agent-cli*
+.venv/**
+
+# Superseded vendor display assets; legal attribution remains included.
+images/icon.png
+images/sema4ai-outline.svg
+images/command-palette.png
+images/gif_run.gif

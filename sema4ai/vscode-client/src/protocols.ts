@@ -108,7 +108,7 @@ export interface WorkItem {
 }
 
 export interface WorkItemsInfo {
-    robot_yaml: string; // Full path to the robot which has these work item info
+    robot_yaml: string; // Compatibility key: full path to the owning robot.yaml or package.yaml.
 
     // Full path to the place where input work items are located
     input_folder_path?: string;
@@ -130,6 +130,7 @@ export interface ActionResultWorkItems {
 
 export interface LibraryVersionInfoDict {
     success: boolean;
+    result?: { library: string; version: string };
 
     // if success == False, this can be some message to show to the user
     message?: string;

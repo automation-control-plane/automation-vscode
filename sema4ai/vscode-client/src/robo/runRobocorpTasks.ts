@@ -11,7 +11,7 @@ export async function runRobocorpTasks(noDebug: boolean, args: string[]) {
     const targetPy = args[0];
 
     let debugConfiguration: DebugConfiguration = {
-        "name": "Python: Sema4.ai Tasks",
+        "name": "Python: Automation Tasks",
         "type": "python",
         "request": "launch",
         "module": "robocorp.tasks",
@@ -62,5 +62,6 @@ export async function runRobocorpTasks(noDebug: boolean, args: string[]) {
     }
     let debugSessionOptions: DebugSessionOptions = {};
     debugConfiguration = await updateDebugConfigurationAndAutoActivatePythonExtension(debugConfiguration);
+    if (!debugConfiguration) return;
     debug.startDebugging(undefined, debugConfiguration, debugSessionOptions);
 }

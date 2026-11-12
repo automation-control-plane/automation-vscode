@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/workspace/port-acceptance/vscode/usr/share/code/bin/code",
+    "--user-data-dir=/tmp/automation-native-qa-20261024/installed-2.20.11/user-data",
+    "--extensions-dir=/tmp/automation-native-qa-20261024/installed-2.20.11/extensions",
+    "--install-extension",
+    "/tmp/automation-release-20261024/automation-vscode-2.20.11-linux-x64.vsix"
+  ],
+  "exit_code": 0,
+  "stdout": "Installing extensions...\nExtension 'automation-vscode-2.20.11-linux-x64.vsix' was successfully installed.\n",
+  "stderr": "(node:2766) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.\n(Use `code --trace-deprecation ...` to show where the warning was created)\n",
+  "timestamp_utc": "2026-10-24T20:04:09.726010+00:00",
+  "classification": "Official Code CLI installation only; no native GUI or Extension Host acceptance"
+}

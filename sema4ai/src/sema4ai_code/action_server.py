@@ -17,6 +17,8 @@ from sema4ai_ls_core.protocols import (
     LaunchActionResult,
 )
 
+from sema4ai_code.runtime_paths import runtime_homes, runtime_environment
+
 from sema4ai_code.protocols import (
     ActionServerPackageBuildInfo,
     ActionServerPackageUploadStatus,
@@ -27,7 +29,7 @@ from sema4ai_code.protocols import (
 log = get_logger(__name__)
 
 ONE_MINUTE_S = 60
-ACTION_SERVER_VERSION = "2.17.0"
+ACTION_SERVER_VERSION = "1.1.0"
 
 if typing.TYPE_CHECKING:
     from sema4ai_code.vendored_deps.url_callback_server import LastRequestInfoTypedDict
@@ -111,12 +113,7 @@ if typing.TYPE_CHECKING:
 
 
 def get_default_sema4ai_home() -> Path:
-    if sys.platform == "win32":
-        path = r"$LOCALAPPDATA\sema4ai"
-    else:
-        path = r"$HOME/.sema4ai"
-    robocorp_home_str = os.path.expandvars(path)
-    return Path(robocorp_home_str)
+    return runtime_homes()["actions"]
 
 
 def get_default_action_server_settings_dir() -> Path:
@@ -194,11 +191,15 @@ class ActionServerAsService:
             args.append(f"--ssl-keyfile={self._ssl_keyfile}")
 
         if self._ssl_certfile:
-            args.append(f"--ssl-cerfile={self._ssl_certfile}")
+            args.append(f"--ssl-certfile={self._ssl_certfile}")
 
         args.append("--kill-lock-holder")
 
-        self._process = Process(args, cwd=self._cwd)
+        self._process = Process(
+            args,
+            cwd=self._cwd,
+            env={**runtime_environment("actions"), "ACTIONS_SKIP_UPDATE_CHECK": "1"},
+        )
         self._process.on_stderr.register(self._on_stderr)
         self._process.on_stdout.register(self._on_stdout)
         self._process.start()
@@ -475,9 +476,18 @@ class ActionServer:
         Args:
             download_if_missing: If true, it will attempt to download the Action Server if missing.
         """
+        configured = self._get_str_optional_setting(
+            "sema4ai.actionServer.location"
+        ) or os.environ.get("ACTIONS_RUNTIME_LOCATION")
+        if configured:
+            if not os.path.isfile(configured):
+                raise RuntimeError(
+                    f"Configured Actions Runtime executable does not exist: {configured}"
+                )
+            return configured
         action_server_location = get_default_action_server_location()
 
-        if download_if_missing and not os.path.exists(action_server_location):
+        if download_if_missing:
             download_action_server(action_server_location, endpoint=self._endpoint())
 
         return action_server_location
@@ -515,14 +525,14 @@ class ActionServer:
         if not self._cached_sema4ai_oauth2_config:
             # FOR SUPPORT: action-server oauth2
             action_result = self._run_action_server_command(
-                ["oauth2", "sema4ai-config"], timeout=10
+                ["oauth2", "actions-config"], timeout=10
             )
             if not action_result.success:
                 raise RuntimeError(action_result.message)
 
             if not action_result.result:
                 raise RuntimeError(
-                    "Output of `action-server oauth2 sema4ai-config` is empty."
+                    "Output of `action-server oauth2 actions-config` is empty."
                 )
             try:
                 oauth2_config = yaml.safe_load(action_result.result)
@@ -564,7 +574,10 @@ class ActionServer:
                 message="Action Server executable not found",
             )
 
-        env: dict[str, str] = {"SEMA4AI_SKIP_UPDATE_CHECK": "1"}
+        env = runtime_environment(
+            "actions", self._get_str_optional_setting("sema4ai.home")
+        )
+        env["ACTIONS_SKIP_UPDATE_CHECK"] = "1"
         return launch(args=[action_server_location] + args, timeout=timeout, env=env)
 
     def get_version(self, download_if_missing=True) -> ActionResult[str]:
@@ -652,7 +665,12 @@ class ActionServer:
                 message="Action Server version is too old. Please update.",
             )
         else:
-            args = ["new", f"--name={directory}", f"--template={template}", "--force"]
+            if Path(directory).exists() and any(Path(directory).iterdir()):
+                return ActionResult(
+                    success=False,
+                    message="The target directory must be empty. Existing files were preserved.",
+                )
+            args = ["new", f"--name={directory}", f"--template={template}"]
 
         # FOR SUPPORT: action-server new
         command_result = self._run_action_server_command(args)
@@ -668,6 +686,18 @@ class ActionServer:
                 package_yaml = yaml.load(stream.read())
 
             package_yaml["name"] = name
+            import re
+
+            pins = {"actions-core": "1.1.0", "actions-work-items": "0.4.4"}
+            for group in ("dependencies", "dev-dependencies"):
+                dependencies = package_yaml.get(group, {}).get("pypi", [])
+                for index, dependency in enumerate(dependencies):
+                    match = re.match(
+                        r"^(actions-core|actions-work-items)(?:[=<>!~].*)?$", dependency
+                    )
+                    if match:
+                        library = match.group(1)
+                        dependencies[index] = f"{library}={pins[library]}"
 
             with open(package_path, "w") as file:
                 yaml.dump(package_yaml, file)
@@ -778,6 +808,8 @@ class ActionServer:
             workspace_dir, path to the current workspace.
             output_dir, path to the directory where the package will be built.
         """
+        # Published Runtime 1.0.4 does not create the requested output directory.
+        os.makedirs(output_dir, exist_ok=True)
         args = [
             "package",
             "build",
@@ -785,7 +817,6 @@ class ActionServer:
             workspace_dir,
             "--output-dir",
             output_dir,
-            "--override",
             "--json",
         ]
 

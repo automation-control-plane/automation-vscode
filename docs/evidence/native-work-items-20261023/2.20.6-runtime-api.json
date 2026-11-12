@@ -1,0 +1,59 @@
+{
+  "runtime": "1.0.4",
+  "runtime_sha256": "d3c450a2b10b226613588cc40cc6ec18873b23c7427958b0752711e4531a1de4",
+  "pid": 16142,
+  "source_sha": "55daabf45244c73a27682ef36a1f643a0afb7489",
+  "checks": [
+    {
+      "check": "Actual Runtime requires bearer authentication",
+      "unauthenticated_status": 403
+    },
+    {
+      "check": "Published Work Items capability",
+      "status": 200,
+      "response": {
+        "items": [],
+        "total": 0
+      }
+    },
+    {
+      "check": "Actual compiled client connect/enqueue/list/upload/download",
+      "id": "d0442b30-80a1-4449-8eae-46751cffbb08",
+      "state": "PENDING",
+      "payload": {
+        "value": 7
+      },
+      "attachment_bytes": 17,
+      "listed": 1
+    },
+    {
+      "check": "Invalid payload rejected by actual Runtime",
+      "status": 422
+    }
+  ],
+  "work_item_routes": {
+    "/api/work-items": [
+      "post",
+      "get"
+    ],
+    "/api/work-items/stats": [
+      "get"
+    ],
+    "/api/work-items/{item_id}": [
+      "get",
+      "delete"
+    ],
+    "/api/work-items/{item_id}/files": [
+      "post",
+      "get"
+    ],
+    "/api/work-items/{item_id}/files/{filename}": [
+      "get",
+      "delete"
+    ]
+  },
+  "durable_lifecycle": "NOT COMPLETE: no verified canonical Run/Attempt/lease/retry/review client contract",
+  "shutdown_status": 404,
+  "owned_process_termination": true,
+  "runtime_exit": 1
+}

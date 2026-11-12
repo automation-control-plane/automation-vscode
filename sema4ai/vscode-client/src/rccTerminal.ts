@@ -21,8 +21,7 @@ export async function askAndCreateRccTerminal() {
     }
 }
 
-const createTempFile = async () => {
-    const sema4aiHome = await getRobocorpHome();
+const createTempFile = async (sema4aiHome: string) => {
     const sema4aiHomeTemp = pathModule.join(sema4aiHome, "temp");
     if (!fsModule.existsSync(sema4aiHomeTemp)) {
         fsModule.mkdirSync(sema4aiHomeTemp, { recursive: true });
@@ -83,7 +82,7 @@ export async function createTerminalForFile(filePath: string, terminalName: stri
                 }
             }
             if (isPath) {
-                value = additionalPathEntry + pathModule.delimiter + value;
+                value = additionalPathEntry ? additionalPathEntry + pathModule.delimiter + value : value;
             }
 
             env[key] = value;
@@ -95,12 +94,8 @@ export async function createTerminalForFile(filePath: string, terminalName: stri
     // This way we avoid the environment being overwritten by shell startup scripts
     // The Terminal env injection works if no overwrites happen
 
-    const sema4aiHome = await getRobocorpHome();
-    const sema4aiHomeTemp = pathModule.join(sema4aiHome, "temp");
-    if (!fsModule.existsSync(sema4aiHomeTemp)) {
-        fsModule.mkdirSync(sema4aiHomeTemp, { recursive: true });
-    }
-    const varsFilePath = await createTempFile();
+    const activeHome = env.ROBOCORP_HOME || (await getRobocorpHome());
+    const varsFilePath = await createTempFile(activeHome);
 
     if (process.platform.toString() === "win32") {
         // Making sure we create a CMD prompt in Windows as it can default to PowerShell
@@ -109,18 +104,18 @@ export async function createTerminalForFile(filePath: string, terminalName: stri
             name: terminalName,
             env: env,
             cwd: pathModule.dirname(filePath),
-            message: "Sema4.ai Package Activated Interpreter (Python Environment)",
+            message: "Automation Package Activated Interpreter (Python Environment)",
             shellPath: "C:\\Windows\\System32\\cmd.exe",
         });
 
         const envVarsContent = Object.keys(env)
             .reduce((acc, key) => {
-                return `${acc}SET ${key}=${env[key]}\n`;
+                return `${acc}SET "${key}=${env[key].replace(/%/g, "%%")}"\n`;
             }, "")
             .trim();
         OUTPUT_CHANNEL.appendLine("Create terminal with environment: " + envVarsContent);
         fsModule.writeFileSync(varsFilePath, envVarsContent);
-        terminal.sendText(`call ${varsFilePath}\n`);
+        terminal.sendText(`call "${varsFilePath}"\n`);
         terminal.show();
     } else {
         // The shell in UNIX doesn't matter that much as the syntax to set the Python Environment is common
@@ -128,16 +123,16 @@ export async function createTerminalForFile(filePath: string, terminalName: stri
             name: terminalName,
             env: env,
             cwd: pathModule.dirname(filePath),
-            message: "Sema4.ai Package Activated Interpreter (Python Environment)",
+            message: "Automation Package Activated Interpreter (Python Environment)",
         });
         const envVarsContent = Object.keys(env)
             .reduce((acc, key) => {
-                return `${acc}export ${key}=${env[key]}\n`;
+                return `${acc}export ${key}='${env[key].replace(/'/g, "'\\''")}'\n`;
             }, "")
             .trim();
         OUTPUT_CHANNEL.appendLine("Create terminal with environment: " + envVarsContent);
         fsModule.writeFileSync(varsFilePath, envVarsContent);
-        terminal.sendText(`source ${varsFilePath}\n`);
+        terminal.sendText(`source '${varsFilePath.replace(/'/g, "'\\''")}'\n`);
         terminal.show();
     }
 }

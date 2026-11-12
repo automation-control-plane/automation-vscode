@@ -9,6 +9,21 @@ from sema4ai_ls_core.protocols import ActionResultDict
 log = get_logger(__name__)
 
 
+def _web_command_result(response) -> ActionResultDict:
+    """Unwrap the Inspector RPC envelope without losing worker failures."""
+    if isinstance(response, dict):
+        result = response.get("result")
+        if isinstance(result, dict) and isinstance(result.get("success"), bool):
+            return result
+        if "error" in response:
+            error = response["error"]
+            message = error.get("message") if isinstance(error, dict) else str(error)
+            return {"success": False, "message": message or "Web Inspector request failed.", "result": None}
+        if "result" in response and result is None:
+            return {"success": True, "message": None, "result": None}
+    return {"success": False, "message": "Web Inspector did not return a valid response. See Automation diagnostic logs.", "result": None}
+
+
 class InspectorLanguageServer:
     def __init__(self):
         from sema4ai_code.inspector.inspector_server_manager import (
@@ -205,10 +220,10 @@ class InspectorLanguageServer:
         self, width: int = 1280, height: int = 720, url: str = ""
     ):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
-        inspector_api_client.send_sync_message(
+        return _web_command_result(inspector_api_client.send_sync_message(
             "browserConfigure",
-            {"viewport_size": (width, height), "url": url},
-        )
+            {"viewport_size": (width, height), "url": url, "wait": True},
+        ))
 
     def m_web_inspector_open_browser(self, url=None):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
@@ -242,9 +257,9 @@ class InspectorLanguageServer:
             if params and "url_if_new" in params
             else uris.from_fs_path(str(INSPECTOR_GUIDE_PATH))
         )
-        inspector_api_client.send_sync_message(
+        return _web_command_result(inspector_api_client.send_sync_message(
             "startPick", {"url_if_new": url, "wait": True}
-        )
+        ))
 
     def m_web_inspector_stop_pick(self, **params):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()

@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import { createHash } from "crypto";
 import { CancellationToken, Progress } from "vscode";
 
 import { sleep, Timing } from "./time";
@@ -14,7 +15,8 @@ export async function downloadWithProgress(
     url: string,
     progress: Progress<DownloadProgress>,
     token: CancellationToken,
-    location: string
+    location: string,
+    expectedSha256?: string
 ) {
     // Downloads can go wrong (so, retry a few times before giving up).
     const maxTries = 3;
@@ -55,14 +57,11 @@ export async function downloadWithProgress(
                 OUTPUT_CHANNEL.appendLine("Finished downloading in: " + timing.getTotalElapsedAsStr());
                 OUTPUT_CHANNEL.appendLine("Writing to: " + location);
                 progress.report({ message: "Finished downloading (writing to file)." });
-                let s = fs.createWriteStream(location, { "encoding": "binary", "mode": 0o744 });
-                try {
-                    response.responseData.forEach((element) => {
-                        s.write(element);
-                    });
-                } finally {
-                    s.close();
+                const contents = Buffer.concat(response.responseData);
+                if (expectedSha256 && createHash("sha256").update(contents).digest("hex") !== expectedSha256) {
+                    throw new Error("SHA-256 verification failed for " + url);
                 }
+                fs.writeFileSync(location, contents, { mode: 0o744, flag: "wx" });
 
                 // If we don't sleep after downloading, the first activation seems to fail on Windows and Mac
                 // (EBUSY on Windows, undefined on Mac).

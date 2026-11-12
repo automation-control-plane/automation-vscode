@@ -1,0 +1,172 @@
+FF.                                                                      [100%]
+=================================== FAILURES ===================================
+_________ test_browser_creation_failure_is_preserved_without_reignite __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6d0c62be50>
+
+    def test_browser_creation_failure_is_preserved_without_reignite(monkeypatch):
+        from sema4ai_code.inspector.web._web_inspector import WebInspector
+        from sema4ai_code.playwright import robocorp_browser
+    
+        endpoint = Endpoint()
+        attempts = []
+        error = RuntimeError("Chromium 1169 missing; installation failed: ECONNREFUSED")
+    
+        def fail():
+            attempts.append(1)
+            raise error
+    
+        monkeypatch.setattr(robocorp_browser, "page", fail)
+        monkeypatch.setattr(robocorp_browser, "browser", lambda: pytest.fail("Failure cleanup must not launch another browser"))
+        inspector = WebInspector(endpoint=endpoint)
+>       with pytest.raises(RuntimeError) as caught:
+E       Failed: DID NOT RAISE RuntimeError
+
+tests/sema4ai_code_tests/inspector/test_failure_states.py:30: Failed
+----------------------------- Captured stderr call -----------------------------
+test: 2026-10-24 21:38:24 UTC pid: 8105 - MainThread - DEBUG - sema4ai_code.inspector.web._web_inspector
+Page is None or Closed. Creating a new one...
+
+test: 2026-10-24 21:38:24 UTC pid: 8105 - MainThread - EXCEPTION - sema4ai_code.inspector.web._web_inspector
+Exception raised while constructing browser page: - (RuntimeError('Chromium 1169 missing; installation failed: ECONNREFUSED'),)
+
+Traceback (most recent call last):
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 175, in page
+    page = robocorp_browser.page()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/automation-vscode/sema4ai/tests/sema4ai_code_tests/inspector/test_failure_states.py", line 25, in fail
+    raise error
+RuntimeError: Chromium 1169 missing; installation failed: ECONNREFUSED
+___ test_failed_browser_worker_settles_request_and_can_be_retried_explicitly ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6d0c62bdd0>
+
+    def test_failed_browser_worker_settles_request_and_can_be_retried_explicitly(monkeypatch):
+        from sema4ai_code.inspector.inspector_api import _WebInspectorThread, _WebAsyncPickCommand
+        from sema4ai_code.playwright import robocorp_browser
+    
+        endpoint = Endpoint()
+        attempts = []
+    
+        def fail():
+            attempts.append(threading.current_thread())
+            raise RuntimeError("Browser executable missing")
+    
+        monkeypatch.setattr(robocorp_browser, "page", fail)
+        monkeypatch.setattr(robocorp_browser, "browser", lambda: pytest.fail("Unexpected browser creation"))
+        for expected in (1, 2):
+            ended = threading.Event()
+            worker = _WebInspectorThread(endpoint, {}, ended.set)
+            command = _WebAsyncPickCommand(endpoint, "http://127.0.0.1/owned-test")
+            worker.start()
+            worker.queue.put(command)
+            try:
+                assert command.handled_event.wait(5)
+                with pytest.raises(RuntimeError, match="Browser executable missing"):
+>                   command.future.result(timeout=1)
+
+tests/sema4ai_code_tests/inspector/test_failure_states.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = None, timeout = 1
+
+    def result(self, timeout=None):
+        """Return the result of the call that the future represents.
+    
+        Args:
+            timeout: The number of seconds to wait for the result if the future
+                isn't done. If None, then there is no limit on the wait time.
+    
+        Returns:
+            The result of the call that the future represents.
+    
+        Raises:
+            CancelledError: If the future was cancelled.
+            TimeoutError: If the future didn't finish executing before the given
+                timeout.
+            Exception: If the call raised then that exception will be raised.
+        """
+        try:
+            with self._condition:
+                if self._state in [CANCELLED, CANCELLED_AND_NOTIFIED]:
+                    raise CancelledError()
+                elif self._state == FINISHED:
+                    return self.__get_result()
+    
+                self._condition.wait(timeout)
+    
+                if self._state in [CANCELLED, CANCELLED_AND_NOTIFIED]:
+                    raise CancelledError()
+                elif self._state == FINISHED:
+                    return self.__get_result()
+                else:
+>                   raise TimeoutError()
+E                   TimeoutError
+
+../../.setup/python/cpython-3.11.17-linux-x86_64-gnu/lib/python3.11/concurrent/futures/_base.py:458: TimeoutError
+----------------------------- Captured stderr call -----------------------------
+test: 2026-10-24 21:38:24 UTC pid: 8105 - Thread-1 - DEBUG - sema4ai_code.inspector.web._web_inspector
+Page is None or Closed. Creating a new one...
+
+test: 2026-10-24 21:38:24 UTC pid: 8105 - Thread-1 - EXCEPTION - sema4ai_code.inspector.web._web_inspector
+Exception raised while constructing browser page: - (RuntimeError('Browser executable missing'),)
+
+Traceback (most recent call last):
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 175, in page
+    page = robocorp_browser.page()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/automation-vscode/sema4ai/tests/sema4ai_code_tests/inspector/test_failure_states.py", line 53, in fail
+    raise RuntimeError("Browser executable missing")
+RuntimeError: Browser executable missing
+test: 2026-10-24 21:38:24 UTC pid: 8105 - Thread-1 - DEBUG - sema4ai_code.inspector.inspector_api
+Exited from Web Inspector Thread!
+
+=============================== warnings summary ===============================
+sema4ai_code_tests/inspector/test_failure_states.py::test_failed_browser_worker_settles_request_and_can_be_retried_explicitly
+  /workspace/automation-vscode/sema4ai/.venv/lib/python3.11/site-packages/_pytest/threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-1
+  
+  Traceback (most recent call last):
+    File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 175, in page
+      page = robocorp_browser.page()
+             ^^^^^^^^^^^^^^^^^^^^^^^
+    File "/workspace/automation-vscode/sema4ai/tests/sema4ai_code_tests/inspector/test_failure_states.py", line 53, in fail
+      raise RuntimeError("Browser executable missing")
+  RuntimeError: Browser executable missing
+  
+  During handling of the above exception, another exception occurred:
+  
+  Traceback (most recent call last):
+    File "/workspace/.setup/python/cpython-3.11.17-linux-x86_64-gnu/lib/python3.11/threading.py", line 1045, in _bootstrap_inner
+      self.run()
+    File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/inspector_api.py", line 96, in run
+      result = item(self)
+               ^^^^^^^^^^
+    File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/inspector_api.py", line 208, in __call__
+      web_inspector.open_if_new(self.url_if_new)
+    File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 277, in open_if_new
+      self.open(url_if_new)
+    File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 263, in open
+      page = self.page(True)
+             ^^^^^^^^^^^^^^^
+    File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 182, in page
+      self.close_browser(skip_notify=True)
+    File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 151, in close_browser
+      browser = robocorp_browser.browser()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/workspace/automation-vscode/sema4ai/tests/sema4ai_code_tests/inspector/test_failure_states.py", line 56, in <lambda>
+      monkeypatch.setattr(robocorp_browser, "browser", lambda: pytest.fail("Unexpected browser creation"))
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/workspace/automation-vscode/sema4ai/.venv/lib/python3.11/site-packages/_pytest/outcomes.py", line 162, in __call__
+      raise Failed(msg=reason, pytrace=pytrace)
+  Failed: Unexpected browser creation
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/sema4ai_code_tests/inspector/test_failure_states.py::test_browser_creation_failure_is_preserved_without_reignite
+FAILED tests/sema4ai_code_tests/inspector/test_failure_states.py::test_failed_browser_worker_settles_request_and_can_be_retried_explicitly
+2 failed, 1 passed, 1 warning in 1.24s
+Robocorp Log (html): /workspace/automation-vscode/sema4ai/output/log.html

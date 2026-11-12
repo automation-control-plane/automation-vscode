@@ -398,8 +398,6 @@ def language_server_initialized(
     language_server_tcp: IRobocorpLanguageServerClient,
     ws_root_path: str,
     rcc_location: str,
-    action_server_location: str,
-    agent_cli_location: str,
     ci_endpoint: str,
     rcc_config_location: str,
     initialization_options,
@@ -419,9 +417,11 @@ def language_server_initialized(
                         "endpoint": ci_endpoint,
                         "config_location": rcc_config_location,
                     },
-                    "actionServer": {"location": action_server_location},
+                    "actionServer": {
+                        "location": os.environ.get("ACTIONS_RUNTIME_LOCATION", "")
+                    },
                     "agentCli": {
-                        "location": agent_cli_location,
+                        "location": os.environ.get("AUTOMATION_AGENT_CLI_LOCATION", ""),
                     },
                 }
             }

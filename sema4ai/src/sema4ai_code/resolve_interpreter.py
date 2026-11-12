@@ -1,6 +1,6 @@
 """
 Note: this code will actually run as a plugin in the RobotFramework Language
-Server, or in the Sema4.ai environment, so, we need to be careful on the
+Server, or in the Automation environment, so, we need to be careful on the
 imports so that it works on both cases.
 
 Also, the required version must be checked in the client (in case imports or APIs
@@ -123,7 +123,7 @@ class _CachedInterpreterInfo:
             ) as f:
                 if progress_reporter is not None and progress_reporter.cancelled:
                     file_contents = f"""
-Sema4.ai: Environment creation cancelled
+Automation: Environment creation cancelled
 ===============================================
 
 The process to create the the environment for:
@@ -142,10 +142,10 @@ If the environment file should be already correct, chose one of the options belo
 
   "Developer: Reload Window"
 
-- Clear all environments and restart Sema4.ai (advised if you suspect
+- Clear all environments and restart Automation (advised if you suspect
   that some environment was partially created and is corrupt):
 
-  "Sema4.ai: Clear Sema4.ai (RCC) environments and restart Sema4.ai"
+  "Automation: Clear Automation (RCC) environments and restart Automation"
 
 Full error message
 ====================
@@ -155,7 +155,7 @@ Full error message
 
                 else:
                     file_contents = f"""
-Sema4.ai: Unable to create environment
+Automation: Unable to create environment
 =============================================
 
 There was an error creating the environment for:
@@ -179,14 +179,14 @@ The most common reasons and fixes for this failure are:
 
       "Developer: Reload Window"
 
-    - Clear all environments and restart Sema4.ai code (advised if you suspect
+    - Clear all environments and restart Automation code (advised if you suspect
       that some environment was partially created and is corrupt):
 
-      "Sema4.ai: Clear Sema4.ai (RCC) environments and restart Sema4.ai"
+      "Automation: Clear Automation (RCC) environments and restart Automation"
 
-If you still can't get it to work, please submit an issue to Sema4.ai using the command:
+If you still can't get it to work, please submit an issue to Automation using the command:
 
-  "Sema4.ai: Submit issue to Sema4.ai".
+  "Automation: Submit issue to Automation".
 
 
 Full error message

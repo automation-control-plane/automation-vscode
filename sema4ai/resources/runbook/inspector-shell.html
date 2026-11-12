@@ -1,0 +1,31 @@
+<header class="automation-inspector-header">
+  <div class="automation-surface-eyebrow">Automation Control Plane <span> / Inspectors</span></div>
+  <h1 id="automation-inspector-title">Inspectors</h1>
+  <p id="automation-inspector-description">Inspect resources in the selected package.</p>
+  <div class="automation-inspector-package-context">
+    <span class="codicon codicon-package" aria-hidden="true"></span>
+    <strong id="automation-inspector-package"></strong>
+    <span id="automation-inspector-kind" class="automation-kind"></span>
+    <span id="automation-inspector-path"></span>
+  </div>
+</header>
+<nav class="automation-inspector-tabs" aria-label="Inspector tools" role="tablist">
+  <button type="button" role="tab" data-inspector-route="/locators-manager/"><span class="codicon codicon-layers" aria-hidden="true"></span>Locators</button>
+  <button type="button" role="tab" data-inspector-route="/web-inspector/"><span class="codicon codicon-globe" aria-hidden="true"></span>Web</button>
+  <button type="button" role="tab" data-inspector-route="/windows-inspector/"><span class="codicon codicon-window" aria-hidden="true"></span>Windows</button>
+  <button type="button" role="tab" data-inspector-route="/image-inspector/"><span class="codicon codicon-file-media" aria-hidden="true"></span>Image</button>
+  <button type="button" role="tab" data-inspector-route="/java-inspector/"><span class="codicon codicon-coffee" aria-hidden="true"></span>Java</button>
+</nav>
+<section id="automation-inspector-error" class="automation-inspector-error" role="alert" hidden>
+  <h2>Web Inspector could not start</h2>
+  <p>Web Inspector needs the Chromium build required by its Playwright environment. Review the error below and Automation diagnostic logs. Correct the browser prerequisite or reported connection problem, then choose <strong>Start</strong> again. No automatic restart is scheduled.</p>
+  <p>Chromium sandboxing is required. If the engine reports an unavailable sandbox, use a supported browser installation and host that provides it, then retry. Automation does not disable the sandbox or change system permissions.</p>
+  <details open><summary>Engine error</summary><pre id="automation-inspector-error-message"></pre></details>
+</section>
+<section id="automation-inspector-validation" class="automation-inspector-validation" role="status" aria-live="polite" hidden>
+  <div class="automation-surface-eyebrow">Last strategy validation</div>
+  <strong id="automation-validation-summary"></strong>
+  <code id="automation-validation-locator"></code>
+  <span id="automation-validation-url"></span>
+  <p id="automation-validation-message"></p>
+</section>

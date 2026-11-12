@@ -2,7 +2,7 @@ import os.path
 import sys
 from typing import List
 
-__version__ = "2.20.0"
+__version__ = "2.20.25"
 version_info: list[int] = [int(x) for x in __version__.split(".")]
 
 __file__ = os.path.abspath(__file__)
@@ -27,11 +27,9 @@ def get_bin_folder() -> str:
 
 
 MACOS_INTEL_NOT_SUPPORTED_MESSAGE = (
-    "macOS Intel (x86_64) is not supported by this version of the Sema4.ai SDK "
-    "extension. On an Intel Mac, use version 2.19.0 (the last version supporting "
-    "macOS Intel): in the Extensions view, right-click Sema4.ai SDK and select "
-    "'Install Specific Version...'. Newer versions require a Mac with Apple "
-    "Silicon (arm64)."
+    "macOS Intel (x86_64) has no verified published tooling artifact for this "
+    "Automation Control Plane candidate. Use Linux x64, Windows x64 or macOS "
+    "Apple Silicon (arm64). Platform qualification is recorded in the compatibility ledger."
 )
 
 

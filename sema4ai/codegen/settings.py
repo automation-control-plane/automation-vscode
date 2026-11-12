@@ -32,6 +32,18 @@ class Setting:
 
 SETTINGS = [
     Setting(
+        "sema4ai.legacyVendorIntegrations.enabled",
+        False,
+        "Expose retained third-party Studio and Control Room compatibility integrations. These external services are not owned or provided by Automation Control Plane. Disabled by default; local package build, export and Runtime do not require them.",
+        setting_type="boolean",
+    ),
+    Setting(
+        "sema4ai.actionServer.port",
+        8082,
+        "Loopback port for Actions Runtime. Choose an unused integer from 1 to 65535. Existing listeners are never stopped or adopted automatically.",
+        setting_type="number",
+    ),
+    Setting(
         "sema4ai.language-server.tcp-port",
         0,
         "If the port is specified, connect to the language server previously started at the given port. Requires a VSCode restart to take effect.",
@@ -40,20 +52,32 @@ SETTINGS = [
     Setting(
         "sema4ai.language-server.args",
         [],
-        'Specifies the arguments to be passed to the Sema4.ai language server (i.e.: ["-vv", "--log-file=~/sema4ai_code.log"]). Requires a VSCode restart to take effect.',
+        'Specifies the arguments to be passed to the Automation language server (i.e.: ["-vv", "--log-file=~/sema4ai_code.log"]). Requires a VSCode restart to take effect.',
         setting_type="array",
         js_type="string[]",
     ),
     Setting(
         "sema4ai.language-server.python",
         "",
-        "Specifies the path to the python executable to be used for the Sema4.ai Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect.",
+        "Specifies the path to the python executable to be used for the Automation Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect.",
         setting_type="string",
     ),
     Setting(
         "sema4ai.rcc.location",
         "",
         "Specifies the location of the rcc tool.",
+        setting_type="string",
+    ),
+    Setting(
+        "sema4ai.actionServer.location",
+        "",
+        "Path to an explicitly configured Actions Runtime executable. No download or replacement is attempted for this path.",
+        setting_type="string",
+    ),
+    Setting(
+        "sema4ai.agentCli.location",
+        "",
+        "Path to an explicitly configured compatible Agent CLI. This port has no published Agent CLI download mapping yet.",
         setting_type="string",
     ),
     Setting(
@@ -71,7 +95,7 @@ SETTINGS = [
     Setting(
         "sema4ai.home",
         "",
-        "Specifies the value for SEMA4AI_HOME (where the conda environments will be downloaded). Must point to a directory without spaces in it.",
+        "Legacy tooling root. Actions and Robots use separate actions/ and robots/ children. ACTIONS_HOME and ROBOTS_HOME override their respective children. No data is migrated.",
         setting_type="string",
     ),
     Setting(
@@ -95,13 +119,13 @@ SETTINGS = [
     Setting(
         "sema4ai.proceedWithLongPathsDisabled",
         False,
-        "Enables Sema4.ai to be started even with long paths disabled.",
+        "Enables Automation to be started even with long paths disabled.",
         setting_type="boolean",
     ),
     Setting(
         "sema4ai.vaultTokenTimeoutInMinutes",
         30,
-        "Specifies the timeout in minutes for the token generated to access the vault when a launch is made. Note: max 60, min 5, additional timeout may be added internally to reuse the token in future runs (please use Sema4.ai Control Room for longer runs).",
+        "Specifies the timeout in minutes for the token generated to access the vault when a launch is made. Note: max 60, min 5, additional timeout may be added internally to reuse the token in future runs (use the separately managed legacy Control Room for longer runs).",
         setting_type="number",
     ),
     Setting(

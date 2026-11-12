@@ -1,0 +1,202 @@
+.F..FFF                                                                  [100%]
+=================================== FAILURES ===================================
+___ test_failed_browser_worker_settles_request_and_can_be_retried_explicitly ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f95033aa990>
+
+    def test_failed_browser_worker_settles_request_and_can_be_retried_explicitly(monkeypatch):
+        from sema4ai_code.inspector.inspector_api import _WebInspectorThread, _WebAsyncPickCommand
+        from sema4ai_code.playwright import robocorp_browser
+        from sema4ai_code.playwright.robocorp_browser._caches import session_cache
+    
+        endpoint = Endpoint()
+        attempts = []
+        cleaned = []
+    
+        @session_cache
+        def driver():
+            owner = threading.current_thread()
+            yield object()
+            cleaned.append((owner, threading.current_thread()))
+    
+        def fail():
+            driver()
+            attempts.append(threading.current_thread())
+            raise RuntimeError("Browser executable missing")
+    
+        monkeypatch.setattr(robocorp_browser, "page", fail)
+        monkeypatch.setattr(robocorp_browser, "browser", lambda: pytest.fail("Unexpected browser creation"))
+        for expected in (1, 2):
+            ended = threading.Event()
+            worker = _WebInspectorThread(endpoint, {}, ended.set)
+            command = _WebAsyncPickCommand(endpoint, "http://127.0.0.1/owned-test")
+            worker.start()
+            worker.queue.put(command)
+            try:
+                assert command.handled_event.wait(5)
+                with pytest.raises(RuntimeError, match="Browser executable missing"):
+                    command.future.result(timeout=1)
+                assert ended.wait(1)
+                worker.join(2)
+                assert not worker.is_alive()
+                assert len(attempts) == expected
+>               assert len(cleaned) == expected
+                
+E               AssertionError: Failed: assert len(cleaned) == expected
+E               Variables:
+E                 len(cleaned) = 0
+E                 expected = 1
+
+tests/sema4ai_code_tests/inspector/test_failure_states.py:80: AssertionError
+----------------------------- Captured stderr call -----------------------------
+test: 2026-10-24 21:43:07 UTC pid: 8507 - Thread-1 - DEBUG - sema4ai_code.inspector.web._web_inspector
+Page is None or Closed. Creating a new one...
+
+test: 2026-10-24 21:43:07 UTC pid: 8507 - Thread-1 - EXCEPTION - sema4ai_code.inspector.web._web_inspector
+Exception raised while constructing browser page
+
+Traceback (most recent call last):
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 175, in page
+    page = robocorp_browser.page()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/automation-vscode/sema4ai/tests/sema4ai_code_tests/inspector/test_failure_states.py", line 62, in fail
+    raise RuntimeError("Browser executable missing")
+RuntimeError: Browser executable missing
+test: 2026-10-24 21:43:07 UTC pid: 8507 - Thread-1 - EXCEPTION - sema4ai_code.inspector.inspector_api
+Error handling <sema4ai_code.inspector.inspector_api._WebAsyncPickCommand object at 0x7f95033ab8d0>: Browser executable missing
+
+Traceback (most recent call last):
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/inspector_api.py", line 96, in run
+    result = item(self)
+             ^^^^^^^^^^
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/inspector_api.py", line 208, in __call__
+    web_inspector.open_if_new(self.url_if_new)
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 281, in open_if_new
+    self.open(url_if_new)
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 267, in open
+    page = self.page(True)
+           ^^^^^^^^^^^^^^^
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/web/_web_inspector.py", line 175, in page
+    page = robocorp_browser.page()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/automation-vscode/sema4ai/tests/sema4ai_code_tests/inspector/test_failure_states.py", line 62, in fail
+    raise RuntimeError("Browser executable missing")
+RuntimeError: Browser executable missing
+test: 2026-10-24 21:43:07 UTC pid: 8507 - Thread-1 - DEBUG - sema4ai_code.inspector.inspector_api
+Exited from Web Inspector Thread!
+
+______________ test_browser_cache_cleanup_stays_on_its_own_worker ______________
+
+    def test_browser_cache_cleanup_stays_on_its_own_worker():
+        from sema4ai_code.playwright.robocorp_browser._caches import session_cache, clear_all_callback
+        ready = [threading.Event(), threading.Event()]
+        release = [threading.Event(), threading.Event()]
+        closed = []
+        failures = []
+    
+        @session_cache
+        def resource(index):
+            owner = threading.current_thread()
+            yield object()
+            closed.append((index, owner, threading.current_thread()))
+    
+        def run(index):
+            try:
+                resource(index)
+                ready[index].set()
+                assert release[index].wait(5)
+                clear_all_callback()
+            except BaseException as error:
+                failures.append(error)
+    
+        workers = [threading.Thread(target=run, args=(i,)) for i in range(2)]
+        for worker in workers:
+            worker.start()
+        try:
+            assert all(event.wait(5) for event in ready)
+            release[0].set(); workers[0].join(2)
+>           assert closed == [(0, workers[0], workers[0])]
+            
+E           AssertionError: Failed: assert closed == [(0, workers[0], workers[0])]
+E           Variables:
+E             closed = [(0, <Thread(Thread-2 (run), stopped 140277980923584)>, <Thread(Thread-2 (run), stopped 140277980923584)>), (1, <Thread(Thread-3 (run), started 140277969385152)>, <Thread(Thread-2 (run), stopped 140277980923584)>)]
+E             [(0, workers[0], workers[0])] = [(0, <Thread(Thread-2 (run), stopped 140277980923584)>, <Thread(Thread-2 (run), stopped 140277980923584)>)]
+
+tests/sema4ai_code_tests/inspector/test_failure_states.py:163: AssertionError
+____________________ test_old_worker_shutdown_is_idempotent ____________________
+
+    def test_old_worker_shutdown_is_idempotent():
+        from sema4ai_code.inspector.inspector_api import _WebInspectorThread
+        callbacks = []
+        worker = _WebInspectorThread(Endpoint(), {}, lambda: callbacks.append("released"))
+        worker.shutdown()
+        worker.shutdown()
+>       assert callbacks == ["released"]
+        
+E       AssertionError: Failed: assert callbacks == ['released']
+E       Variables:
+E         callbacks = ['released', 'released']
+E         ['released'] = ['released']
+
+tests/sema4ai_code_tests/inspector/test_failure_states.py:178: AssertionError
+__________ test_configure_and_start_failures_cross_both_python_layers __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9502acf310>
+
+    def test_configure_and_start_failures_cross_both_python_layers(monkeypatch):
+        from io import BytesIO
+        from types import SimpleNamespace
+        from sema4ai_code.inspector.inspector_api import InspectorApi
+        from sema4ai_code.inspector.inspector_language_server import InspectorLanguageServer
+        from sema4ai_code.playwright import robocorp_browser
+    
+        api = InspectorApi(BytesIO(), BytesIO())
+        requests = []
+        def request(name, params):
+            requests.append((name, params))
+            method = api.m_browser_configure if name == "browserConfigure" else api.m_start_pick
+            return {"jsonrpc": "2.0", "id": 1, "result": method(**params)}
+        server = InspectorLanguageServer.__new__(InspectorLanguageServer)
+        server._inspector_server_manager = SimpleNamespace(get_inspector_api_client=lambda: SimpleNamespace(send_sync_message=request))
+        def fail(*args, **kwargs): raise RuntimeError("original engine failure")
+        monkeypatch.setattr(robocorp_browser, "configure", fail)
+        try:
+            result = server.m_web_inspector_configure_browser()
+>           assert result == {"success": False, "message": "original engine failure", "result": None}
+            
+E           AssertionError: Failed: assert result == {'success': False, 'message': 'original engine failure', 'result': None}
+E           Variables:
+E             result = None
+E             {'success': False, 'message': 'original engine failure', 'result': None} = {'success': False, 'message': 'original engine failure', 'result': None}
+
+tests/sema4ai_code_tests/inspector/test_failure_states.py:200: AssertionError
+----------------------------- Captured stderr call -----------------------------
+test: 2026-10-24 21:43:08 UTC pid: 8507 - Thread-5 - EXCEPTION - sema4ai_code.inspector.inspector_api
+Error handling <sema4ai_code.inspector.inspector_api._WebBrowserConfigureCommand object at 0x7f9503475d10>: original engine failure
+
+Traceback (most recent call last):
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/inspector_api.py", line 96, in run
+    result = item(self)
+             ^^^^^^^^^^
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/inspector/inspector_api.py", line 173, in __call__
+    robocorp_browser.configure(**self.kwargs)
+  File "/workspace/automation-vscode/sema4ai/tests/sema4ai_code_tests/inspector/test_failure_states.py", line 196, in fail
+    def fail(*args, **kwargs): raise RuntimeError("original engine failure")
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: original engine failure
+test: 2026-10-24 21:43:08 UTC pid: 8507 - MainThread - DEBUG - sema4ai_code.inspector.inspector_api
+Man:: Will kill inspector: - ('browser',)
+
+test: 2026-10-24 21:43:08 UTC pid: 8507 - Thread-5 - DEBUG - sema4ai_code.inspector.inspector_api
+Exited from Web Inspector Thread!
+
+test: 2026-10-24 21:43:08 UTC pid: 8507 - MainThread - DEBUG - sema4ai_code.inspector.inspector_api
+Man:: Killed Web Inspector!
+
+=========================== short test summary info ============================
+FAILED tests/sema4ai_code_tests/inspector/test_failure_states.py::test_failed_browser_worker_settles_request_and_can_be_retried_explicitly
+FAILED tests/sema4ai_code_tests/inspector/test_failure_states.py::test_browser_cache_cleanup_stays_on_its_own_worker
+FAILED tests/sema4ai_code_tests/inspector/test_failure_states.py::test_old_worker_shutdown_is_idempotent
+FAILED tests/sema4ai_code_tests/inspector/test_failure_states.py::test_configure_and_start_failures_cross_both_python_layers
+4 failed, 3 passed in 1.84s
+Robocorp Log (html): /workspace/automation-vscode/sema4ai/output/log.html

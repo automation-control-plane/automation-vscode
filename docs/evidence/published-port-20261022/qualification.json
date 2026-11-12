@@ -1,0 +1,797 @@
+{
+  "artifact": {
+    "source_sha": "871151ceafc7b07dc59f7715d9c4f70153734794",
+    "artifact": "/workspace/artifacts/automation-vscode-2.20.1-linux-x64.vsix",
+    "sha256": "daa4c3ffefb635358c8e945e82034eb10475e75ca4e5ee92b1618b7637ab34b0",
+    "bytes": 3941431,
+    "zip_entries": 713,
+    "license_matches_root": true,
+    "bundled_managed_executables": false,
+    "identity": {
+      "publisher": "automation-control-plane",
+      "name": "automation-vscode",
+      "version": "2.20.1"
+    },
+    "qualified_at": "2026-10-22T21:39:22.296989+00:00",
+    "toolchain": {
+      "node": "24.21.0",
+      "python": "3.11.17",
+      "poetry": "2.1.3"
+    },
+    "extension_root": "/workspace/port-acceptance/qualified-871151ce/extensions/automation-control-plane.automation-vscode-2.20.1",
+    "qualification_root": "/workspace/port-acceptance/qualified-871151ce",
+    "installation": [
+      {
+        "command": [
+          "/workspace/port-acceptance/vscode/usr/share/code/bin/code",
+          "--user-data-dir=/workspace/port-acceptance/qualified-871151ce/user-data",
+          "--extensions-dir=/workspace/port-acceptance/qualified-871151ce/extensions",
+          "--install-extension",
+          "/workspace/artifacts/automation-vscode-2.20.1-linux-x64.vsix"
+        ],
+        "exit": 0,
+        "stdout": "Installing extensions...\nExtension 'automation-vscode-2.20.1-linux-x64.vsix' was successfully installed.\n",
+        "stderr": "(node:12884) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.\n(Use `code --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": [
+          "/workspace/port-acceptance/vscode/usr/share/code/bin/code",
+          "--user-data-dir=/workspace/port-acceptance/qualified-871151ce/user-data",
+          "--extensions-dir=/workspace/port-acceptance/qualified-871151ce/extensions",
+          "--list-extensions",
+          "--show-versions"
+        ],
+        "exit": 0,
+        "stdout": "automation-control-plane.automation-vscode@2.20.1\n",
+        "stderr": ""
+      }
+    ],
+    "matching_installed_runtime_files": 711,
+    "installer_manifest_change": "__metadata only",
+    "extension_host": "blocked: SUID helper requires supported root-owned installation; no sandbox disabling applied",
+    "library_file_id": "libfile_e4df12846b14819183182e285930de9f",
+    "library_file_version": 0
+  },
+  "live": {
+    "root": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46",
+    "source_sha": "871151ceafc7b07dc59f7715d9c4f70153734794",
+    "real_executions": [
+      {
+        "check": "rcc published wrapper identity",
+        "version": "v18.19.7",
+        "sha256": "f8e0394be7f47ee84d6f4cd734822b87b492a4d6102f977f6a18f29453703d48"
+      },
+      {
+        "check": "action-server published wrapper identity",
+        "version": "1.0.4",
+        "sha256": "d3c450a2b10b226613588cc40cc6ec18873b23c7427958b0752711e4531a1de4"
+      },
+      {
+        "check": "Action Package creation through extension backend",
+        "templates": 6,
+        "package": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package/package.yaml"
+      },
+      {
+        "check": "Action discovery, lint and execution",
+        "python": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/holotree/3eed48f_c5e81ff_1c0bc041/bin/python3",
+        "result": "Hello Dakota"
+      },
+      {
+        "check": "Published Work Items FileAdapter input/output",
+        "version": "0.4.4",
+        "output": [
+          {
+            "payload": {
+              "observed": 7
+            },
+            "files": {}
+          }
+        ]
+      },
+      {
+        "check": "Robot creation and RCC execution",
+        "template": "01-python",
+        "python": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/robots-home/holotree/3eed48f_c5e81ff_1c0bc041/bin/python3"
+      },
+      {
+        "check": "Action/Robot Holotree isolation",
+        "actions": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/holotree/3eed48f_c5e81ff_1c0bc041",
+        "robots": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/robots-home/holotree/3eed48f_c5e81ff_1c0bc041"
+      },
+      {
+        "check": "Action breakpoint and continue",
+        "adapter": "debugpy",
+        "source": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package/smoke_actions.py",
+        "line": 13,
+        "stopped": "breakpoint",
+        "breakpoint_cleared_before_resume": true,
+        "exit": 0
+      },
+      {
+        "check": "Robot breakpoint and continue",
+        "adapter": "debugpy",
+        "source": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/robot-package/smoke_tasks.py",
+        "line": 7,
+        "stopped": "breakpoint",
+        "breakpoint_cleared_before_resume": true,
+        "exit": 0
+      },
+      {
+        "check": "Published Runtime wrapper HTTP Action execution",
+        "command": [
+          "/tmp/automation-vscode-port/actions-runtime-1.0.4-linux64",
+          "start",
+          "--address=127.0.0.1",
+          "--port=43573",
+          "--min-processes=1",
+          "--max-processes=2",
+          "--datadir=/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/action-server/http-smoke-a84489de9fba"
+        ],
+        "result": "Hello HTTP Dakota",
+        "datadir": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/action-server/http-smoke-a84489de9fba",
+        "runtime_version": "1.0.4",
+        "bundled_rcc_version": "v18.19.3",
+        "shutdown_status": 200,
+        "runtime_exit_code": 1,
+        "forced_termination": false
+      },
+      {
+        "check": "Published Runtime local package build and metadata",
+        "package_path": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/dist/published-compatibility-smoke.zip"
+      }
+    ],
+    "commands": [
+      {
+        "argv": [
+          "/tmp/automation-vscode-port/rcc-linux64",
+          "--version"
+        ],
+        "cwd": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46",
+        "exit": 0,
+        "log": "command-0.log"
+      },
+      {
+        "argv": [
+          "/tmp/automation-vscode-port/actions-runtime-1.0.4-linux64",
+          "version"
+        ],
+        "cwd": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46",
+        "exit": 0,
+        "log": "command-1.log"
+      },
+      {
+        "argv": [
+          "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/holotree/3eed48f_c5e81ff_1c0bc041/bin/python3",
+          "/workspace/port-acceptance/qualified-871151ce/extensions/automation-control-plane.automation-vscode-2.20.1/src/sema4ai_code/robo/action_runtime.py",
+          "list",
+          "--skip-lint",
+          "--glob",
+          "smoke_actions.py"
+        ],
+        "cwd": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package",
+        "exit": 0,
+        "log": "command-2.log"
+      },
+      {
+        "argv": [
+          "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/holotree/3eed48f_c5e81ff_1c0bc041/bin/python3",
+          "/workspace/port-acceptance/qualified-871151ce/extensions/automation-control-plane.automation-vscode-2.20.1/src/sema4ai_code/robo/lint_in_target_env.py"
+        ],
+        "cwd": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package",
+        "exit": 0,
+        "log": "command-3.log"
+      },
+      {
+        "argv": [
+          "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/holotree/3eed48f_c5e81ff_1c0bc041/bin/python3",
+          "/workspace/port-acceptance/qualified-871151ce/extensions/automation-control-plane.automation-vscode-2.20.1/src/sema4ai_code/robo/launch_actions.py",
+          "run",
+          "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package/smoke_actions.py",
+          "-a",
+          "welcome",
+          "--json-input",
+          "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package/input.json",
+          "--json-output",
+          "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/action-result.json"
+        ],
+        "cwd": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package",
+        "exit": 0,
+        "log": "command-4.log"
+      },
+      {
+        "argv": [
+          "node",
+          "-e",
+          "const fs=require('fs'); const {publishedWorkItemEnvironment}=require(process.argv[1]); process.stdout.write(JSON.stringify(publishedWorkItemEnvironment(JSON.parse(fs.readFileSync(0,'utf8')))));",
+          "/workspace/port-acceptance/qualified-871151ce/extensions/automation-control-plane.automation-vscode-2.20.1/vscode-client/out/runtimePaths.js"
+        ],
+        "cwd": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46",
+        "exit": 0,
+        "log": "command-5.log"
+      },
+      {
+        "argv": [
+          "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/holotree/3eed48f_c5e81ff_1c0bc041/bin/python3",
+          "/workspace/port-acceptance/qualified-871151ce/extensions/automation-control-plane.automation-vscode-2.20.1/src/sema4ai_code/robo/launch_actions.py",
+          "run",
+          "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package/smoke_actions.py",
+          "-a",
+          "consume"
+        ],
+        "cwd": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package",
+        "exit": 0,
+        "log": "command-6.log"
+      },
+      {
+        "argv": [
+          "/tmp/automation-vscode-port/rcc-linux64",
+          "run",
+          "--robot",
+          "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/robot-package/robot.yaml",
+          "--task",
+          "Smoke task",
+          "--bundled",
+          "--robocorp",
+          "--controller",
+          "AutomationVSCodeSmoke"
+        ],
+        "cwd": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/robot-package",
+        "exit": 0,
+        "log": "command-7.log"
+      }
+    ],
+    "action_python": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/holotree/3eed48f_c5e81ff_1c0bc041/bin/python3",
+    "robot_python": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/robots-home/holotree/3eed48f_c5e81ff_1c0bc041/bin/python3",
+    "workspace": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace"
+  },
+  "language_server": {
+    "command": [
+      "/workspace/port-acceptance/language-server-smoke/actions/holotree/257fd4c_c5e81ff_1c0bc041/bin/python3",
+      "-u",
+      "/workspace/port-acceptance/qualified-871151ce/extensions/automation-control-plane.automation-vscode-2.20.1/src/sema4ai_code/__main__.py"
+    ],
+    "scope": "Packaged Python language-server stdio; not VS Code Extension Host activation",
+    "packages": [
+      "Published compatibility smoke",
+      "robot-package"
+    ],
+    "interpreters": {
+      "actions": {
+        "python": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/actions-home/holotree/bb8a853_c5e81ff_1c0bc041/bin/python3",
+        "ROBOCORP_HOME": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/actions-home",
+        "RCC_VERSION": "v18.19.7"
+      },
+      "robots": {
+        "python": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/robots-home/holotree/bb8a853_c5e81ff_1c0bc041/bin/python3",
+        "ROBOCORP_HOME": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/robots-home",
+        "RCC_VERSION": "v18.19.7"
+      }
+    },
+    "action_code_lenses": [
+      {
+        "range": {
+          "start": {
+            "line": 2,
+            "character": 0
+          },
+          "end": {
+            "line": 2,
+            "character": 0
+          }
+        },
+        "command": {
+          "title": "Run Action",
+          "command": "sema4ai.robotsViewActionRun",
+          "arguments": [
+            {
+              "actionName": "welcome",
+              "robot": {
+                "directory": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package",
+                "filePath": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package/package.yaml"
+              },
+              "uri": "file:///workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package/smoke_actions.py"
+            }
+          ]
+        },
+        "data": null
+      },
+      {
+        "range": {
+          "start": {
+            "line": 2,
+            "character": 0
+          },
+          "end": {
+            "line": 2,
+            "character": 0
+          }
+        },
+        "command": {
+          "title": "Debug Action",
+          "command": "sema4ai.robotsViewActionDebug",
+          "arguments": [
+            {
+              "actionName": "welcome",
+              "robot": {
+                "directory": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package",
+                "filePath": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package/package.yaml"
+              },
+              "uri": "file:///workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package/smoke_actions.py"
+            }
+          ]
+        },
+        "data": null
+      },
+      {
+        "range": {
+          "start": {
+            "line": 15,
+            "character": 0
+          },
+          "end": {
+            "line": 15,
+            "character": 0
+          }
+        },
+        "command": {
+          "title": "Run Action",
+          "command": "sema4ai.robotsViewActionRun",
+          "arguments": [
+            {
+              "actionName": "consume",
+              "robot": {
+                "directory": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package",
+                "filePath": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package/package.yaml"
+              },
+              "uri": "file:///workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package/smoke_actions.py"
+            }
+          ]
+        },
+        "data": null
+      },
+      {
+        "range": {
+          "start": {
+            "line": 15,
+            "character": 0
+          },
+          "end": {
+            "line": 15,
+            "character": 0
+          }
+        },
+        "command": {
+          "title": "Debug Action",
+          "command": "sema4ai.robotsViewActionDebug",
+          "arguments": [
+            {
+              "actionName": "consume",
+              "robot": {
+                "directory": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package",
+                "filePath": "/workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package/package.yaml"
+              },
+              "uri": "file:///workspace/port-acceptance/automation-published-smoke-1ybdc2_0/workspace/action-package/smoke_actions.py"
+            }
+          ]
+        },
+        "data": null
+      }
+    ],
+    "actions": {
+      "welcome": {
+        "default_values": {
+          "name": ""
+        },
+        "informal_schema_representation": [
+          "name: string: The recipient."
+        ],
+        "json_schema": {
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The recipient.",
+              "title": "Name"
+            }
+          },
+          "type": "object",
+          "required": [
+            "name"
+          ]
+        },
+        "managed_params_json_schema": {},
+        "action_name": "welcome",
+        "action_relative_path": "smoke_actions.py",
+        "kind": "action"
+      },
+      "consume": {
+        "default_values": {},
+        "informal_schema_representation": [],
+        "json_schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "managed_params_json_schema": {},
+        "action_name": "consume",
+        "action_relative_path": "smoke_actions.py",
+        "kind": "action"
+      }
+    }
+  },
+  "debug": {
+    "scope": "Real installed extension compute_launch profiles executed through debugpy DAP. Console changed to internalConsole for this headless client; not VS Code UI debug acceptance.",
+    "source_sha": "871151ceafc7b07dc59f7715d9c4f70153734794",
+    "vsix_sha256": "daa4c3ffefb635358c8e945e82034eb10475e75ca4e5ee92b1618b7637ab34b0",
+    "checks": {
+      "action": {
+        "debug": {
+          "adapter": "debugpy",
+          "source": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package/smoke_actions.py",
+          "line": 13,
+          "stopped": "breakpoint",
+          "breakpoint_cleared_before_resume": true,
+          "exit": 0
+        },
+        "profile": {
+          "type": "python",
+          "python": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/holotree/3eed48f_c5e81ff_1c0bc041/bin/python3",
+          "program": "/workspace/port-acceptance/qualified-871151ce/extensions/automation-control-plane.automation-vscode-2.20.1/src/sema4ai_code/robo/launch_actions.py",
+          "module": null,
+          "args": [
+            "run",
+            "--action",
+            "welcome",
+            "--json-input",
+            "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package/input.json",
+            "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package/smoke_actions.py"
+          ],
+          "cwd": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/action-package"
+        },
+        "versions": {
+          "actions-core": "1.0.3",
+          "actions-work-items": "0.4.4",
+          "debugpy": "1.8.22"
+        },
+        "home": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home",
+        "RCC_VERSION": "v18.19.7"
+      },
+      "robot": {
+        "debug": {
+          "adapter": "debugpy",
+          "source": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/robot-package/smoke_tasks.py",
+          "line": 7,
+          "stopped": "breakpoint",
+          "breakpoint_cleared_before_resume": true,
+          "exit": 0
+        },
+        "profile": {
+          "type": "python",
+          "python": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/robots-home/holotree/3eed48f_c5e81ff_1c0bc041/bin/python3",
+          "program": null,
+          "module": "robocorp.tasks",
+          "args": [
+            "run",
+            "smoke_tasks.py"
+          ],
+          "cwd": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/workspace/robot-package"
+        },
+        "versions": {
+          "robocorp-tasks": "4.1.1",
+          "debugpy": "1.8.22"
+        },
+        "home": "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/robots-home",
+        "RCC_VERSION": "v18.19.7"
+      }
+    }
+  },
+  "action_templates": [
+    {
+      "template": "advanced",
+      "success": true,
+      "message": null,
+      "actions_dependencies": [
+        "actions-core=1.0.3"
+      ]
+    },
+    {
+      "template": "basic",
+      "success": true,
+      "message": null,
+      "actions_dependencies": [
+        "actions-core=1.0.3"
+      ]
+    },
+    {
+      "template": "canvas-query",
+      "success": true,
+      "message": null,
+      "actions_dependencies": [
+        "actions-core=1.0.3"
+      ]
+    },
+    {
+      "template": "mcp-v2-showcase",
+      "success": true,
+      "message": null,
+      "actions_dependencies": [
+        "actions-core=1.0.3"
+      ]
+    },
+    {
+      "template": "minimal",
+      "success": true,
+      "message": null,
+      "actions_dependencies": [
+        "actions-core=1.0.3"
+      ]
+    },
+    {
+      "template": "workflow-producer-consumer",
+      "success": true,
+      "message": null,
+      "actions_dependencies": [
+        "actions-core=1.0.3",
+        "actions-work-items=0.4.4"
+      ]
+    }
+  ],
+  "robot_templates": [
+    {
+      "template": "01-python",
+      "success": true,
+      "message": null
+    },
+    {
+      "template": "02-python-browser",
+      "success": true,
+      "message": null
+    },
+    {
+      "template": "03-python-work-items",
+      "success": true,
+      "message": null
+    },
+    {
+      "template": "04-python-assistant-ai",
+      "success": true,
+      "message": null
+    },
+    {
+      "template": "05-python-action-server-work-items",
+      "success": true,
+      "message": null
+    },
+    {
+      "template": "06-python-uv-native",
+      "success": true,
+      "message": null
+    }
+  ],
+  "web_inspector": {
+    "scope": "Real web inspector browser, picker injection and locator callback on a synthetic HTTP page; not Extension Host UI acceptance.",
+    "url": "http://127.0.0.1:36805/index.html",
+    "browser_version": "154.0.8037.57",
+    "locator": {
+      "type": "browser",
+      "source": "http://127.0.0.1:36805/index.html",
+      "strategy": "id",
+      "value": "smoke-target",
+      "element": {
+        "tag": "BUTTON",
+        "type": "button",
+        "modifier": ""
+      },
+      "alternatives": [
+        {
+          "strategy": "id",
+          "value": "smoke-target",
+          "matches": 1
+        },
+        {
+          "strategy": "css",
+          "value": "#smoke-target",
+          "matches": 1
+        },
+        {
+          "strategy": "xpath:attributes",
+          "value": "//button[@id='smoke-target']",
+          "matches": 1
+        },
+        {
+          "strategy": "xpath:position",
+          "value": "//button",
+          "matches": 1
+        },
+        {
+          "strategy": "xpath:inner-text",
+          "value": "//button[contains(.,'Inspect this button')]",
+          "matches": 1
+        }
+      ],
+      "frame": {
+        "name": "",
+        "title": "Published port web inspector smoke",
+        "url": "http://127.0.0.1:36805/index.html",
+        "sourceURL": "http://127.0.0.1:36805/index.html",
+        "isMain": true,
+        "props": null
+      }
+    },
+    "screenshots": {
+      "web-inspector-original.png": "c3efadde124c13c8e2a750eafadc741defcc6943472dbf7e5f8667f4d4a97785",
+      "web-inspector-boxed.png": "ed82a159ab40acae38005faec3e293538c73c3e83dfb0615a91e44d3c397e001"
+    }
+  },
+  "browser_interpreter": {
+    "command": [
+      "/workspace/port-acceptance/language-server-smoke/actions/holotree/257fd4c_c5e81ff_1c0bc041/bin/python3",
+      "/workspace/automation-vscode/sema4ai/tests/web_inspector_smoke.py",
+      "--extension-root",
+      "/workspace/port-acceptance/qualified-871151ce/extensions/automation-control-plane.automation-vscode-2.20.1",
+      "--output",
+      "/workspace/port-acceptance/qualified-871151ce/web-inspector"
+    ],
+    "exit": 0,
+    "versions": {
+      "python": "3.11.10 | packaged by conda-forge | (main, Oct 16 2024, 01:27:36) [GCC 13.3.0]",
+      "playwright": "1.52.0"
+    }
+  },
+  "inspector_worker": {
+    "source_sha": "871151ceafc7b07dc59f7715d9c4f70153734794",
+    "vsix_sha256": "daa4c3ffefb635358c8e945e82034eb10475e75ca4e5ee92b1618b7637ab34b0",
+    "scope": "Actual installed inspector worker JSON-RPC lifecycle and echo; UI-specific inspectors remain separately gated.",
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": [
+        "echo",
+        871151
+      ]
+    }
+  },
+  "runtime_ui": {
+    "scope": "Actual published Runtime web UI and synthetic HTTP action result; not VS Code Extension Host UI acceptance.",
+    "command": [
+      "/tmp/automation-vscode-port/actions-runtime-1.0.4-linux64",
+      "start",
+      "--address=127.0.0.1",
+      "--port=43329",
+      "--min-processes=1",
+      "--max-processes=2",
+      "--datadir=/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/action-server/ui-smoke-600da1b18c7f"
+    ],
+    "source_sha": "871151ceafc7b07dc59f7715d9c4f70153734794",
+    "vsix_sha256": "daa4c3ffefb635358c8e945e82034eb10475e75ca4e5ee92b1618b7637ab34b0",
+    "runtime_version": "1.0.4",
+    "action_result": "Hello Screenshot Dakota",
+    "run_id": "run-000-2ca94682-ea48-4f88-bfdb-dbfa9c2bef7c",
+    "ui_url": "http://127.0.0.1:43329/runs/",
+    "ui_text": "Actions Runtime\n\u263e\n\u2190\nOverview\nActions\nRuns\nSchedules\nRobots\nWork Items\nAnalytics\nOpenAPI spec\nRun History\n\nMonitor executions across all Actions and Robots. Filter by type, name, or run identifier.\n\nAll Types\nActions Only\nRobots Only\nReset\nRUN #\tTYPE\tNAME\tSTARTED\tDURATION\tSTATUS\tACTIONS\n\n1\n\t\nAction\t\nPublished compatibility smoke / welcome\nRun ID:\nrun-000-2ca94682-ea48-4f88-bfdb-dbfa9c2bef7c\n\t10/22/2026, 9:42:51 PM\t933 ms\tPassed\t\nShowing all 1 runs.",
+    "screenshots": {
+      "runtime-ui-original.png": "4ca08d189e090047308a1a7db92bff03af2b196e2d66a6ddcd77906f02dd5149",
+      "runtime-ui-boxed.png": "f33839ad66741903cd3de2c6ea3f144d5261eccccd30a51acb35e3cd86c18b2e"
+    },
+    "runtime_exit_code": 1
+  },
+  "images": [
+    {
+      "file": "automation-vscode-871151ce-runtime-original.png",
+      "library_file_id": "libfile_568b7f22d2588191856bb8e4ed09065d",
+      "sha256": "4ca08d189e090047308a1a7db92bff03af2b196e2d66a6ddcd77906f02dd5149",
+      "scope": "Actual Runtime web UI",
+      "not_accepted": "VS Code Extension Host UI and environment-loading screenshots remain blocked"
+    },
+    {
+      "file": "automation-vscode-871151ce-runtime-boxed.png",
+      "library_file_id": "libfile_16b50075078c8191b03e0fa9268c1dce",
+      "sha256": "f33839ad66741903cd3de2c6ea3f144d5261eccccd30a51acb35e3cd86c18b2e",
+      "scope": "Actual Runtime web UI",
+      "not_accepted": "VS Code Extension Host UI and environment-loading screenshots remain blocked"
+    },
+    {
+      "file": "automation-vscode-871151ce-web-inspector-original.png",
+      "library_file_id": "libfile_f238f472271c8191a0ce42163ebadceb",
+      "sha256": "c3efadde124c13c8e2a750eafadc741defcc6943472dbf7e5f8667f4d4a97785",
+      "scope": "Actual web inspector on synthetic HTTP target",
+      "not_accepted": "VS Code Extension Host UI and environment-loading screenshots remain blocked"
+    },
+    {
+      "file": "automation-vscode-871151ce-web-inspector-boxed.png",
+      "library_file_id": "libfile_494649768a7481918c612e2f2f077816",
+      "sha256": "ed82a159ab40acae38005faec3e293538c73c3e83dfb0615a91e44d3c397e001",
+      "scope": "Actual web inspector on synthetic HTTP target",
+      "not_accepted": "VS Code Extension Host UI and environment-loading screenshots remain blocked"
+    }
+  ],
+  "regression": {
+    "passed": 53,
+    "skipped": [
+      {
+        "test": "sema4ai_code_tests.robo.test_list_actions.test_get_actions_metadata_below_version[complex_type]",
+        "reason": "Skipping test for actions version > 1.0.1",
+        "location": "/workspace/automation-vscode/sema4ai/tests/sema4ai_code_tests/robo/test_list_actions.py:542: Skipping test for actions version > 1.0.1"
+      }
+    ],
+    "classification": "Mocked/file-based regression plus real local TCP LSP tests; not counted as live workload acceptance",
+    "node_policy_passed": 6,
+    "baseline": {
+      "python_passed": 76,
+      "python_skipped": 6,
+      "classification": "Starting-tree baseline only, not port acceptance"
+    }
+  },
+  "blockers": [
+    {
+      "action": "Start actual VS Code Extension Host and capture its UI",
+      "target": "Microsoft VS Code 1.143.0 task-local official Debian extraction",
+      "status": "execution failed, not an automatic approval-review rejection",
+      "reason": "SUID sandbox helper must be root-owned and mode 4755; no security changes or sandbox disabling authorized",
+      "needed": "Provide a normally installed sandbox-capable Code; graphical/virtual display if required. Then repeat installed-profile activation, run/debug/terminal/Work Items/inspector/UI capture gates."
+    },
+    {
+      "action": "Use RCC 18.19.7 for all Runtime-internal environment execution",
+      "target": "Published Actions Runtime 1.0.4",
+      "status": "published contract mismatch",
+      "reason": "Runtime bundles RCC 18.19.3; its artifact adapter actually raises RccRuntimeError: RCC rcc failed: unsupported RCC version 'v18.19.7'",
+      "needed": "Published compatible Runtime composition or owner/parent architecture decision; no bundled bytes or upstream sources modified"
+    },
+    {
+      "action": "Port Agent CLI and Data Server integrations completely",
+      "target": "Requested published release set",
+      "status": "backend contract not supplied",
+      "reason": "Agent CLI project/package/registry contract (previously 2.3.3) and standalone Data Server implementation are not supplied by these releases",
+      "needed": "Owner-compatible published implementation/API contracts; existing commands retained; forbidden vendor acquisition not used"
+    },
+    {
+      "action": "Execute credentialed cloud/Vault/OAuth/publishing and platform inspectors",
+      "target": "Authorized sandbox backend and native operator hosts",
+      "status": "operator gates",
+      "reason": "No authorized service credentials, VS Code UI, Windows/macOS/native desktop/Java host in this task",
+      "needed": "Authorized nonproduction backend and corresponding operator environment; no live data or public publishing"
+    }
+  ],
+  "full_feature_acceptance": false,
+  "remaining_local_qualification": [
+    "Environment profile import/switch, cache clearing, diagnostics and rebuild behavior across both homes require further verification/adaptation.",
+    "Development-task execution, workspace editing/configuration, OAuth/Studio/MCP UI flows, recorder and support/feedback flows are not covered by the live workload smoke.",
+    "All 119 commands remain registered; retained source is not counted as verified functional support."
+  ],
+  "managed_downloads": [
+    {
+      "tool": "rcc",
+      "url": "https://github.com/joshyorko/rcc/releases/download/v18.19.7/rcc-linux64",
+      "path": "/workspace/port-acceptance/qualified-871151ce/downloads/rcc-linux64",
+      "sha256": "f8e0394be7f47ee84d6f4cd734822b87b492a4d6102f977f6a18f29453703d48",
+      "version": "v18.19.7",
+      "command": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/rcc-linux64",
+        "--version"
+      ]
+    },
+    {
+      "tool": "action-server",
+      "url": "https://github.com/joshyorko/actions/releases/download/actions-runtime-1.0.4/actions-runtime-1.0.4-linux64",
+      "path": "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+      "sha256": "d3c450a2b10b226613588cc40cc6ec18873b23c7427958b0752711e4531a1de4",
+      "version": "1.0.4",
+      "command": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+        "version"
+      ]
+    }
+  ],
+  "lock_isolation": {
+    "simultaneous_acquisition": true,
+    "elapsed_seconds": 0.008966102000158571,
+    "physical_lock_paths": [
+      "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/actions-home/.sema4ai_code/qualification-isolation.lock",
+      "/workspace/port-acceptance/qualified-871151ce/automation-published-smoke-tgcynd46/robots-home/.sema4ai_code/qualification-isolation.lock"
+    ]
+  },
+  "final_review_tests": {
+    "python_passed": 53,
+    "python_skipped": 1,
+    "node_passed": 6,
+    "runtime_implementation_unchanged_after": "871151ceafc7b07dc59f7715d9c4f70153734794"
+  }
+}

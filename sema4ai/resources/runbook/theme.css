@@ -1,0 +1,54 @@
+/* Automation Control Plane — approved Runbook design tokens. Native VS Code chrome is untouched. */
+:root {
+  color-scheme: dark;
+  --automation-bg: #151d24;
+  --automation-surface: #1c252e;
+  --automation-surface-raised: #222e39;
+  --automation-border: #32414e;
+  --automation-text: #e6edf5;
+  --automation-muted: #b2c0cf;
+  --automation-accent: #ffbf24;
+  --automation-accent-text: #181b1e;
+  --automation-link: #53bbff;
+  --automation-success: #49db7c;
+  --automation-danger: #ff858b;
+  --automation-radius: 4px;
+  --automation-font: var(--vscode-font-family, system-ui, sans-serif);
+  --automation-code-font: var(--vscode-editor-font-family, monospace);
+}
+body.vscode-light {
+  color-scheme: light;
+  --automation-bg: #f7f9fb;
+  --automation-surface: #ffffff;
+  --automation-surface-raised: #eef2f6;
+  --automation-border: #c8d2dc;
+  --automation-text: #17232f;
+  --automation-muted: #4c6073;
+  --automation-accent: #a76000;
+  --automation-accent-text: #ffffff;
+  --automation-link: #0969a6;
+  --automation-success: #16843e;
+  --automation-danger: #bb2436;
+}
+body.vscode-high-contrast, body.vscode-high-contrast-light {
+  --automation-bg: var(--vscode-editor-background);
+  --automation-surface: var(--vscode-editor-background);
+  --automation-surface-raised: var(--vscode-input-background);
+  --automation-border: var(--vscode-contrastBorder, var(--vscode-foreground));
+  --automation-text: var(--vscode-foreground);
+  --automation-muted: var(--vscode-foreground);
+  --automation-accent: var(--vscode-focusBorder);
+  --automation-accent-text: var(--vscode-editor-background);
+  --automation-link: var(--vscode-textLink-foreground);
+  --automation-success: var(--vscode-terminal-ansiGreen);
+  --automation-danger: var(--vscode-errorForeground);
+}
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--automation-text); background: var(--automation-bg); font: 13px/1.5 var(--automation-font); }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+a { color: var(--automation-link); }
+:focus-visible { outline: 2px solid var(--vscode-focusBorder, var(--automation-accent)); outline-offset: 3px; }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

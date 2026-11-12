@@ -106,7 +106,8 @@ export const createActionInputs = async (
     actionFileUri: vscode.Uri,
     actionName: string,
     targetInput: string,
-    actionPackageYamlDirectory: string
+    actionPackageYamlDirectory: string,
+    showToUser: boolean = true
 ): Promise<boolean> => {
     const result = await window.withProgress(
         {
@@ -119,7 +120,7 @@ export const createActionInputs = async (
             if (result !== undefined) {
                 const inputUri = vscode.Uri.file(targetInput);
                 await vscode.workspace.fs.writeFile(inputUri, Buffer.from(JSON.stringify(result, null, 4)));
-                await vscode.window.showTextDocument(inputUri);
+                if (showToUser) await vscode.window.showTextDocument(inputUri);
                 return true;
             }
             return false;

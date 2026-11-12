@@ -1,0 +1,31 @@
+✖ Packages tree does not discover or reuse cached packages before language services are ready (3.533018ms)
+✔ Default contributions hide vendor publishing/navigation while keeping stable compatibility IDs (0.539181ms)
+✔ Actual package tree retains local build/server and removes vendor destinations by default (2.929353ms)
+✔ Explicit compatibility opt-in retains accurately named legacy destinations (0.218311ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 83.129108
+
+✖ failing tests:
+
+test at tests/owned_workflow.test.js:37:1
+✖ Packages tree does not discover or reuse cached packages before language services are ready (3.533018ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/owned_workflow.test.js:45:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

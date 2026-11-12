@@ -1,0 +1,439 @@
+✔ Runbook mount and refresh discover real-shaped packages and runnables without launch or interpreter side effects (20.751612ms)
+✔ Package selection and explicit Action/Robot operations pass authoritative discovered entries, not webview arguments (4.630631ms)
+✔ Unknown and stale runnable/package/settings/run IDs cannot redirect host commands (3.577825ms)
+✔ Runtime open rechecks ownership on click and ignores a forged endpoint (3.000871ms)
+✔ Untrusted workspace cannot run, resolve, or open inspectors through a spoofed bridge action (3.64629ms)
+✔ Recorder uses the selected package even if a different package has an active source editor (1.816891ms)
+✔ Same-named Actions from different source files retain distinct runnable identities and source targets (1.844966ms)
+✔ An obsolete selected package removed from discovery cannot still launch through the bridge (2.777146ms)
+✔ Robot task targets cannot enter Action-only input configuration through forged actions (2.126029ms)
+✔ Robot packages cannot invoke Action-only export or Runtime recovery through forged actions (2.773616ms)
+✔ Delayed discovery for an old package cannot overwrite the newly selected package view (1.69185ms)
+✔ Stale failed package discovery cannot overwrite a newer selected package success (1.442719ms)
+✔ A package switch during pre-action refresh cannot redirect a previously clicked terminal action (1.909982ms)
+✖ starting bootstrap does not query package providers on any Runbook route (3.003273ms)
+✖ starting bootstrap rejects forged package actions and package selection (11.027147ms)
+✖ failed bootstrap does not query package providers on any Runbook route (4.866469ms)
+✖ failed bootstrap rejects forged package actions and package selection (4.966169ms)
+✖ Failed bootstrap can become ready and discover packages through a normal refresh (2.953382ms)
+✖ A previously discovered runnable cannot launch after bootstrap fails (5.344231ms)
+✖ Failed bootstrap permits diagnostics and native Settings; explicit retry only reloads the window (5.812615ms)
+✔ Startup retry does not reload while bootstrap is starting (2.215523ms)
+✔ Startup retry does not reload while bootstrap is ready (4.343735ms)
+✔ Workspace DOM mount only asks to refresh; explicit Run sends only the displayed target identity (11.379105ms)
+✔ Every workspace route renders host state without issuing an execution, capture, configuration, or connection request (9.382288ms)
+✔ Host paths and result labels remain inert text, and package search changes no execution state (2.827904ms)
+✖ Bootstrap failure DOM explains the network cause without raw command IDs and exposes only explicit recovery controls (8.502472ms)
+✖ Starting bootstrap DOM has no retry or package execution controls; ready state restores real runnables (3.613614ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 18
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 228.422692
+
+✖ failing tests:
+
+test at tests/runbook_host.test.js:228:5
+✖ starting bootstrap does not query package providers on any Runbook route (3.003273ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   message: 'Preparing the language server Python environment.',
+  -   status: 'starting',
+  -   title: 'Starting Automation'
+  - }
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/runbook_host.test.js:232:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { status: 'starting', title: 'Starting Automation', message: 'Preparing the language server Python environment.' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/runbook_host.test.js:242:5
+✖ starting bootstrap rejects forged package actions and package selection (11.027147ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   [
+  +     'sema4ai.createActionPackage'
+  +   ],
+  +   [
+  +     'sema4ai.createRobot'
+  +   ],
+  +   [
+  +     'sema4ai.createAgentPackage'
+  +   ],
+  +   [
+  +     'sema4ai.openRobotCondaTreeSelection',
+  +     {
+  +       label: 'Same name',
+  +       robot: {
+  +         directory: '/workspace/action-a',
+  +         filePath: '/workspace/action-a/package.yaml',
+  +         name: 'Same name',
+  +         packageType: 'action',
+  +         yamlContents: {
+  +           dependencies: {
+  +             pypi: [
+  +               'actions-work-items=0.4.4'
+  +             ]
+  +           }
+  +         }
+  +       },
+  +       type: 'ActionPackage',
+  +       uri: {
+  +         fsPath: '/workspace/action-a/package.yaml',
+  +         toString: [Function: toString]
+  +       }
+  +     }
+  +   ],
+  +   [
+  +     'sema4ai.rccTerminalCreateRobotTreeSelection',
+  +     {
+  +       label: 'Same name',
+  +       robot: {
+  +         directory: '/workspace/action-a',
+  +         filePath: '/workspace/action-a/package.yaml',
+  +         name: 'Same name',
+  +         packageType: 'action',
+  +         yamlContents: {
+  +           dependencies: {
+  +             pypi: [
+  +               'actions-work-items=0.4.4'
+  +             ]
+  +           }
+  +         }
+  +       },
+  +       type: 'ActionPackage',
+  +       uri: {
+  +         fsPath: '/workspace/action-a/package.yaml',
+  +         toString: [Function: toString]
+  +       }
+  +     }
+  +   ],
+  +   [
+  +     'sema4ai.startActionServer',
+  +     {
+  +       fsPath: '/workspace/action-a',
+  +       toString: [Function: toString]
+  +     }
+  +   ],
+  +   [
+  +     'automation.workItems.open'
+  +   ],
+  +   [
+  +     'sema4ai.actionServerPackageBuild',
+  +     {
+  +       fsPath: '/workspace/action-a',
+  +       toString: [Function: toString]
+  +     }
+  +   ],
+  +   [
+  +     'sema4ai.actionServerPackageMetadata',
+  +     {
+  +       fsPath: '/workspace/action-a',
+  +       toString: [Function: toString]
+  +     }
+  +   ],
+  +   [
+  +     'sema4ai.inspector'
+  +   ],
+  +   [
+  +     'sema4ai.newRobocorpInspectorBrowser'
+  +   ],
+  +   [
+  +     'sema4ai.newRobocorpInspectorWindows'
+  +   ],
+  +   [
+  +     'sema4ai.newRobocorpInspectorImage'
+  +   ],
+  +   [
+  +     'sema4ai.newRobocorpInspectorJava'
+  +   ],
+  +   [
+  +     'sema4ai.openPlaywrightRecorder',
+  +     true
+  +   ],
+  +   [
+  +     'revealInExplorer',
+  +     {
+  +       fsPath: '/workspace/action-a',
+  +       toString: [Function: toString]
+  +     }
+  +   ]
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/runbook_host.test.js:251:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Array],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/runbook_host.test.js:228:5
+✖ failed bootstrap does not query package providers on any Runbook route (4.866469ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   message: 'Language server bootstrap could not download its Python environment because network access was blocked. Review diagnostic logs and your tooling settings before retrying.',
+  -   reason: 'network',
+  -   status: 'failed',
+  -   title: 'Automation could not start'
+  - }
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/runbook_host.test.js:232:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { status: 'failed', title: 'Automation could not start', message: 'Language server bootstrap could not download its Python environment because network access was blocked. Review diagnostic logs and your tooling settings before retrying.', reason: 'network' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/runbook_host.test.js:242:5
+✖ failed bootstrap rejects forged package actions and package selection (4.966169ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   [
+  +     'sema4ai.createActionPackage'
+  +   ],
+  +   [
+  +     'sema4ai.createRobot'
+  +   ],
+  +   [
+  +     'sema4ai.createAgentPackage'
+  +   ],
+  +   [
+  +     'sema4ai.openRobotCondaTreeSelection',
+  +     {
+  +       label: 'Same name',
+  +       robot: {
+  +         directory: '/workspace/action-a',
+  +         filePath: '/workspace/action-a/package.yaml',
+  +         name: 'Same name',
+  +         packageType: 'action',
+  +         yamlContents: {
+  +           dependencies: {
+  +             pypi: [
+  +               'actions-work-items=0.4.4'
+  +             ]
+  +           }
+  +         }
+  +       },
+  +       type: 'ActionPackage',
+  +       uri: {
+  +         fsPath: '/workspace/action-a/package.yaml',
+  +         toString: [Function: toString]
+  +       }
+  +     }
+  +   ],
+  +   [
+  +     'sema4ai.rccTerminalCreateRobotTreeSelection',
+  +     {
+  +       label: 'Same name',
+  +       robot: {
+  +         directory: '/workspace/action-a',
+  +         filePath: '/workspace/action-a/package.yaml',
+  +         name: 'Same name',
+  +         packageType: 'action',
+  +         yamlContents: {
+  +           dependencies: {
+  +             pypi: [
+  +               'actions-work-items=0.4.4'
+  +             ]
+  +           }
+  +         }
+  +       },
+  +       type: 'ActionPackage',
+  +       uri: {
+  +         fsPath: '/workspace/action-a/package.yaml',
+  +         toString: [Function: toString]
+  +       }
+  +     }
+  +   ],
+  +   [
+  +     'sema4ai.startActionServer',
+  +     {
+  +       fsPath: '/workspace/action-a',
+  +       toString: [Function: toString]
+  +     }
+  +   ],
+  +   [
+  +     'automation.workItems.open'
+  +   ],
+  +   [
+  +     'sema4ai.actionServerPackageBuild',
+  +     {
+  +       fsPath: '/workspace/action-a',
+  +       toString: [Function: toString]
+  +     }
+  +   ],
+  +   [
+  +     'sema4ai.actionServerPackageMetadata',
+  +     {
+  +       fsPath: '/workspace/action-a',
+  +       toString: [Function: toString]
+  +     }
+  +   ],
+  +   [
+  +     'sema4ai.inspector'
+  +   ],
+  +   [
+  +     'sema4ai.newRobocorpInspectorBrowser'
+  +   ],
+  +   [
+  +     'sema4ai.newRobocorpInspectorWindows'
+  +   ],
+  +   [
+  +     'sema4ai.newRobocorpInspectorImage'
+  +   ],
+  +   [
+  +     'sema4ai.newRobocorpInspectorJava'
+  +   ],
+  +   [
+  +     'sema4ai.openPlaywrightRecorder',
+  +     true
+  +   ],
+  +   [
+  +     'revealInExplorer',
+  +     {
+  +       fsPath: '/workspace/action-a',
+  +       toString: [Function: toString]
+  +     }
+  +   ]
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/runbook_host.test.js:251:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Array],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/runbook_host.test.js:258:1
+✖ Failed bootstrap can become ready and discover packages through a normal refresh (2.953382ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   null
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/runbook_host.test.js:260:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ null ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/runbook_host.test.js:270:1
+✖ A previously discovered runnable cannot launch after bootstrap fails (5.344231ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   message: 'Language server bootstrap could not download its Python environment because network access was blocked. Review diagnostic logs and your tooling settings before retrying.',
+  -   reason: 'network',
+  -   status: 'failed',
+  -   title: 'Automation could not start'
+  - }
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/runbook_host.test.js:277:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { status: 'failed', title: 'Automation could not start', message: 'Language server bootstrap could not download its Python environment because network access was blocked. Review diagnostic logs and your tooling settings before retrying.', reason: 'network' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/runbook_host.test.js:284:1
+✖ Failed bootstrap permits diagnostics and native Settings; explicit retry only reloads the window (5.812615ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'workbench.action.openSettings',
+  +   '@ext:automation-control-plane.automation-vscode'
+  -   'workbench.action.reloadWindow'
+    ]
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/runbook_host.test.js:292:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'workbench.action.openSettings', '@ext:automation-control-plane.automation-vscode' ],
+    expected: [ 'workbench.action.reloadWindow' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/runbook_host.test.js:357:1
+✖ Bootstrap failure DOM explains the network cause without raw command IDs and exposes only explicit recovery controls (8.502472ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(text.includes(FAILED_STARTUP.title))
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/runbook_host.test.js:363:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/runbook_host.test.js:375:1
+✖ Starting bootstrap DOM has no retry or package execution controls; ready state restores real runnables (3.613614ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(dom.all().some(node=>node.textContent===STARTING_STARTUP.title))
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/runbook_host.test.js:378:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

@@ -1,3 +1,5 @@
+import { publishedWorkItemEnvironment } from "./runtimePaths";
+import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 import {
     commands,
     window,
@@ -9,7 +11,7 @@ import {
     DebugSessionOptions,
     env,
 } from "vscode";
-import { dirname } from "path";
+import { basename, dirname } from "path";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import * as roboCommands from "./robocorpCommands";
 import * as vscode from "vscode";
@@ -158,7 +160,7 @@ export async function cloudLogout(): Promise<void> {
  * Note that callers need to check both whether it was successful as well as if the interpreter was resolved.
  */
 export async function resolveInterpreter(targetRobot: string): Promise<ActionResult<InterpreterInfo | undefined>> {
-    // Note: this may also activate `Sema4.ai` if it's still not activated
+    // Note: this may also activate `Automation` if it's still not activated
     // (so, it cannot be used during startup as there'd be a cyclic dependency).
     try {
         let interpreter: ActionResult<InterpreterInfo | undefined> = await commands.executeCommand(
@@ -362,7 +364,7 @@ export async function setPythonInterpreterFromRobotYaml() {
             window.showInformationMessage("Successfully set python executable path for vscode-python.");
         } else if (!pythonExecutableConfigured) {
             window.showInformationMessage(
-                "Unable to verify if vscode-python executable was properly set. See OUTPUT -> Sema4.ai for more info."
+                "Unable to verify if vscode-python executable was properly set. See OUTPUT -> Automation for more info."
             );
         } else {
             if (pythonExecutableConfigured != interpreter.pythonExe) {
@@ -899,8 +901,8 @@ export async function updateLaunchEnvironmentCommonTasksAndActions(
 ): Promise<Record<string, string>> {
     const newEnv = applyOutViewIntegrationEnvVars(environment);
 
-    const externalApiUrl: any = await langServer.sendRequest("getExternalApiUrl");
-    if (externalApiUrl) {
+    const externalApiUrl: unknown = legacyVendorIntegrationsEnabled() ? await langServer.sendRequest("getExternalApiUrl") : undefined;
+    if (typeof externalApiUrl === "string" && externalApiUrl) {
         newEnv["SEMA4AI_CREDENTIAL_API"] = externalApiUrl;
     }
 
@@ -918,7 +920,7 @@ export async function updateLaunchEnvironmentCommonTasksAndActions(
         }
     }
 
-    return newEnv;
+    return publishedWorkItemEnvironment(newEnv);
 }
 
 /**
@@ -939,7 +941,7 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
         if (error && error.message) {
             msg += ` (${error.message})`;
         }
-        msg += "See OUTPUT > Sema4.ai for more details.";
+        msg += "See OUTPUT > Automation for more details.";
         window.showErrorMessage(msg);
         logError("Error computing launch env.", error, "ERROR_LAUNCH_ENV");
         throw error;
@@ -956,7 +958,7 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
                     await window.withProgress(
                         {
                             location: vscode.ProgressLocation.Notification,
-                            title: "Running preRunScripts (see 'OUTPUT > Sema4.ai' for details).",
+                            title: "Running preRunScripts (see 'OUTPUT > Automation' for details).",
                             cancellable: false,
                         },
                         async (
@@ -974,7 +976,7 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
                                 if (!result["success"]) {
                                     OUTPUT_CHANNEL.show();
                                     window.showErrorMessage(
-                                        "There was a problem running preRunScripts. See `OUTPUT > Sema4.ai` for more details."
+                                        "There was a problem running preRunScripts. See `OUTPUT > Automation` for more details."
                                     );
                                 }
                             }
@@ -1019,9 +1021,9 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
 
     const newEnv: { [key: string]: string } = await updateLaunchEnvironmentCommonTasksAndActions(environment);
 
-    let vaultInfoActionResult: ActionResult<IVaultInfo> = await commands.executeCommand(
+    let vaultInfoActionResult: ActionResult<IVaultInfo> = legacyVendorIntegrationsEnabled() ? await commands.executeCommand(
         roboCommands.SEMA4AI_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
-    );
+    ) : undefined;
     if (vaultInfoActionResult?.success) {
         const vaultInfo: IVaultInfo = vaultInfoActionResult.result;
         if (vaultInfo?.workspaceId) {
@@ -1044,6 +1046,19 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
         }
     }
 
+    return updateWorkItemEnvironment(newEnv, robot);
+}
+
+/** Configure the same local Work Items selection for Action and Robot launches. */
+export async function updateWorkItemEnvironment(
+    environment: Record<string, string>,
+    robot: string
+): Promise<Record<string, string> | "cancelled"> {
+    const newEnv = { ...environment };
+    const condaPrefix = newEnv.CONDA_PREFIX;
+    if (!condaPrefix) {
+        return newEnv;
+    }
     let workItemsActionResult: ActionResultWorkItems = await commands.executeCommand(
         roboCommands.SEMA4AI_LIST_WORK_ITEMS_INTERNAL,
         { "robot": robot, "increment_output": true }
@@ -1067,8 +1082,8 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
             {
                 "conda_prefix": condaPrefix,
                 "libs_and_version": [
-                    ["rpaframework", "11.3"],
-                    ["robocorp-workitems", "0.0.1"], // Any version will do
+                    ["actions-work-items", "0.4.4"],
+                    ...(basename(robot) === "package.yaml" ? [] : [["rpaframework", "11.3"], ["robocorp-workitems", "0.0.1"]]),
                 ],
             }
         );
@@ -1121,13 +1136,13 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
 
         let selectedItem = await showSelectOneQuickPick(
             items,
-            "Please select the work item input to be used by RPA.Robocorp.WorkItems."
+            "Please select the work item input for this package."
         );
         if (!selectedItem) {
             return "cancelled";
         }
         if (selectedItem.label === noWorkItemLabel) {
-            return newEnv;
+            return publishedWorkItemEnvironment(newEnv);
         }
 
         // No need to await.
@@ -1136,5 +1151,5 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
         newEnv["RPA_INPUT_WORKITEM_PATH"] = selectedItem.action;
     }
 
-    return newEnv;
+    return publishedWorkItemEnvironment(newEnv);
 }

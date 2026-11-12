@@ -1,0 +1,13 @@
+✔ Canonical Canvas discovery produces immutable typed UI selections without defaulting snapshot authority (6.259035ms)
+✔ Discovery refuses cross-workspace/revision/queue descriptors and unknown authority or mode (3.216863ms)
+✔ Claim invocation carries only the exact discovered snapshot and selected live claim (0.728214ms)
+✔ Claim invocation rejects another item, changed snapshot, stale terminal state and forged owner fields (3.726813ms)
+✔ Canvas selection rejects duplicate IDs, excessive schemas and metadata masquerading as discovery (0.845645ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 103.091183

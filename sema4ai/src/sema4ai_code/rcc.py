@@ -35,6 +35,7 @@ from sema4ai_code.protocols import (
 )
 from sema4ai_code.rcc_space_info import RCCSpaceInfo, SpaceState
 from sema4ai_code.tools import Tool
+from sema4ai_code.runtime_paths import RuntimeKind, runtime_environment, runtime_homes
 
 log = get_logger(__name__)
 
@@ -44,6 +45,56 @@ RCC_CREDENTIALS_MUTEX_NAME = "rcc_credentials"
 ACCOUNT_NAME = "sema4ai"
 
 _cache_hash: LRUCache[tuple[str, str], ActionResult[str]] = LRUCache(max_size=50)
+
+
+def _rcc_command_path(args: list[str]) -> tuple[str, ...]:
+    """Classify command positions, never profile/path/space argument values.
+
+    RCC 18.19.7 root/configuration help defines these flags and aliases. Only
+    prefixes preceding the operation need parsing; leaf arguments belong to RCC.
+    Refuse an unknown prefix flag rather than guessing its arity and bypassing
+    the external-service boundary. Native callers put leaf flags after commands.
+    """
+    value_flags = {
+        "--anything", "--config", "--controller", "--log-hide", "--pprof",
+        "--tag", "--workers", "--account", "-a",
+    }
+    boolean_flags = {
+        "--bundled", "--colorless", "--debug", "--externally-managed",
+        "--help", "-h", "--version", "-v", "--liveonly", "--lockless",
+        "--no-build", "--no-pyc-management", "--no-retry-build",
+        "--no-temp-management", "--nocache", "--numbers", "--robocorp",
+        "--silent", "--strict", "--timeline", "--trace", "--unmanaged",
+        "--warranty-voided",
+    }
+    commands: list[str] = []
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if not isinstance(token, str):
+            raise ValueError("RCC command arguments must be strings.")
+        flag, equals, _ = token.partition("=")
+        if flag in value_flags:
+            if not equals:
+                index += 1
+                if index >= len(args):
+                    raise ValueError(f"RCC command flag {flag} requires a value.")
+        elif flag in boolean_flags:
+            pass
+        elif token.startswith("-"):
+            raise ValueError(f"Unrecognized RCC command prefix flag {flag}; put the command before its options.")
+        else:
+            if not commands:
+                token = {
+                    "conf": "configuration", "config": "configuration",
+                    "configure": "configuration", "c": "cloud",
+                    "robocorp": "cloud", "f": "feedback",
+                }.get(token, token)
+            commands.append(token)
+            if commands[0] != "configuration" or len(commands) == 2:
+                return tuple(commands)
+        index += 1
+    return tuple(commands)
 
 
 def download_rcc(
@@ -63,7 +114,7 @@ def download_rcc(
     """
     from sema4ai_code.tools import download_tool
 
-    RCC_VERSION = "v21.3.0"
+    RCC_VERSION = "v18.19.8"
     download_tool(
         Tool.RCC,
         location,
@@ -81,12 +132,7 @@ def get_default_rcc_location() -> str:
 
 
 def get_default_app_home_location() -> Path:
-    if sys.platform == "win32":
-        path = r"$LOCALAPPDATA\sema4ai"
-    else:
-        path = r"$HOME/.sema4ai"
-    home_str = os.path.expandvars(path)
-    return Path(home_str)
+    return runtime_homes()["actions"]
 
 
 class RccRobotMetadata:
@@ -150,7 +196,7 @@ class Rcc:
     # It should store the contents of conda which couldn't be resolved.
     # After being stored once here, it'll only be tried again when
     # the user restarts the language server (or changes the conda config).
-    broken_conda_configs: dict[str, ActionResult] = {}
+    broken_conda_configs: dict[tuple[str, str], ActionResult] = {}
 
     def __init__(self, config_provider: IConfigProvider) -> None:
         self._config_provider = weakref.ref(config_provider)
@@ -178,15 +224,11 @@ class Rcc:
 
         return self._get_str_optional_setting(SEMA4AI_HOME)
 
-    def get_robocorp_code_datadir(self) -> Path:
-        robocorp_home_str = self.get_robocorp_home_from_settings()
-        if not robocorp_home_str:
-            app_home = get_default_app_home_location()
-        else:
-            app_home = Path(robocorp_home_str)
-
-        directory = app_home / ".sema4ai_code"
-        return directory
+    def get_robocorp_code_datadir(self, kind: RuntimeKind = "actions") -> Path:
+        return (
+            runtime_homes(self.get_robocorp_home_from_settings())[kind]
+            / ".sema4ai_code"
+        )
 
     @property
     def config_location(self) -> str | None:
@@ -213,10 +255,16 @@ class Rcc:
         from sema4ai_code import settings
 
         rcc_location = self._get_str_optional_setting(settings.SEMA4AI_RCC_LOCATION)
+        rcc_location = rcc_location or os.environ.get("AUTOMATION_RCC_LOCATION")
+        configured = bool(rcc_location)
         if not rcc_location:
             rcc_location = get_default_rcc_location()
+        if configured and not os.path.isfile(rcc_location):
+            raise RuntimeError(
+                f"Configured RCC executable does not exist: {rcc_location}"
+            )
 
-        if download_if_missing and not os.path.exists(rcc_location):
+        if download_if_missing and not configured:
             download_rcc(rcc_location)
         return rcc_location
 
@@ -232,6 +280,7 @@ class Rcc:
         show_interactive_output: bool = False,
         hide_in_log: str | None = None,
         send_to_stdin: str | None = None,
+        kind: RuntimeKind | None = None,
     ) -> LaunchActionResult[str]:
         """
         Returns an ActionResult where the result is the stdout of the executed command.
@@ -250,6 +299,18 @@ class Rcc:
         from sema4ai_ls_core.basic import build_subprocess_kwargs
         from sema4ai_ls_core.process import check_output_interactive
 
+        from sema4ai_code.legacy_integrations import DISABLED, enabled
+        provider = self._config_provider()
+        try:
+            command_path = _rcc_command_path(args)
+        except ValueError as error:
+            return LaunchActionResult("", False, str(error))
+        external = command_path[:1] in (("cloud",), ("feedback",)) or command_path == ("configuration", "credentials")
+        if external and not enabled(
+            provider.config if provider is not None else None
+        ):
+            return LaunchActionResult("", False, DISABLED)
+
         if stderr is Sentinel.SENTINEL:
             stderr = subprocess.PIPE
 
@@ -262,16 +323,28 @@ class Rcc:
         env["PYTHONIOENCODING"] = "utf-8"
         env["PYTHONUNBUFFERED"] = "1"
 
-        robocorp_home = self.get_robocorp_home_from_settings()
-        if robocorp_home:
-            env["ROBOCORP_HOME"] = robocorp_home
-            env["SEMA4AI_HOME"] = robocorp_home
+        if kind is None:
+            # RCC owns Robot Control Room credentials; Runtime owns Action auth.
+            # Keep credential lookup and the corresponding cloud calls together.
+            kind = (
+                "robots"
+                if command_path[:1] == ("cloud",) or command_path == ("configuration", "credentials")
+                else "actions"
+            )
+        env.update(runtime_environment(kind, self.get_robocorp_home_from_settings()))
+        robocorp_home = env["ROBOCORP_HOME"]
+        if mutex_name:
+            import hashlib
+
+            mutex_name += (
+                "-" + hashlib.sha256(env["ROBOCORP_HOME"].encode()).hexdigest()[:16]
+            )
 
         kwargs: dict = build_subprocess_kwargs(cwd, env, stderr=stderr)
         args = (
             [rcc_location]
             + args
-            + ["--bundled", "--sema4ai", "--controller", "Sema4aiCode"]
+            + ["--bundled", "--robocorp", "--controller", "AutomationCode"]
         )
         cmdline = list2cmdline([str(x) for x in args])
 
@@ -392,7 +465,7 @@ class Rcc:
 
     @implements(IRcc.get_template_names)
     def get_template_names(self) -> ActionResult[list[RobotTemplate]]:
-        result = self._run_rcc("robot initialize -l --json".split())
+        result = self._run_rcc("robot initialize -l --json".split(), kind="robots")
         if not result.success:
             return ActionResult(success=False, message=result.message)
 
@@ -484,7 +557,7 @@ class Rcc:
         if force:
             args.append("-f")
         args = self._add_config_to_args(args)
-        return self._run_rcc(args, error_msg="Error creating robot.")
+        return self._run_rcc(args, error_msg="Error creating robot.", kind="robots")
 
     @implements(IRcc.add_credentials)
     def add_credentials(self, credential: str) -> ActionResult:
@@ -898,16 +971,21 @@ class Rcc:
         from sema4ai_code.holetree_manager import HolotreeManager
         from sema4ai_code.rcc_space_info import format_conda_contents_to_compare
 
+        kind: RuntimeKind = "robots" if robot_yaml_path is not None else "actions"
         if holotree_manager is None:
-            holotree_manager = HolotreeManager(self)
+            holotree_manager = HolotreeManager(
+                self, directory=self.get_robocorp_code_datadir(kind)
+            )
 
         formatted_conda_yaml_contents = format_conda_contents_to_compare(
             conda_yaml_contents
         )
 
-        broken_action_result = self.broken_conda_configs.get(
-            formatted_conda_yaml_contents
+        failure_key = (
+            str(self.get_robocorp_code_datadir(kind).resolve()),
+            formatted_conda_yaml_contents,
         )
+        broken_action_result = self.broken_conda_configs.get(failure_key)
 
         if broken_action_result is not None:
             msg = f"Environment from previously broken {conda_or_package_yaml_path.name} requested: {conda_or_package_yaml_path}.\n-- VSCode restart required to retry."
@@ -1033,7 +1111,7 @@ class Rcc:
                 False, msg, None
             )
 
-            self.broken_conda_configs[formatted_conda_yaml_contents] = action_result
+            self.broken_conda_configs[failure_key] = action_result
 
             with space_info.acquire_lock():
                 # If some failure happened, mark this as just created (so, it
@@ -1078,6 +1156,7 @@ class Rcc:
                 ),
                 timeout=timeout,  # Creating the env may be really slow!
                 show_interactive_output=True,
+                kind=kind,
             )
 
             if not ret.success:
@@ -1104,6 +1183,9 @@ class Rcc:
                 msg = f"Did not find PYTHON_EXE in {environ}"
                 return return_failure(msg)
 
+            environ.update(
+                runtime_environment(kind, self.get_robocorp_home_from_settings())
+            )
             with space_info.acquire_lock():
                 space_info.env_json_path.write_text(json.dumps(environ), "utf-8")
                 space_info.state_path.write_text(SpaceState.ENV_READY.value, "utf-8")
@@ -1145,6 +1227,12 @@ class Rcc:
 
     @implements(IRcc.feedack_metric)
     def feedack_metric(self, name, value="+1") -> ActionResult[str]:
+        provider = self._config_provider()
+        config = provider.config if provider is not None else None
+        if config is None or not config.get_setting(
+            "sema4ai.legacyVendorIntegrations.enabled", bool, False
+        ):
+            return ActionResult(True)
         key = f"{name}.{value}"
         if key in self._feedback_metrics_reported:
             return ActionResult(True)

@@ -1,0 +1,12 @@
+tasks:
+  Consume Work Item:
+    shell: python -m robocorp.tasks run work_items_tasks.py -t consume
+  Copy Work Item Attachment:
+    shell: python -m robocorp.tasks run work_items_tasks.py -t copy_attachment
+environmentConfigs:
+  - conda.yaml
+artifactsDir: output
+PATH:
+  - .
+PYTHONPATH:
+  - .

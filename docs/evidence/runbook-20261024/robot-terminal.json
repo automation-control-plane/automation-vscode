@@ -1,0 +1,27 @@
+{
+  "source_sha": "aec537ebaadbf80aa95f22bf4a466fb514be2683",
+  "extension": "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11",
+  "scope": "Actual custom adapter, terminal wrapper and verified RCC; simulated Code reverse-terminal peer, not GUI",
+  "checks": [
+    {
+      "task": "Consume",
+      "actual_terminal_exit": 0,
+      "dap_exit_code": 0,
+      "events": [
+        "exited",
+        "terminated"
+      ],
+      "terminal_wrapper_pid": 3358
+    },
+    {
+      "task": "Fail",
+      "actual_terminal_exit": 10,
+      "dap_exit_code": 10,
+      "events": [
+        "exited",
+        "terminated"
+      ],
+      "terminal_wrapper_pid": 3420
+    }
+  ]
+}

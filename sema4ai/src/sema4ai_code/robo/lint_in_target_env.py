@@ -5,75 +5,41 @@ from typing import Any
 
 def main() -> None:
     contents_to_lint: bytes = sys.stdin.buffer.read()
+    import importlib
+
     try:
-        from sema4ai import actions  # noqa #type: ignore
-
-        use_sema4lib = True
-    except ImportError:
-        use_sema4lib = False
-
-    EPManagedParameters: Any
-    PluginManager: Any
-    ManagedParameters: Any
-    _lint_action: Any
-    version_info: Any
-
-    if use_sema4lib:
-        from sema4ai.actions import _lint_action  # noqa #type: ignore
-        from sema4ai.actions import version_info  # noqa #type: ignore
-
-        requires_pm = True
-
-        pm = None
-
-        # fmt: off
         try:
-            from sema4ai.actions._customization._extension_points import (  # noqa #type: ignore
-                EPManagedParameters,
-            )
-            from sema4ai.actions._customization._plugin_manager import (  # noqa #type: ignore
-                PluginManager,
-            )
-            from sema4ai.actions._managed_parameters import (  # noqa #type: ignore
-                ManagedParameters,
-            )
-
-
+            from .action_runtime import ActionSDKError, load_actions
+        except ImportError:
+            from action_runtime import ActionSDKError, load_actions
+        try:
+            actions, _ = load_actions()
+        except ActionSDKError as error:
+            print(json.dumps([{
+                "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}},
+                "severity": 1, "source": "Automation", "message": str(error),
+            }]))
+            return
+        prefix = actions.__name__
+        _lint_action = importlib.import_module(prefix + "._lint_action")
+        requires_pm = True
+        pm = None
+        try:
+            EPManagedParameters = importlib.import_module(
+                prefix + "._customization._extension_points"
+            ).EPManagedParameters
+            PluginManager = importlib.import_module(
+                prefix + "._customization._plugin_manager"
+            ).PluginManager
+            ManagedParameters = importlib.import_module(
+                prefix + "._managed_parameters"
+            ).ManagedParameters
             pm = PluginManager()
             pm.set_instance(EPManagedParameters, ManagedParameters({}))
-        except BaseException:
-            pass
-        # fmt: on
-    else:
-        try:
-            # May not be in the target env or could be an older version of
-            # robocorp.actions.
-            from robocorp.actions import _lint_action  # noqa #type: ignore
-            from robocorp.actions import version_info  # noqa #type: ignore
-
-            requires_pm = version_info[:2] >= [0, 2]
-        except BaseException:
-            return
-
-        pm = None
-        if requires_pm:
-            # fmt: off
-            try:
-                from robocorp.actions._managed_parameters import (  # noqa #type: ignore
-                    ManagedParameters,
-                )
-                from robocorp.tasks._customization._extension_points import (  # noqa #type: ignore
-                    EPManagedParameters,
-                )
-                from robocorp.tasks._customization._plugin_manager import (  # noqa #type: ignore
-                    PluginManager,
-                )
-
-                pm = PluginManager()
-                pm.set_instance(EPManagedParameters, ManagedParameters({}))
-            except BaseException:
-                pass
-            # fmt: on
+        except ImportError:
+            requires_pm = False
+    except ImportError:
+        return
 
     if requires_pm:
         try:

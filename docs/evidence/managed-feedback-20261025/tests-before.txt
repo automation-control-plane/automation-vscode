@@ -1,0 +1,53 @@
+✔ Managed editor keeps queue/review/Run identity separate and gates controls by actual grants (46.819029ms)
+✖ Managed logs distinguish an unloaded result, an empty page, and literal returned lines (19.946268ms)
+✔ A managed cancellation response clears Working without changing the payload draft (18.671712ms)
+✖ Native managed controller preserves exact targets, grants, artifacts and uncertain request identity across reconnect (104.770766ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 262.055424
+
+✖ failing tests:
+
+test at tests/managed_work_items_editor.test.js:62:1
+✖ Managed logs distinguish an unloaded result, an empty page, and literal returned lines (19.946268ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /select.*logs/i. Input:
+  
+  ''
+  
+      at TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/managed_work_items_editor.test.js:66:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: /select.*logs/i,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/managed_work_items_view.test.js:13:1
+✖ Native managed controller preserves exact targets, grants, artifacts and uncertain request identity across reconnect (104.770766ms)
+  AssertionError [ERR_ASSERTION]: Cancel must settle the loading state without Refresh
+  
+  5 !== 6
+  
+      at assertCancelled (/workspace/automation-vscode/sema4ai/tests/managed_work_items_view.test.js:66:20)
+      at async TestContext.<anonymous> (/workspace/automation-vscode/sema4ai/tests/managed_work_items_view.test.js:73:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 5,
+    expected: 6,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

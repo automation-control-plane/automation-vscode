@@ -19,7 +19,6 @@ class Tool(Enum):
 @dataclass
 class ToolInfo:
     mutex_name: str
-    base_url: str
     executable_name: str
     version_command: tuple[str, ...]
 
@@ -27,19 +26,16 @@ class ToolInfo:
 _tool_info_map = {
     Tool.RCC: ToolInfo(
         mutex_name="robocorp_get_rcc",
-        base_url="https://cdn.sema4.ai/rcc/releases",
         executable_name="rcc",
         version_command=("--version",),
     ),
     Tool.ACTION_SERVER: ToolInfo(
         mutex_name="sema4ai-get-action-server",
-        base_url="https://cdn.sema4.ai/action-server/releases",
         executable_name="action-server",
         version_command=("version",),
     ),
     Tool.AGENT_CLI: ToolInfo(
         mutex_name="sema4ai-get-agent-cli",
-        base_url="https://cdn.sema4.ai/agent-cli/releases",
         executable_name="agent-cli",
         version_command=("--version",),
     ),
@@ -139,78 +135,64 @@ def download_tool(
         sys_platform: The target platform of downloaded artifact. Defaults to None.
     """
 
-    from contextlib import _GeneratorContextManager
-    from pathlib import Path
+    if tool in (Tool.RCC, Tool.ACTION_SERVER):
+        import tempfile
+        from pathlib import Path
+        from sema4ai_code.published_tools import published_tool, verify_digest
+        from sema4ai_ls_core.http import download_with_resume
+        from sema4ai_ls_core.system_mutex import timed_acquire_mutex
 
-    from sema4ai_ls_core.constants import NULL, Null
-    from sema4ai_ls_core.http import download_with_resume
-    from sema4ai_ls_core.progress_report import progress_context
-    from sema4ai_ls_core.protocols import IProgressReporter
-    from sema4ai_ls_core.system_mutex import timed_acquire_mutex
-
-    if sys_platform is None:
-        sys_platform = sys.platform
-
-    if not force:
-        if verify_tool_downloaded_ok(
-            tool,
-            location,
-            force=force,
-            make_run_check=sys_platform == sys.platform,
-            version=tool_version,
-        ):
-            return
-
-    tool_info = get_tool_info(tool)
-    ctx: _GeneratorContextManager[IProgressReporter] | Null
-    with timed_acquire_mutex(tool_info.mutex_name, timeout=300):
-        # If other call was already in progress, we need to check it again,
-        # as to not overwrite it when force was equal to False.
-        if not force:
-            if verify_tool_downloaded_ok(
-                tool,
-                location,
-                force=force,
-                make_run_check=sys_platform == sys.platform,
-                version=tool_version,
-            ):
-                return
-
-        if endpoint is not None:
-            ctx = progress_context(
-                endpoint, f"Download {tool.value}", dir_cache=None, cancellable=True
+        artifact = published_tool(tool.value, sys_platform)
+        if tool_version != artifact["version"]:
+            raise ValueError(f"Unsupported {tool.value} version: {tool_version}")
+        destination = Path(location)
+        with timed_acquire_mutex(f"automation-download-{tool.value}", timeout=300):
+            if destination.exists():
+                if verify_digest(destination, artifact["sha256"]):
+                    return
+                raise RuntimeError(
+                    f"Existing executable at {destination} does not match the pinned release. It has been preserved; configure an executable or choose an unused download path."
+                )
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            fd, temporary = tempfile.mkstemp(
+                prefix=destination.name + ".", dir=destination.parent
             )
-        else:
-            ctx = NULL
+            os.close(fd)
+            staged = Path(temporary)
+            try:
+                from sema4ai_ls_core.constants import NULL
+                from sema4ai_ls_core.progress_report import progress_context
 
-        from sema4ai_code import get_release_artifact_relative_path
+                context = (
+                    progress_context(
+                        endpoint,
+                        f"Download {tool.value}",
+                        dir_cache=None,
+                        cancellable=True,
+                    )
+                    if endpoint
+                    else NULL
+                )
+                with context as reporter:
+                    download_with_resume(
+                        artifact["url"],
+                        staged,
+                        make_executable=True,
+                        progress_reporter=reporter,
+                    )
+                if not verify_digest(staged, artifact["sha256"]):
+                    raise RuntimeError(
+                        f"SHA-256 verification failed for {artifact['url']}"
+                    )
+                # Hard-link admission fails if a different writer created the target.
+                os.link(staged, destination)
+            finally:
+                staged.unlink(missing_ok=True)
+        return
 
-        executable_name = tool_info.executable_name
-
-        relative_path = get_release_artifact_relative_path(
-            sys_platform, executable_name
-        )
-
-        url = f"{tool_info.base_url}/{tool_version}/{relative_path}"
-
-        with ctx as progress_reporter:
-            download_with_resume(
-                url,
-                Path(location),
-                make_executable=True,
-                progress_reporter=progress_reporter,
-            )
-
-        if not verify_tool_downloaded_ok(
-            tool,
-            location,
-            force=True,
-            make_run_check=sys_platform == sys.platform,
-            version=tool_version,
-        ):
-            raise Exception(
-                f"After downloading {tool!r} the verification failed (location: {location})!"
-            )
+    raise RuntimeError(
+        "Automatic vendor Agent CLI acquisition is outside the published local toolchain. Configure a trusted executable explicitly for that integration."
+    )
 
 
 def get_default_tool_location(tool: Tool) -> str:
@@ -225,6 +207,11 @@ def get_default_tool_location(tool: Tool) -> str:
 
     tool_info = get_tool_info(tool)
     executable_name = tool_info.executable_name
+
+    if tool in (Tool.RCC, Tool.ACTION_SERVER):
+        from sema4ai_code.published_tools import published_tool
+
+        return get_extension_relative_path("bin", published_tool(tool.value)["name"])
 
     executable_extension = ".exe" if sys.platform == "win32" else ""
 

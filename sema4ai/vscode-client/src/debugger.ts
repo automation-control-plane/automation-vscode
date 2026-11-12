@@ -1,3 +1,5 @@
+import { getRccLocation as getConfiguredRcc } from "./rcc";
+import { runtimeEnvironment } from "./runtimePaths";
 import * as path from "path";
 import * as fs from "fs";
 import {
@@ -13,7 +15,7 @@ import {
 } from "vscode";
 import * as roboConfig from "./robocorpSettings";
 import { OUTPUT_CHANNEL } from "./channel";
-import { resolveInterpreter, updateLaunchEnvironmentCommonTasksAndActions } from "./activities";
+import { resolveInterpreter, updateLaunchEnvironmentCommonTasksAndActions, updateWorkItemEnvironment } from "./activities";
 import {
     SEMA4AI_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
     SEMA4AI_UPDATE_LAUNCH_ENV,
@@ -34,7 +36,7 @@ interface ActionResult {
 
 export async function updateDebugConfigurationAndAutoActivatePythonExtension(
     debugConfiguration: DebugConfiguration
-): Promise<DebugConfiguration> {
+): Promise<DebugConfiguration | undefined> {
     const isPythonRun = debugConfiguration && debugConfiguration.type && debugConfiguration.type == "python";
     if (isPythonRun) {
         let extension = extensions.getExtension("ms-python.python");
@@ -45,7 +47,7 @@ export async function updateDebugConfigurationAndAutoActivatePythonExtension(
                 // the launch is already resolved.
                 await extension.activate();
             }
-        } else if (isPyDevDebuggerPythonExtensionInstalled()) {
+        } else if (await isPyDevDebuggerPythonExtensionInstalled()) {
             let extension = extensions.getExtension("fabioz.vscode-pydev-python-debugger");
             if (extension) {
                 if (!extension.isActive) {
@@ -74,7 +76,7 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
         let configurations: DebugConfiguration[] = [];
         configurations.push({
             "type": "sema4ai",
-            "name": "Sema4.ai: Launch task from robot.yaml",
+            "name": "Automation: Launch task from robot.yaml",
             "request": "launch",
             "robot": '^"\\${file}"',
             "task": "",
@@ -128,15 +130,34 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
             return;
         }
 
-        let env: { [key: string]: string } = interpreter.environ;
+        let env: { [key: string]: string } = { ...interpreter.environ };
         const baseEnv = debugConfiguration.baseEnv;
         if (baseEnv) {
             env = { ...env, ...baseEnv };
         }
 
-        if (isActionPackageLaunch) {
+        if (debugConfiguration.automationWorkItems) {
+            // Native Work Items prepares a private input snapshot or SDK queue
+            // through the package interpreter. Preserve explicit operator values.
+            const allowed = new Set(["RC_WORKITEM_ADAPTER", "RC_WORKITEM_INPUT_PATH", "RC_WORKITEM_OUTPUT_PATH",
+                "RC_WORKITEM_DB_PATH", "RC_WORKITEM_FILES_DIR", "RC_WORKITEM_QUEUE_NAME", "RC_WORKITEM_OUTPUT_QUEUE_NAME"]);
+            if (["RPA_WORKITEMS_ADAPTER", "RPA_INPUT_WORKITEM_PATH", "RPA_OUTPUT_WORKITEM_PATH"].some(key => env[key])) {
+                throw Error("Explicit legacy Work Items overrides conflict with native selection. Existing configuration was preserved.");
+            }
+            for (const [key, value] of Object.entries(debugConfiguration.automationWorkItems)) {
+                if (!allowed.has(key) || typeof value !== "string") throw Error("Invalid native Work Items launch environment.");
+                if (env[key] && env[key] !== value) throw Error(`Operator override ${key} conflicts with native Work Items selection. Existing configuration was preserved.`);
+                env[key] = value;
+            }
+            env = await updateLaunchEnvironmentCommonTasksAndActions(env, targetYaml);
+        } else if (isActionPackageLaunch) {
             env = await updateLaunchEnvironmentCommonTasksAndActions(env, debugConfiguration.package);
-            // Vault/work-items features not available in action server at this point.
+            const workItemEnv = await updateWorkItemEnvironment(env, debugConfiguration.package);
+            if (workItemEnv === "cancelled") {
+                OUTPUT_CHANNEL.appendLine("Launch cancelled");
+                return;
+            }
+            env = workItemEnv;
         } else {
             // Resolve environment (updates the environment to add vault
             // environment variables as well as work-items environment variables).
@@ -194,7 +215,7 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
 
         // In a custom run we get the input contents -- something as:
         // "type": "sema4ai",
-        // "name": "Sema4.ai: Launch task from current robot.yaml",
+        // "name": "Automation: Launch task from current robot.yaml",
         // "request": "launch",
         // "robot": "c:/robot.yaml",
         // "task": "entrypoint",
@@ -236,6 +257,7 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
             return;
         }
         result = await updateDebugConfigurationAndAutoActivatePythonExtension(result);
+        if (!result) return;
 
         // OUTPUT_CHANNEL.appendLine("Launching with: " + JSON.stringify(result));
         result["noDebug"] = debugConfiguration.noDebug;
@@ -250,15 +272,8 @@ export function registerDebugger() {
         if (!env) {
             env = {};
         }
-        let robotHome = roboConfig.getHome();
-        if (robotHome && robotHome.length > 0) {
-            if (env) {
-                env["ROBOCORP_HOME"] = robotHome;
-                env["SEMA4AI_HOME"] = robotHome;
-            } else {
-                env = { "ROBOCORP_HOME": robotHome, "SEMA4AI_HOME": robotHome };
-            }
-        }
+        const homes = runtimeEnvironment("robots", roboConfig.getHome());
+        env = { ...homes, ...env, AUTOMATION_RCC_LOCATION: await getConfiguredRcc() };
         let targetMain: string = path.resolve(__dirname, "../../src/sema4ai_code_debug_adapter/__main__.py");
         if (!fs.existsSync(targetMain)) {
             window.showWarningMessage("Error. Expected: " + targetMain + " to exist.");

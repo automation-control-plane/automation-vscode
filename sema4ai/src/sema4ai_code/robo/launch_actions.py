@@ -6,51 +6,20 @@ from pathlib import Path
 def create_and_rotate_directories(
     dir_path: str, prefix: str, max_count: int = 20
 ) -> str:
+    """Create an unused output directory and preserve all earlier run artifacts.
+
+    The legacy name and max_count argument remain for callers. Retention is an
+    operator decision; launching an action must not delete existing run data.
     """
-    Creates directories named <number>-prefix in the given directory,
-    maintaining a maximum count by removing the one with the lowest number
-    when reaching the limit.
-
-    Args:
-        dir_path: Path to the directory where directories will be created.
-        prefix: Prefix to add to the directory names.
-        max_count: Maximum number of directories to maintain. Defaults to 20.
-    """
-    import threading
-    from functools import partial
-
-    # Get existing directory names
-    existing_dirs = [
-        entry.name
-        for entry in os.scandir(dir_path)
-        if entry.is_dir() and "-" in entry.name
-    ]
-
-    existing_numbers = []
-    for d in existing_dirs:
+    os.makedirs(dir_path, exist_ok=True)
+    number = 1
+    while True:
+        candidate = os.path.join(dir_path, f"{prefix}-{number}")
         try:
-            existing_numbers.append(int(d.split("-")[-1]))
-        except ValueError:
-            continue  # Ignore if not in the pattern we want
-    existing_numbers.sort()
-
-    next_number = 1
-    if existing_numbers:
-        next_number = existing_numbers[-1] + 1
-
-    # Create the new directory with calculated number and prefix
-    new_dir_name = f"{prefix}-{next_number}"
-    new_dir_path = os.path.join(dir_path, new_dir_name)
-    os.makedirs(new_dir_path, exist_ok=True)  # Create directory with parents if needed
-
-    # Remove the oldest directories if exceeding max count
-    if len(existing_dirs) >= max_count:
-        t = threading.Thread(
-            target=partial(_delete_old, dir_path, existing_dirs, max_count)
-        )
-        t.start()
-
-    return new_dir_path
+            os.mkdir(candidate)
+            return candidate
+        except FileExistsError:
+            number += 1
 
 
 def on_rm_rf_error(func, path: str, exc, *, start_path: Path) -> bool:
@@ -144,16 +113,30 @@ def _delete_old(dir_path: str, existing_dirs: list[str], max_count: int):
 def create_pm():
     # The X-Action-Context header may be provided through an environment
     # variable when launching in VSCode (and it needs to be passed on
-    # to sema4ai-actions).
+    # to Actions Core). The environment key is retained for configuration compatibility.
     x_action_context = os.environ.get("SEMA4AI_VSCODE_X_ACTION_CONTEXT")
     if not x_action_context:
         return None
 
+    import importlib
+
     try:
-        from sema4ai.actions._customization._extension_points import EPManagedParameters
-        from sema4ai.actions._customization._plugin_manager import PluginManager
-        from sema4ai.actions._managed_parameters import ManagedParameters
-        from sema4ai.actions._request import Request
+        try:
+            from .action_runtime import load_actions
+        except ImportError:
+            from action_runtime import load_actions
+        actions, _ = load_actions()
+        prefix = actions.__name__
+        EPManagedParameters = importlib.import_module(
+            prefix + "._customization._extension_points"
+        ).EPManagedParameters
+        PluginManager = importlib.import_module(
+            prefix + "._customization._plugin_manager"
+        ).PluginManager
+        ManagedParameters = importlib.import_module(
+            prefix + "._managed_parameters"
+        ).ManagedParameters
+        Request = importlib.import_module(prefix + "._request").Request
     except ImportError:
         return None
 
@@ -174,21 +157,11 @@ def create_pm():
 def main():
     from tempfile import gettempdir
 
-    cli = None
-    actions = None
     try:
-        from sema4ai import actions
-        from sema4ai.actions import cli  # noqa #type: ignore
+        from .action_runtime import load_actions
     except ImportError:
-        try:
-            # Backward compatibility
-            from robocorp.actions import cli  # noqa #type: ignore
-
-        except ImportError:
-            pass
-
-        if cli is None:
-            raise  # Raise the sema4ai.actions error
+        from action_runtime import load_actions
+    actions, cli = load_actions()
 
     dir_path = Path(gettempdir()) / "sema4ai-vscode-actions"
     dir_path.mkdir(parents=True, exist_ok=True)
@@ -200,11 +173,11 @@ def main():
     args = sys.argv[1:]
     if actions is not None:
         if actions.version_info >= [0, 7, 0]:
-            # Only available on newer versions of sema4ai-actions.
+            # Supported by published Actions Core.
             args.append("--print-result")
 
     print(
-        f"Running with sema4ai.actions version: {'.'.join(str(x) for x in actions.version_info)}"
+        f"Running with {actions.__name__} version: {'.'.join(str(x) for x in actions.version_info)}"
     )
     kwargs = {}
     if actions.version_info >= [0, 9, 0]:

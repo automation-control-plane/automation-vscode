@@ -1,0 +1,10 @@
+tasks:
+  Smoke task:
+    shell: python -m robocorp.tasks run smoke_tasks.py
+environmentConfigs:
+  - conda.yaml
+artifactsDir: output
+PATH:
+  - .
+PYTHONPATH:
+  - .

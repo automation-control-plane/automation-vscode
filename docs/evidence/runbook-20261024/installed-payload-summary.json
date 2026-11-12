@@ -1,0 +1,36 @@
+{
+  "source_sha": "aec537ebaadbf80aa95f22bf4a466fb514be2683",
+  "source_tree": "2ad8bd7ce07ecd390ef2197965cace3f1e86374f",
+  "source_status": "",
+  "vsix": "/tmp/automation-release-20261024/automation-vscode-2.20.11-linux-x64.vsix",
+  "sha256": "0a4d50b4b5a1679ed62d064cf767f1be1e7302e659ff7d0dd37145bddc1a62cb",
+  "size_bytes": 2191400,
+  "zip_entries": 749,
+  "installed": "/tmp/automation-native-qa-20261024/installed-2.20.11/extensions/automation-control-plane.automation-vscode-2.20.11",
+  "payload_files": 747,
+  "installed_exact_byte_matches": 746,
+  "installed_matches": 747,
+  "source_matches": 747,
+  "normalizations": [
+    "Installed package.json: remove Code-added __metadata for semantic comparison"
+  ],
+  "source_path_mapping": [
+    "VSCE readme.md -> source README.md (bytes unchanged)"
+  ],
+  "installed_extras": [],
+  "installed_missing": [],
+  "errors": [],
+  "status": "passed",
+  "timestamp_utc": "2026-10-24T20:04:29.543536+00:00",
+  "classification": "Installed payload integrity only; no native GUI/Extension Host acceptance",
+  "installation_metadata": [
+    {
+      "installed_path": ".vsixmanifest",
+      "archive_path": "extension.vsixmanifest",
+      "size_bytes": 2893,
+      "sha256": "97192db63649b837f26ec7bd79cf77cd9169c918671f8e620db6235501ff5b96",
+      "exact_byte_match": true
+    }
+  ],
+  "installed_total_files": 748
+}

@@ -2,6 +2,22 @@ from pathlib import Path
 from typing import Optional
 
 
+def find_package_yaml_path_from_path(path: Path, stat) -> Path | None:
+    """Find the nearest owning Action or Robot package without crossing one to find the other."""
+    from stat import S_ISDIR
+
+    if not S_ISDIR(stat.st_mode):
+        if path.name in ("package.yaml", "robot.yaml"):
+            return path
+        path = path.parent
+    for directory in (path, *path.parents):
+        for name in ("package.yaml", "robot.yaml"):
+            candidate = directory / name
+            if candidate.is_file():
+                return candidate
+    return None
+
+
 def find_robot_yaml_path_from_path(path: Path, stat) -> Path | None:
     """
     To be used as:

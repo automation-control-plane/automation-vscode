@@ -1,3 +1,7 @@
+import { registerRunbookWorkspace } from "./runbookView";
+import { initializeRuntimeOwnership } from "./actionServer";
+import { isLegacyVendorCommand, legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
+import { vendorStudioHome } from "./runtimePaths";
 /*
 Original work Copyright (c) Microsoft Corporation (MIT)
 See ThirdPartyNotices.txt in the project root for license information.
@@ -70,6 +74,7 @@ import {
     newWorkItemInWorkItemsTree,
     openWorkItemHelp,
 } from "./viewsWorkItems";
+import { registerNativeWorkItems } from "./workItemsNative";
 import { FSEntry, LocatorEntry, refreshTreeView, RobotEntry } from "./viewsCommon";
 import {
     SEMA4AI_CLOUD_LOGIN,
@@ -175,6 +180,7 @@ import { installWorkspaceWatcher } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 import { connectWorkspace, disconnectWorkspace } from "./vault";
 import { CACHE_KEY_LAST_WORKED, getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
+import {beginLanguageServerStartup, completeLanguageServerStartup, failLanguageServerStartup, getLanguageServerStartup} from "./languageServerStartup";
 import { registerDebugger } from "./debugger";
 import { clearRCCEnvironments, clearRobocorpCodeCaches, computeEnvsToCollect } from "./clear";
 import { Mutex } from "./mutex";
@@ -249,7 +255,7 @@ const serverOptions: ServerOptions = async function () {
     let executableAndEnv: InterpreterInfo | undefined;
     function onNoPython() {
         OUTPUT_CHANNEL.appendLine(
-            "Unable to activate Sema4.ai extension because python executable from RCC environment was not provided.\n" +
+            "Unable to activate Automation extension because python executable from RCC environment was not provided.\n" +
                 " -- Most common reason is that the environment couldn't be created due to network connectivity issues.\n" +
                 " -- Please fix the error and restart VSCode."
         );
@@ -265,6 +271,8 @@ const serverOptions: ServerOptions = async function () {
             throw new Error("Unable to get language server python info.");
         }
     } catch (error) {
+        failLanguageServerStartup(error, "environment");
+        C.errorMessage = getLanguageServerStartup().message;
         onNoPython();
         logError("Error getting Python", error, "INIT_PYTHON_ERR");
         throw error;
@@ -309,7 +317,7 @@ const serverOptions: ServerOptions = async function () {
             args = args.concat(["-v"]);
         }
 
-        OUTPUT_CHANNEL.appendLine("Starting Sema4.ai with args: " + executableAndEnv.pythonExe + " " + args.join(" "));
+        OUTPUT_CHANNEL.appendLine("Starting Automation with args: " + executableAndEnv.pythonExe + " " + args.join(" "));
 
         let src: string = path.resolve(__dirname, "../../src");
         let executableAndEnvEnviron = {};
@@ -332,11 +340,14 @@ const serverOptions: ServerOptions = async function () {
 async function notifyOfInitializationErrorShowOutputTab(msg?: string) {
     OUTPUT_CHANNEL.show();
     if (!msg) {
-        msg = "Unable to activate Sema4.ai extension. Please see: Output > Sema4.ai for more details.";
+        msg = getLanguageServerStartup().status === "failed" ? getLanguageServerStartup().message :
+            "Automation language services are not ready. See Output > Automation for startup details.";
     }
-    window.showErrorMessage(msg);
-    const selection = await window.showErrorMessage(msg, "Show Output > Sema4.ai");
-    if (selection) {
+    const choices = getLanguageServerStartup().status === "failed" ? ["Show Output > Automation", "Retry startup"] : ["Show Output > Automation"];
+    const selection = await window.showErrorMessage(msg, ...choices);
+    if (selection === "Retry startup") {
+        await commands.executeCommand("workbench.action.reloadWindow");
+    } else if (selection === "Show Output > Automation") {
         OUTPUT_CHANNEL.show();
     }
 }
@@ -352,7 +363,13 @@ class CommandRegistry {
     }
 
     public registerWithoutStub(command: string, callback: (...args: any[]) => any, thisArg?: any): void {
-        this.context.subscriptions.push(commands.registerCommand(command, callback));
+        this.context.subscriptions.push(commands.registerCommand(command, (...args: any[]) => {
+            if (isLegacyVendorCommand(command) && !legacyVendorIntegrationsEnabled()) {
+                window.showWarningMessage("This vendor compatibility integration is disabled. No owned published backend is available; use local package build/export or Actions Runtime.");
+                return;
+            }
+            return callback.apply(thisArg, args);
+        }));
     }
 
     /**
@@ -361,6 +378,10 @@ class CommandRegistry {
     public register(command: string, callback: (...args: any[]) => any, thisArg?: any): void {
         const that = this;
         async function redirect() {
+            if (isLegacyVendorCommand(command) && !legacyVendorIntegrationsEnabled()) {
+                window.showWarningMessage("This vendor compatibility integration is disabled. No owned published backend is available; use local package build/export or Actions Runtime.");
+                return;
+            }
             if (that.useErrorStubs) {
                 notifyOfInitializationErrorShowOutputTab(that.errorMessage);
             } else {
@@ -405,7 +426,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
         } catch (error) {
             logError("Error downloading Action Server", error, "ERR_DOWNLOAD_ACTION_SERVER");
             window.showErrorMessage(
-                "There was an error downloading the action server. See `OUTPUT > Sema4.ai` for more information."
+                "There was an error downloading the action server. See `OUTPUT > Automation` for more information."
             );
         }
     });
@@ -550,7 +571,7 @@ async function clearEnvAndRestart() {
     await window.withProgress(
         {
             location: vscode.ProgressLocation.Window,
-            title: "Clearing environments and restarting Sema4.ai.",
+            title: "Clearing environments and restarting Automation.",
             cancellable: false,
         },
         clearEnvsAndRestart
@@ -562,32 +583,38 @@ async function clearEnvsAndRestart(progress: vscode.Progress<{ message?: string;
     let okToRestartRFLS = false;
     try {
         await langServerMutex.dispatch(async () => {
+            beginLanguageServerStartup();
+            C.useErrorStubs = true;
+            C.errorMessage = getLanguageServerStartup().message;
             let result = await clearEnvsLocked(progress);
             if (!result) {
-                // Something didn't work out...
-                return;
+                throw new Error("Environment maintenance did not complete. See Automation diagnostics.");
             }
             okToRestartRFLS = result["okToRestartRFLS"];
         });
         const timing = new Timing();
         progress.report({
-            "message": `Waiting for Sema4.ai to be ready.`,
+            "message": `Waiting for Automation to be ready.`,
         });
         await langServer.onReady();
-        let msg = "Restarted Sema4.ai. Took: " + timing.getTotalElapsedAsStr();
+        let msg = "Restarted Automation. Took: " + timing.getTotalElapsedAsStr();
         progress.report({
             "message": msg,
         });
         OUTPUT_CHANNEL.appendLine(msg);
     } catch (err) {
         allOk = false;
-        const msg = "Error restarting Sema4.ai";
+        failLanguageServerStartup(err);
+        C.errorMessage = getLanguageServerStartup().message;
+        const msg = "Error restarting Automation";
         notifyOfInitializationErrorShowOutputTab(msg);
         logError(msg, err, "INIT_RESTART_ROBOCORP_CODE");
     } finally {
         if (allOk) {
-            window.showInformationMessage("RCC Environments cleared and Sema4.ai restarted.");
+            window.showInformationMessage("RCC Environments cleared and Automation restarted.");
             C.useErrorStubs = false;
+            C.errorMessage = undefined;
+            completeLanguageServerStartup();
         } else {
             C.useErrorStubs = true;
         }
@@ -620,7 +647,7 @@ async function clearEnvsLocked(progress: vscode.Progress<{ message?: string; inc
     globalCachedPythonInfo = undefined;
 
     C.useErrorStubs = true; // Prevent any calls while restarting...
-    C.errorMessage = "Unable to use Sema4.ai actions while clearing environments.";
+    C.errorMessage = "Unable to use Automation actions while clearing environments.";
     let okToRestartRFLS = false;
     try {
         let timing = new Timing();
@@ -638,10 +665,10 @@ async function clearEnvsLocked(progress: vscode.Progress<{ message?: string; inc
 
         let timingStop = new Timing();
         progress.report({
-            "message": `Stopping Sema4.ai.`,
+            "message": `Stopping Automation.`,
         });
         await langServer.stop();
-        OUTPUT_CHANNEL.appendLine("Stopped Sema4.ai. Took: " + timingStop.getTotalElapsedAsStr());
+        OUTPUT_CHANNEL.appendLine("Stopped Automation. Took: " + timingStop.getTotalElapsedAsStr());
 
         if (envsToLoCollect) {
             await clearRCCEnvironments(rccLocation, robocorpHome, envsToLoCollect, progress);
@@ -649,16 +676,16 @@ async function clearEnvsLocked(progress: vscode.Progress<{ message?: string; inc
 
         try {
             progress.report({
-                "message": `Clearing Sema4.ai caches.`,
+                "message": `Clearing Automation caches.`,
             });
             await clearRobocorpCodeCaches(robocorpHome);
         } catch (error) {
-            let msg = "Error clearing Sema4.ai caches.";
+            let msg = "Error clearing Automation caches.";
             logError(msg, error, "RCC_CLEAR_ENV");
         }
 
         progress.report({
-            "message": `Starting Sema4.ai.`,
+            "message": `Starting Automation.`,
         });
         langServer.start();
     } finally {
@@ -680,7 +707,7 @@ function checkDeprecatedRobocorpCoreExtension() {
         OUTPUT_CHANNEL.appendLine(`Found deprecated ${robocorpExtension.packageJSON.displayName} extension.`);
         vscode.window
             .showWarningMessage(
-                `The deprecated "${robocorpExtension.packageJSON.displayName}" extension found. It may cause conflicts with the rebranded Sema4ai extension.`,
+                `The deprecated "${robocorpExtension.packageJSON.displayName}" extension found. It may cause conflicts with the Automation extension.`,
                 "Open Extensions"
             )
             .then((selection) => {
@@ -692,25 +719,31 @@ function checkDeprecatedRobocorpCoreExtension() {
 }
 
 export async function activate(context: ExtensionContext) {
+    beginLanguageServerStartup();
+    initializeRuntimeOwnership(context.workspaceState);
     GLOBAL_STATE = context.globalState;
     let timing = new Timing();
-    OUTPUT_CHANNEL.appendLine("Activating Sema4.ai extension.");
+    OUTPUT_CHANNEL.appendLine("Activating Automation extension.");
 
     checkDeprecatedRobocorpCoreExtension();
 
     registerLinkProviders(context);
 
     C = new CommandRegistry(context);
+    C.useErrorStubs = true;
+    C.errorMessage = getLanguageServerStartup().message;
 
     try {
         return await langServerMutex.dispatch(async () => {
             let ret = await doActivate(context, C);
-            OUTPUT_CHANNEL.appendLine("Sema4.ai initialization finished. Took: " + timing.getTotalElapsedAsStr());
+            OUTPUT_CHANNEL.appendLine("Automation initialization finished. Took: " + timing.getTotalElapsedAsStr());
             return ret;
         });
     } catch (error) {
-        logError("Error initializing Sema4.ai extension", error, "INIT_ROBOCORP_CODE_ERROR");
+        failLanguageServerStartup(error, "activation");
+        logError("Error initializing Automation extension", error, "INIT_ROBOCORP_CODE_ERROR");
         C.useErrorStubs = true;
+        C.errorMessage = getLanguageServerStartup().message;
         notifyOfInitializationErrorShowOutputTab();
     }
 }
@@ -721,6 +754,7 @@ interface ExecuteWorkspaceCommandArgs {
 }
 
 export async function doActivate(context: ExtensionContext, C: CommandRegistry) {
+    registerNativeWorkItems(context);
     // Note: register the submit issue actions early on so that we can later actually
     // report startup errors.
     C.registerWithoutStub(SEMA4AI_SUBMIT_ISSUE, async () => {
@@ -852,9 +886,9 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
             return;
         }
 
-        const sema4aiHome = await getRobocorpHome();
+        const sema4aiHome = vendorStudioHome(roboConfig.getHome());
         if (!sema4aiHome) {
-            vscode.window.showErrorMessage(`Unable to publish because no Sema4.ai Home was found.`);
+            vscode.window.showErrorMessage(`Unable to publish because no Automation Home was found.`);
             return;
         }
 
@@ -915,10 +949,11 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
             const micro = parseInt(splitted[2]);
             if (major < 1 || (major == 1 && (minor < 7 || (minor == 7 && micro < 0)))) {
                 const msg =
-                    "Unable to initialize the Sema4.ai extension because the Robot Framework Language Server version (" +
+                    "Unable to initialize the Automation extension because the Robot Framework Language Server version (" +
                     version +
-                    ") is not compatible with this version of Sema4.ai. Robot Framework Language Server 1.7.0 or newer is required. Please update to proceed. ";
+                    ") is not compatible with this version of Automation. Robot Framework Language Server 1.7.0 or newer is required. Please update to proceed. ";
                 OUTPUT_CHANNEL.appendLine(msg);
+                failLanguageServerStartup(new Error(msg), "activation");
                 C.useErrorStubs = true;
                 notifyOfInitializationErrorShowOutputTab(msg);
                 return;
@@ -951,7 +986,7 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     });
 
     let startLsTiming = new Timing();
-    langServer = new LanguageClient("Sema4.ai", serverOptions, clientOptions);
+    langServer = new LanguageClient("Automation", serverOptions, clientOptions);
 
     context.subscriptions.push(
         langServer.onDidChangeState((event) => {
@@ -997,6 +1032,7 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
         })
     );
     views.registerViews(context);
+    registerRunbookWorkspace(context);
     registerDebugger();
 
     try {
@@ -1004,15 +1040,22 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
         context.subscriptions.push(disposable);
         // i.e.: if we return before it's ready, the language server commands
         // may not be available.
-        OUTPUT_CHANNEL.appendLine("Waiting for Sema4.ai (python) language server to finish activating...");
+        OUTPUT_CHANNEL.appendLine("Waiting for Automation (python) language server to finish activating...");
         await langServer.onReady();
+        C.useErrorStubs = false;
+        C.errorMessage = undefined;
+        completeLanguageServerStartup();
         // If it started properly, mark that it worked.
         GLOBAL_STATE.update(CACHE_KEY_LAST_WORKED, true);
         OUTPUT_CHANNEL.appendLine(
-            "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Sema4.ai Language Server."
+            "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Automation Language Server."
         );
     } catch (error) {
-        logError("Error initializing Robocorp code.", error, "ERROR_INITIALIZING_ROBOCORP_CODE_LANG_SERVER");
+        failLanguageServerStartup(error);
+        C.useErrorStubs = true;
+        C.errorMessage = getLanguageServerStartup().message;
+        logError("Error initializing Automation language services.", error, "ERROR_INITIALIZING_ROBOCORP_CODE_LANG_SERVER");
+        return;
     }
 
     // Note: start the async ones below but don't await on them (the extension should be considered initialized

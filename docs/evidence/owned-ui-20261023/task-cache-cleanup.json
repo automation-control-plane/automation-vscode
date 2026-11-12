@@ -1,0 +1,237 @@
+{
+  "scope": "Five task-created reproducible micromamba repodata cache duplicates only",
+  "source_before": {
+    "total": 33770192896,
+    "used": 32435986432,
+    "free": 0
+  },
+  "paths": [
+    {
+      "path": "/workspace/port-acceptance/owned-2.20.4/automation-published-smoke-ayhq3t0_/actions-home/pkgs/cache",
+      "files": [
+        {
+          "relative_path": "88ec62ec.json",
+          "bytes": 458843297,
+          "allocated_bytes": 458846208,
+          "sha256": "4b75d6526cabcb1d08c4d8f8ea39e0811af4888197093de743a362d5d3eabc07"
+        },
+        {
+          "relative_path": "88ec62ec.solv",
+          "bytes": 209604462,
+          "allocated_bytes": 209608704,
+          "sha256": "e7579d8cd4d09e38101f13241d1270630b8cdf76df1471159dfc435fc06fd52d"
+        },
+        {
+          "relative_path": "88ec62ec.state.json",
+          "bytes": 374,
+          "allocated_bytes": 4096,
+          "sha256": "b681d7f671047880a024f17290fe405a06208c516e72aba5f79c3fb345ce8563"
+        },
+        {
+          "relative_path": "eb045dd1.json",
+          "bytes": 192652646,
+          "allocated_bytes": 192655360,
+          "sha256": "d811ea0a1b65c822ab3a64e8e99960573376fcf4371212393b24dffb7bfdba8e"
+        },
+        {
+          "relative_path": "eb045dd1.solv",
+          "bytes": 101780893,
+          "allocated_bytes": 101785600,
+          "sha256": "638a953994646815ed1371ec25687214c76d6255462707f2ab1507acc4ca95db"
+        },
+        {
+          "relative_path": "eb045dd1.state.json",
+          "bytes": 372,
+          "allocated_bytes": 4096,
+          "sha256": "3eb46877bc4519a49dc31e5b06cc55a34d3b8e98f31ab3d0dd3999ad5e2483b1"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/pkgs/cache",
+      "files": [
+        {
+          "relative_path": "88ec62ec.json",
+          "bytes": 458816825,
+          "allocated_bytes": 458821632,
+          "sha256": "036479f4de4b670f9e8e539037442510c2397feaf516021dea7dde6f7b12ae70"
+        },
+        {
+          "relative_path": "88ec62ec.solv",
+          "bytes": 209597739,
+          "allocated_bytes": 209604608,
+          "sha256": "e2068579ae15737739683254509718a39550af08c1d885d619a4aed7ee6b0ec5"
+        },
+        {
+          "relative_path": "88ec62ec.state.json",
+          "bytes": 374,
+          "allocated_bytes": 4096,
+          "sha256": "e8bfdd0161368e2fe093d0bc68859af1ea8b1d644bb0c1be3fb86973331f2840"
+        },
+        {
+          "relative_path": "eb045dd1.json",
+          "bytes": 192647562,
+          "allocated_bytes": 192651264,
+          "sha256": "f6884f7b4316d5e26fdf8e59cb4556465ca26daefa48981307ed993e479deb19"
+        },
+        {
+          "relative_path": "eb045dd1.solv",
+          "bytes": 101778108,
+          "allocated_bytes": 101781504,
+          "sha256": "77c6b9630e56c590a51547f70b108afa119d8e72f599f8d6b41a9896e3c5ba1d"
+        },
+        {
+          "relative_path": "eb045dd1.state.json",
+          "bytes": 372,
+          "allocated_bytes": 4096,
+          "sha256": "6660882b0a1ea1e0b2762533e89a2d6206863b977a6205272c1fbae35f92b348"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/robots-home/pkgs/cache",
+      "files": [
+        {
+          "relative_path": "88ec62ec.json",
+          "bytes": 458816825,
+          "allocated_bytes": 458821632,
+          "sha256": "036479f4de4b670f9e8e539037442510c2397feaf516021dea7dde6f7b12ae70"
+        },
+        {
+          "relative_path": "88ec62ec.solv",
+          "bytes": 209597739,
+          "allocated_bytes": 209604608,
+          "sha256": "e2068579ae15737739683254509718a39550af08c1d885d619a4aed7ee6b0ec5"
+        },
+        {
+          "relative_path": "88ec62ec.state.json",
+          "bytes": 374,
+          "allocated_bytes": 4096,
+          "sha256": "99f71f57843b020270934a4e9f0bb4577a746e0585aa78ad03ce4fef374e5dd3"
+        },
+        {
+          "relative_path": "eb045dd1.json",
+          "bytes": 192647562,
+          "allocated_bytes": 192651264,
+          "sha256": "f6884f7b4316d5e26fdf8e59cb4556465ca26daefa48981307ed993e479deb19"
+        },
+        {
+          "relative_path": "eb045dd1.solv",
+          "bytes": 101778108,
+          "allocated_bytes": 101781504,
+          "sha256": "77c6b9630e56c590a51547f70b108afa119d8e72f599f8d6b41a9896e3c5ba1d"
+        },
+        {
+          "relative_path": "eb045dd1.state.json",
+          "bytes": 372,
+          "allocated_bytes": 4096,
+          "sha256": "37d28b4d0100ca0232c0dd979dfca4bfd296357b2b4adc61ae458c0bd72ced28"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/actions-home/pkgs/cache",
+      "files": [
+        {
+          "relative_path": "88ec62ec.json",
+          "bytes": 458816825,
+          "allocated_bytes": 458821632,
+          "sha256": "036479f4de4b670f9e8e539037442510c2397feaf516021dea7dde6f7b12ae70"
+        },
+        {
+          "relative_path": "88ec62ec.solv",
+          "bytes": 209597739,
+          "allocated_bytes": 209604608,
+          "sha256": "e2068579ae15737739683254509718a39550af08c1d885d619a4aed7ee6b0ec5"
+        },
+        {
+          "relative_path": "88ec62ec.state.json",
+          "bytes": 374,
+          "allocated_bytes": 4096,
+          "sha256": "183727e0e66939902bc915a380683a1a9f2462c36e516e7b8051aa6dfc4bca59"
+        },
+        {
+          "relative_path": "eb045dd1.json",
+          "bytes": 192647562,
+          "allocated_bytes": 192655360,
+          "sha256": "f6884f7b4316d5e26fdf8e59cb4556465ca26daefa48981307ed993e479deb19"
+        },
+        {
+          "relative_path": "eb045dd1.solv",
+          "bytes": 101778108,
+          "allocated_bytes": 101781504,
+          "sha256": "77c6b9630e56c590a51547f70b108afa119d8e72f599f8d6b41a9896e3c5ba1d"
+        },
+        {
+          "relative_path": "eb045dd1.state.json",
+          "bytes": 372,
+          "allocated_bytes": 4096,
+          "sha256": "cc18ffee3ab1fed45779377c2ac7ba56f26641356d826c6aae72bd024d3343f3"
+        }
+      ]
+    },
+    {
+      "path": "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/robots-home/pkgs/cache",
+      "files": [
+        {
+          "relative_path": "88ec62ec.json",
+          "bytes": 458816825,
+          "allocated_bytes": 458821632,
+          "sha256": "036479f4de4b670f9e8e539037442510c2397feaf516021dea7dde6f7b12ae70"
+        },
+        {
+          "relative_path": "88ec62ec.solv",
+          "bytes": 209597739,
+          "allocated_bytes": 209600512,
+          "sha256": "e2068579ae15737739683254509718a39550af08c1d885d619a4aed7ee6b0ec5"
+        },
+        {
+          "relative_path": "88ec62ec.state.json",
+          "bytes": 374,
+          "allocated_bytes": 4096,
+          "sha256": "5a05589b77028be7f48febe6235198750b74453c4955ec6d27b0813942ff7628"
+        },
+        {
+          "relative_path": "eb045dd1.json",
+          "bytes": 192647562,
+          "allocated_bytes": 192651264,
+          "sha256": "f6884f7b4316d5e26fdf8e59cb4556465ca26daefa48981307ed993e479deb19"
+        },
+        {
+          "relative_path": "eb045dd1.solv",
+          "bytes": 101778108,
+          "allocated_bytes": 101781504,
+          "sha256": "77c6b9630e56c590a51547f70b108afa119d8e72f599f8d6b41a9896e3c5ba1d"
+        },
+        {
+          "relative_path": "eb045dd1.state.json",
+          "bytes": 372,
+          "allocated_bytes": 4096,
+          "sha256": "66bbe524447e990e17c9172303f16241051512f8d511ba6944e47b597807942f"
+        }
+      ]
+    }
+  ],
+  "preserved": [
+    "source and Git history",
+    "all VSIX files and artifact checksums",
+    "logs/reports/screenshots/qualification evidence",
+    "installed Holotrees and packages",
+    "qualified-871151ce downloads and caches",
+    "language-server-smoke prepared environment",
+    "current final /tmp qualification"
+  ],
+  "removed_paths": [
+    "/workspace/port-acceptance/owned-2.20.4/automation-published-smoke-ayhq3t0_/actions-home/pkgs/cache",
+    "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/actions-home/pkgs/cache",
+    "/workspace/port-acceptance/branded-2.20.3/automation-published-smoke-petbagll/robots-home/pkgs/cache",
+    "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/actions-home/pkgs/cache",
+    "/workspace/port-acceptance/branded-2.20.2/automation-published-smoke-qa26g_tu/robots-home/pkgs/cache"
+  ],
+  "source_after": {
+    "total": 33770192896,
+    "used": 27621593088,
+    "free": 4413837312
+  },
+  "freed_bytes": 4413837312
+}

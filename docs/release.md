@@ -1,35 +1,49 @@
-> **Note:** Publishing to [Open VSX](https://open-vsx.org/extension/sema4ai/sema4ai) is currently
-> disabled because the `VSCODE_OPEN_VSX_TOKEN` secret has expired. Once it's renewed, set
-> `PUBLISH_TO_OPEN_VSX: "true"` in `.github/workflows/release-sema4ai-sdk.yml` and
-> `.github/workflows/pre-release-sema4ai-sdk.yml`.
+# Release Automation Control Plane for VS Code
 
-## Pre-Release
+This fork publishes qualified VSIX files as assets in
+[automation-control-plane/automation-vscode releases](https://github.com/automation-control-plane/automation-vscode/releases).
+The extension ID is `automation-control-plane.automation-vscode`.
+Use tags named `automation-vscode-v<version>`. The existing `sema4ai-*` tag
+workflows publish through the historical upstream Marketplace path; do not run
+them for this release. Marketplace and Open VSX publication require separate
+verification of the owned publisher and credentials.
 
-To release a new **pre-release** version:
+## Qualify the exact artifact
 
-1. Go to [VSCode Extensions Marketplace - Sema4.ai SDK](https://marketplace.visualstudio.com/items?itemName=sema4ai.sema4ai) and get the latest version number.
-   1. Copy the latest version from there & increment only the patch version, this will be the version you use in the next step.
-2. Run the [Pre-release - Sema4.ai Extension](https://github.com/Sema4AI/vscode-extension/actions/workflows/pre-release-robocorp-code.yml) workflow with the bugfix version bumped.
-   1. <img src="./pre-release-version.png" alt="" width="300">
-   2. **Note:** It is important not to bump the major nor minor version.
-   3. **Note:** Make sure all changes in the pre-release are under the _Unreleased_ section of the `/docs/changelog.md`
-3. No other actions required.
+Run development and packaging commands in the repository's `sema4ai` directory,
+using its Node 24 and Python 3.11 development environments. Preserve existing
+candidates and operator homes. Use a fresh task-owned Code profile and synthetic
+Action and Robot packages.
 
-## Release
+1. Set the same candidate version in `package.json`, root package-lock metadata,
+   `pyproject.toml`, and `src/sema4ai_code/__init__.py`.
+2. Run `npm test` and the focused owned Python regressions. Record exclusions
+   and skipped checks separately from passes.
+3. Run `npm run vsce:package -- --target linux-x64 --out <new-vsix-path>`.
+4. Install those exact bytes in the isolated profile. Verify the archive and
+   installed payloads, identity, version, and hash. Install the supported
+   `ms-python.python` debugger prerequisite in that profile for native Action
+   Run and Python debugging.
+5. Exercise actual native Action/Robot File/SQLite execution and output lineage.
+   CLI/DAP and simulated webview tests are separate evidence.
+6. Against the Actions owner's verified synthetic managed endpoint, negotiate
+   live `tools/list`, protocol, server identity, and managed schema. Qualify
+   discovery, enqueue, claim, Run, linked Run/Attempt/artifacts, a second input,
+   intentional failure, cancellation, stale selection, and lost-response/reload
+   with no duplicate invocation. Never clear an uncertain request from a 404.
+7. Record exact dependency artifacts and platform scope. A source version or
+   planned upstream release is not a published artifact. Document standalone
+   and exceptional recovery limitations explicitly.
 
-Stable releases usually bump the minor version. The patch version number is usually reserved for pre-releases.
+## Publish the qualified bytes
 
-To release a **STABLE** new version:
+After the qualification gates pass, update PR #1 with the evidence and remaining
+supported-scope limitations, then merge the reviewed head. Preserve the qualified
+VSIX instead of rebuilding it after merge. Record its source commit, the merged
+commit, SHA-256, installed-payload comparison, and sanitized QA receipts.
 
-- Open a shell at the proper place (something as `X:\sema4ai\vscode-extension\sema4ai`)
-- Checkout the `master` branch and create a new branch from it (`release/2.12.0`)
-- Update version using `python -m dev set-version 2.12.0`
-- Update README.md to add notes on features/fixes
-- Update `/docs/changelog.md`:
-  - Add a new section for the new version (including the release date)
-  - Move all items from the _Unreleased_ section to the new section
-- Commit your changes using the following message: `Release Sema4.ai VSCode extension 2.12.0`
-- Create PR
-- After PR is merged to `master`, create a New Release from [Github Releases](https://github.com/Sema4AI/vscode-extension/releases)
-- **Make sure you follow the same tagging pattern that was used beforehand - tags should be of value: `sema4ai-2.12.0`**
-  <img src="./releases-help.png" alt="Sema4.ai SDK Releases Example">
+Create a draft GitHub release at the merged commit with the owned tag, the exact
+VSIX, checksum file, and sanitized QA archive. Review the draft asset hashes and
+release notes, then publish the release. Verify the public release and asset
+URLs and report them. Do not advertise Windows/macOS or Java acceptance from a
+Linux run. Do not dispatch the obsolete environment publishing workflow.

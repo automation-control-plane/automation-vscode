@@ -27,6 +27,8 @@ import { getTargetInputJson, runActionFromActionPackage } from "./robo/actionPac
 import { ActionResult } from "./protocols";
 import * as roboCommands from "./robocorpCommands";
 import { createActionInputs } from "./robo/actionInputs";
+import { initializeActionInputEditors, openActionInputsEditor } from "./actionInputsEditor";
+import {onLanguageServerStartupChanged} from "./languageServerStartup";
 
 export async function editInput(actionName?: string, actionDirectory?: string) {
     if (!actionName || !actionDirectory) {
@@ -46,14 +48,14 @@ export async function editInput(actionName?: string, actionDirectory?: string) {
             vscode.Uri.file(actionDirectory),
             actionName,
             targetInput,
-            actionDirectory
+            actionDirectory,
+            false
         );
         if (!success) {
             return;
         }
     }
-    const inputUri = vscode.Uri.file(targetInput);
-    await vscode.window.showTextDocument(inputUri);
+    await openActionInputsEditor(targetInput, actionName);
 }
 
 export async function openRobotTreeSelection(robot?: RobotEntry) {
@@ -218,6 +220,7 @@ export async function runSelectedAction(noDebug: boolean, actionRobotEntry?: Rob
 }
 
 export function registerViews(context: ExtensionContext) {
+    initializeActionInputEditors(context);
     // Cloud data
     const cloudTreeDataProvider = new CloudTreeDataProvider();
     const viewsCloudTree = vscode.window.createTreeView(TREE_VIEW_SEMA4AI_CLOUD_TREE, {
@@ -228,6 +231,7 @@ export function registerViews(context: ExtensionContext) {
 
     // Robots (i.e.: list of robots, not its contents)
     const robotsTreeDataProvider = new RobotsTreeDataProvider();
+    context.subscriptions.push(onLanguageServerStartupChanged(() => robotsTreeDataProvider.fireRootChange()));
     const robotsTree = vscode.window.createTreeView(TREE_VIEW_SEMA4AI_TASK_PACKAGES_TREE, {
         "treeDataProvider": robotsTreeDataProvider,
     });

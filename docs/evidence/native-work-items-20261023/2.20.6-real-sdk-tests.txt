@@ -1,0 +1,12 @@
+test_file_editor_snapshot_attachment_and_conflict (__main__.NativeWorkItemsSDK.test_file_editor_snapshot_attachment_and_conflict) ... ok
+test_invalid_payload_paths_and_other_package (__main__.NativeWorkItemsSDK.test_invalid_payload_paths_and_other_package) ... ok
+test_robot_requires_same_owned_sdk_and_receipts (__main__.NativeWorkItemsSDK.test_robot_requires_same_owned_sdk_and_receipts) ... ok
+test_sqlite_failure_replay_and_orphan_recovery_use_sdk (__main__.NativeWorkItemsSDK.test_sqlite_failure_replay_and_orphan_recovery_use_sdk) ... ok
+test_sqlite_fifo_scope_and_no_unsafe_edit (__main__.NativeWorkItemsSDK.test_sqlite_fifo_scope_and_no_unsafe_edit) ... ok
+test_sqlite_public_lifecycle_survives_process_restart (__main__.NativeWorkItemsSDK.test_sqlite_public_lifecycle_survives_process_restart) ... ok
+test_typed_payload_contract_and_actual_exit_receipt (__main__.NativeWorkItemsSDK.test_typed_payload_contract_and_actual_exit_receipt) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.929s
+
+OK

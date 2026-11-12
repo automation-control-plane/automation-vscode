@@ -1,0 +1,49 @@
+{
+  "checked_at_utc": "2026-11-12T19:42:42.114956+00:00",
+  "exact_version_endpoint": "https://pypi.org/pypi/actions-core/1.1.0/json",
+  "project_url": "https://pypi.org/project/actions-core/1.1.0/",
+  "project_latest_alias_not_used": true,
+  "metadata": {
+    "name": "actions-core",
+    "version": "1.1.0",
+    "requires_python": ">=3.10,<4.0",
+    "requires_dist": [
+      "actions-http-helper (>=1.0.0,<2.0.0)",
+      "cryptography (>=44.0.1)",
+      "docstring_parser_fork (>=0.0.5,<0.0.6)",
+      "psutil (>=5.0,<8.0)",
+      "pydantic (>=2.11.7,<3.0.0)",
+      "pyyaml (>=6.0,<7.0)",
+      "tomli (>=2.0.1,<3) ; python_version < \"3.11\"",
+      "truststore (>=0.10,<1.0)"
+    ]
+  },
+  "files": [
+    {
+      "filename": "actions_core-1.1.0-py3-none-any.whl",
+      "sha256": "38bd11c756cc60d0c028094d6e7f5f3859d724114e2abd48e54f0951e2a3dac6",
+      "url": "https://files.pythonhosted.org/packages/e4/80/534babcffeb1a0e56d09900f46028299123a66889648da8ad61aa22660e7/actions_core-1.1.0-py3-none-any.whl",
+      "yanked": false,
+      "download_verified": true
+    },
+    {
+      "filename": "actions_core-1.1.0.tar.gz",
+      "sha256": "135bef2b94a45e25b1adff9358dc2082364afc12617e35efc33e78f32d461554",
+      "url": "https://files.pythonhosted.org/packages/48/a7/642d2990cdd1607719cbb157210aeeb1d7b64a33857b6cd781fa29f59598/actions_core-1.1.0.tar.gz",
+      "yanked": false,
+      "download_verified": true
+    }
+  ],
+  "qualified_dakota_wheel_sha256": "38bd11c756cc60d0c028094d6e7f5f3859d724114e2abd48e54f0951e2a3dac6",
+  "public_wheel_byte_identical_to_qualified": true,
+  "immutable_source_tag": "actions-core-1.1.0",
+  "verified_source_tag_object": "d3f7f49d90072e456edbade45b82d6f2bf4c6d12",
+  "verified_source_commit": "739da0897447167f0d4f2dff79567fce2146e007",
+  "source_tag_verification": "GitHub ref and annotated object independently read; no signature verification claim.",
+  "remaining_runtime": {
+    "endpoint": "https://pypi.org/pypi/actions-runtime/1.1.0/json",
+    "status": 404,
+    "files": []
+  },
+  "gate": "Core and SDK public artifact identity verified. Runtime public artifacts, frozen-source comparison, and final composition remain required before extension merge/release."
+}

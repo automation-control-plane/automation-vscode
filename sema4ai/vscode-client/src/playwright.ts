@@ -40,7 +40,7 @@ export async function openPlaywrightRecorder(useTreeSelected: boolean = false): 
     window.withProgress(
         {
             location: ProgressLocation.Notification,
-            title: "Sema4.ai",
+            title: "Automation",
             cancellable: false,
         },
         (progress) => {

@@ -1,0 +1,87 @@
+{
+  "root": "/workspace/port-acceptance/native-work-items/runtime-restart-iRHlOU",
+  "extension": "/workspace/port-acceptance/native-work-items/installed-2.20.6/extensions/automation-control-plane.automation-vscode-2.20.6",
+  "version": "2.20.6",
+  "source_sha": "55daabf45244c73a27682ef36a1f643a0afb7489",
+  "scope": "Actual published wrapper and compiled extension; simulated Code terminal events, not GUI acceptance",
+  "port": 40825,
+  "events": [
+    {
+      "event": "spawn",
+      "pid": 16291,
+      "at": 1792767964791,
+      "argv": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+        "start",
+        "--address=127.0.0.1",
+        "--port=40825",
+        "--datadir=/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/action-server/vscode-2ad253cc654f"
+      ]
+    },
+    {
+      "event": "output",
+      "text": "Starting Actions Runtime (in terminal): /workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64; URL: http://127.0.0.1:40825",
+      "at": 1792767964791
+    },
+    {
+      "event": "first-ready",
+      "pid": 16291,
+      "at": 1792767969578
+    },
+    {
+      "event": "restart-confirmed",
+      "at": 1792767969589
+    },
+    {
+      "event": "terminal-closed",
+      "pid": 16291,
+      "at": 1792767969589
+    },
+    {
+      "event": "output",
+      "text": "Waiting for owned Actions Runtime to exit and release 127.0.0.1:40825.",
+      "at": 1792767969590
+    },
+    {
+      "event": "process-exited",
+      "pid": 16291,
+      "code": 1,
+      "signal": null,
+      "at": 1792767969914
+    },
+    {
+      "event": "spawn",
+      "pid": 16341,
+      "at": 1792767970001,
+      "argv": [
+        "/workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64",
+        "start",
+        "--address=127.0.0.1",
+        "--port=40825",
+        "--datadir=/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/action-server/vscode-2ad253cc654f"
+      ]
+    },
+    {
+      "event": "output",
+      "text": "Starting Actions Runtime (in terminal): /workspace/port-acceptance/qualified-871151ce/downloads/actions-runtime-1.0.4-linux64; URL: http://127.0.0.1:40825",
+      "at": 1792767970001
+    },
+    {
+      "event": "terminal-closed",
+      "pid": 16341,
+      "at": 1792767984390
+    },
+    {
+      "event": "process-exited",
+      "pid": 16341,
+      "code": 1,
+      "signal": null,
+      "at": 1792767984674
+    }
+  ],
+  "errors": [],
+  "result": "PASS",
+  "old_pid": 16291,
+  "new_pid": 16341,
+  "action_result": "Hello Restart QA"
+}

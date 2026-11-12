@@ -1,0 +1,125 @@
+...........FFF..F.                                                       [100%]
+=================================== FAILURES ===================================
+_______ test_inspector_launch_options_enable_chromium_sandbox[chromium] ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe0015a1250>
+engine = 'chromium'
+
+    @pytest.mark.parametrize('engine', ['chromium', 'chrome', 'msedge', 'firefox', 'webkit'])
+    def test_inspector_launch_options_enable_chromium_sandbox(monkeypatch, engine):
+        from sema4ai_code.playwright.robocorp_browser import _context
+        from sema4ai_code.playwright.robocorp_browser._caches import clear_all_callback
+        from types import SimpleNamespace
+        clear_all_callback()
+        monkeypatch.delenv('AUTOMATION_BROWSER_EXECUTABLE', raising=False)
+        calls = []
+        monkeypatch.setattr(_context, '_browser_type', lambda: SimpleNamespace(launch=lambda **kw: calls.append(kw)))
+        try:
+            _context._browser_config().browser_engine = engine
+            _context._browser_launcher()(headless=True)
+>           assert calls[0].get('chromium_sandbox') is (True if engine in ('chromium', 'chrome', 'msedge') else None)
+            
+E           AssertionError: Failed: assert calls[0].get('chromium_sandbox') is (True if engine in ('chromium', 'chrome', 'msedge') else None)
+E           Variables:
+E             calls[0].get('chromium_sandbox') = None
+E             True if engine in ('chromium', 'chrome', 'msedge') else None = True
+
+tests/sema4ai_code_tests/inspector/test_failure_states.py:232: AssertionError
+________ test_inspector_launch_options_enable_chromium_sandbox[chrome] _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe000c282d0>
+engine = 'chrome'
+
+    @pytest.mark.parametrize('engine', ['chromium', 'chrome', 'msedge', 'firefox', 'webkit'])
+    def test_inspector_launch_options_enable_chromium_sandbox(monkeypatch, engine):
+        from sema4ai_code.playwright.robocorp_browser import _context
+        from sema4ai_code.playwright.robocorp_browser._caches import clear_all_callback
+        from types import SimpleNamespace
+        clear_all_callback()
+        monkeypatch.delenv('AUTOMATION_BROWSER_EXECUTABLE', raising=False)
+        calls = []
+        monkeypatch.setattr(_context, '_browser_type', lambda: SimpleNamespace(launch=lambda **kw: calls.append(kw)))
+        try:
+            _context._browser_config().browser_engine = engine
+            _context._browser_launcher()(headless=True)
+>           assert calls[0].get('chromium_sandbox') is (True if engine in ('chromium', 'chrome', 'msedge') else None)
+            
+E           AssertionError: Failed: assert calls[0].get('chromium_sandbox') is (True if engine in ('chromium', 'chrome', 'msedge') else None)
+E           Variables:
+E             calls[0].get('chromium_sandbox') = None
+E             True if engine in ('chromium', 'chrome', 'msedge') else None = True
+
+tests/sema4ai_code_tests/inspector/test_failure_states.py:232: AssertionError
+________ test_inspector_launch_options_enable_chromium_sandbox[msedge] _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe000c34d50>
+engine = 'msedge'
+
+    @pytest.mark.parametrize('engine', ['chromium', 'chrome', 'msedge', 'firefox', 'webkit'])
+    def test_inspector_launch_options_enable_chromium_sandbox(monkeypatch, engine):
+        from sema4ai_code.playwright.robocorp_browser import _context
+        from sema4ai_code.playwright.robocorp_browser._caches import clear_all_callback
+        from types import SimpleNamespace
+        clear_all_callback()
+        monkeypatch.delenv('AUTOMATION_BROWSER_EXECUTABLE', raising=False)
+        calls = []
+        monkeypatch.setattr(_context, '_browser_type', lambda: SimpleNamespace(launch=lambda **kw: calls.append(kw)))
+        try:
+            _context._browser_config().browser_engine = engine
+            _context._browser_launcher()(headless=True)
+>           assert calls[0].get('chromium_sandbox') is (True if engine in ('chromium', 'chrome', 'msedge') else None)
+            
+E           AssertionError: Failed: assert calls[0].get('chromium_sandbox') is (True if engine in ('chromium', 'chrome', 'msedge') else None)
+E           Variables:
+E             calls[0].get('chromium_sandbox') = None
+E             True if engine in ('chromium', 'chrome', 'msedge') else None = True
+
+tests/sema4ai_code_tests/inspector/test_failure_states.py:232: AssertionError
+_________ test_launch_failure_does_not_download_or_retry_sandbox_error _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe000c44a50>
+
+    def test_launch_failure_does_not_download_or_retry_sandbox_error(monkeypatch):
+        from playwright.sync_api import Error
+        from sema4ai_code.playwright.robocorp_browser import _context
+        from sema4ai_code.playwright.robocorp_browser._caches import clear_all_callback
+        clear_all_callback()
+        attempts, installs = [], []
+        error = Error('The SUID sandbox helper binary was found, but is not configured correctly')
+        def launch(**kwargs):
+            attempts.append(kwargs)
+            raise error
+        monkeypatch.setattr(_context, '_browser_launcher', lambda: launch)
+        monkeypatch.setattr(_context, 'install_browser', lambda *args: installs.append(args))
+        try:
+            with pytest.raises(Error) as caught:
+                _context.browser()
+            assert caught.value is error
+>           assert installs == []
+            
+E           AssertionError: Failed: assert installs == []
+E           Variables:
+E             installs = [(<BrowserEngine.CHROMIUM: 'chromium'>,)]
+E             [] = []
+
+tests/sema4ai_code_tests/inspector/test_failure_states.py:253: AssertionError
+----------------------------- Captured stderr call -----------------------------
+test: 2026-10-24 22:09:42 UTC pid: 10124 - MainThread - EXCEPTION - sema4ai_code.playwright.robocorp_browser._context
+Unable to launch browser.
+PLAYWRIGHT_BROWSERS_PATH: None
+Installing browsers now.
+
+Traceback (most recent call last):
+  File "/workspace/automation-vscode/sema4ai/src/sema4ai_code/playwright/robocorp_browser/_context.py", line 223, in browser
+    browser = launcher(**kwargs)
+              ^^^^^^^^^^^^^^^^^^
+  File "/workspace/automation-vscode/sema4ai/tests/sema4ai_code_tests/inspector/test_failure_states.py", line 246, in launch
+    raise error
+playwright._impl._errors.Error: The SUID sandbox helper binary was found, but is not configured correctly
+=========================== short test summary info ============================
+FAILED tests/sema4ai_code_tests/inspector/test_failure_states.py::test_inspector_launch_options_enable_chromium_sandbox[chromium]
+FAILED tests/sema4ai_code_tests/inspector/test_failure_states.py::test_inspector_launch_options_enable_chromium_sandbox[chrome]
+FAILED tests/sema4ai_code_tests/inspector/test_failure_states.py::test_inspector_launch_options_enable_chromium_sandbox[msedge]
+FAILED tests/sema4ai_code_tests/inspector/test_failure_states.py::test_launch_failure_does_not_download_or_retry_sandbox_error
+4 failed, 14 passed in 0.85s
+Robocorp Log (html): /workspace/automation-vscode/sema4ai/output/log.html

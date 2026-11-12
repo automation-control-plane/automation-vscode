@@ -1,5 +1,6 @@
 import enum
 from typing import Optional, Union
+from commands import LEGACY_VENDOR_COMMANDS, LEGACY_VENDOR_WHEN
 
 
 class TreeView:
@@ -11,6 +12,8 @@ class TreeView:
         menus,
         add_to_package_json=True,
         visibility=None,
+        when=None,
+        initial_size=None,
     ):
         self.id = id
         self.name = name
@@ -18,6 +21,8 @@ class TreeView:
         self.menus = menus
         self.add_to_package_json = add_to_package_json
         self.visibility = visibility
+        self.when = when
+        self.initial_size = initial_size
 
 
 class TreeViewContainer:
@@ -49,13 +54,15 @@ class Menu:
 TREE_VIEW_CONTAINERS = [
     TreeViewContainer(
         id="sem4ai-packages",
-        title="Sema4.ai",
-        icon="images/sema4ai-outline.svg",
+        title="Automation",
+        icon="images/automation-outline.svg",
         tree_views=[
+            TreeView(id="automation-navigation", name="Workspace", contextual_title="Automation", menus={}, initial_size=1),
             TreeView(
                 id="sema4ai-task-packages-tree",
-                name="Agent/Action/Task Packages",
-                contextual_title="Agent/Action/Task Packages",
+                name="Packages",
+                contextual_title="Packages",
+                initial_size=4,
                 menus={
                     # See: https://code.visualstudio.com/api/references/contribution-points#contributes.menus
                     # for targets
@@ -205,6 +212,7 @@ TREE_VIEW_CONTAINERS = [
             TreeView(
                 id="sema4ai-package-content-tree",
                 name="Package Content",
+                visibility="collapsed",
                 contextual_title="Package Content",
                 menus={
                     "view/title": [
@@ -337,8 +345,9 @@ TREE_VIEW_CONTAINERS = [
             ),
             TreeView(
                 id="sema4ai-cloud-tree",
-                name="Control Room",
-                contextual_title="Sema4.ai",
+                name="Control Room (legacy integration)",
+                when=LEGACY_VENDOR_WHEN,
+                contextual_title="Automation",
                 visibility="collapsed",
                 menus={
                     "view/item/context": [
@@ -414,6 +423,10 @@ def create_tree_in_package_json(tree):
     }
     if tree.visibility is not None:
         ret["visibility"] = tree.visibility
+    if tree.when is not None:
+        ret["when"] = tree.when
+    if tree.initial_size is not None:
+        ret["initialSize"] = tree.initial_size
     return ret
 
 
@@ -463,7 +476,9 @@ def get_menus():
                 for menu in menu_lst:
                     when = f"view == {tree_viewer.id}"
                     if menu.when:
-                        when += f" && {menu.when}"
+                        when += f" && ({menu.when})"
+                    if menu.command_id in LEGACY_VENDOR_COMMANDS:
+                        when += f" && {LEGACY_VENDOR_WHEN}"
                     item = {"command": menu.command_id, "when": when}
                     if menu.group:
                         if isinstance(menu.group, str):

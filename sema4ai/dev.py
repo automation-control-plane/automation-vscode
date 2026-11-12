@@ -237,33 +237,19 @@ class Dev:
             content,
         )
 
-        new_content = new_content.replace(
-            "Apache 2.0",
-            "[Sema4.ai License Agreement (pdf)](https://sema4.ai/cdn/downloads/legal/Sema4ai-EULA-v1.0.pdf)",
-        )
-
-        assert "apache" not in new_content.lower()
         with open(readme, "w", encoding="utf-8", newline="\n") as f:
             f.write(new_content)
 
     def generate_license_file(self):
-        import os
-        import urllib.request
+        import shutil
 
-        url = "https://sema4.ai/cdn/downloads/legal/Sema4ai-EULA-v1.0.txt"
-        readme = os.path.join(os.path.dirname(__file__), "LICENSE.txt")
-
-        request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(request) as response:
-            content = response.read().decode("utf-8")
-
-        with open(readme, "w", encoding="utf-8", newline="\n") as f:
-            f.write(content)
-
-        # Read the content back from LICENSE.txt for verification
-        with open(readme, encoding="utf-8") as f:
-            written_content = f.read()
-        assert "Sema4.ai End User License Agreement" in written_content
+        destination = Path(__file__).parent
+        for source, target in (
+            ("LICENSE", "LICENSE.txt"),
+            ("COPYRIGHT", "COPYRIGHT"),
+            ("ThirdPartyNotices.txt", "ThirdPartyNotices.txt"),
+        ):
+            shutil.copyfile(root / source, destination / target)
 
     def download_rcc(self, plat):
         assert plat in ("win32", "linux", "darwin", "darwin-arm64")

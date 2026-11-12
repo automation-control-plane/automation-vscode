@@ -78,7 +78,7 @@ export const runActionPackageDevTask = async (devTaskInfo: DevTaskInfo | undefin
         processExecutionInfo.args,
         { cwd: processExecutionInfo.cwd, env: processExecutionInfo.env }
     );
-    tasks.executeTask(new Task(definition, ws, `Sema4.ai dev-task: ${taskName}`, "dev-task", processExecution));
+    tasks.executeTask(new Task(definition, ws, `Automation dev-task: ${taskName}`, "dev-task", processExecution));
 };
 
 interface DevTaskDefinition extends TaskDefinition {}

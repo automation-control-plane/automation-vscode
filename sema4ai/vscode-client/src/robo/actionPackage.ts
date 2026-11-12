@@ -962,7 +962,7 @@ export async function createActionPackage(agentPackage?: LocalPackageMetadataInf
     } catch (err) {
         const errorMsg = "Error creating Action Package at: " + targetDir;
         logError(errorMsg, err, "ERR_CREATE_ACTION_PACKAGE");
-        window.showErrorMessage(errorMsg + " (see `OUTPUT > Sema4.ai` for more details).");
+        window.showErrorMessage(errorMsg + " (see `OUTPUT > Automation` for more details).");
     }
 }
 
@@ -1184,7 +1184,7 @@ export const publishActionPackage = async (actionPackagePath?: vscode.Uri) => {
             const verifyLoginOutput = await verifyLogin();
             if (!verifyLoginOutput || !verifyLoginOutput.logged_in) {
                 window.showErrorMessage(
-                    "Action Server Not authenticated to Control Room, run: Sema4ai: Authenticate the Action Server to Control Room"
+                    "Action Server Not authenticated to Control Room, run: Automation: Authenticate the Action Server to Control Room"
                 );
                 return;
             }

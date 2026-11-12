@@ -1,0 +1,189 @@
+{
+  "source_sha": "55daabf45244c73a27682ef36a1f643a0afb7489",
+  "extension": "/workspace/port-acceptance/native-work-items/installed-2.20.6/extensions/automation-control-plane.automation-vscode-2.20.6",
+  "scope": "Real CLI/DAP; desktop editor acceptance is separate",
+  "checks": [
+    {
+      "kind": "action",
+      "mode": "file",
+      "debug": false,
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "/workspace/port-acceptance/native-work-items/installed-2.20.6/extensions/automation-control-plane.automation-vscode-2.20.6/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "/workspace/port-acceptance/native-work-items/installed-workloads/action/work_items_actions.py",
+        "-a",
+        "consume",
+        "--json-input",
+        "/workspace/port-acceptance/native-work-items/installed-workloads/action/devdata/automation-work-items/executions/5b9ff43879d14de9adc21c81de9ca440/action-parameters.json"
+      ],
+      "exit": 0,
+      "output": [
+        {
+          "payload": {
+            "observed": 7
+          },
+          "files": {}
+        }
+      ]
+    },
+    {
+      "kind": "action",
+      "mode": "file",
+      "debug": true,
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "adapter": "debugpy",
+      "source": "/workspace/port-acceptance/native-work-items/installed-workloads/action/work_items_actions.py",
+      "line": 12,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0,
+      "output": [
+        {
+          "payload": {
+            "observed": 7
+          },
+          "files": {}
+        }
+      ]
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "debug": false,
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "/workspace/port-acceptance/native-work-items/installed-2.20.6/extensions/automation-control-plane.automation-vscode-2.20.6/src/sema4ai_code/robo/launch_actions.py",
+        "run",
+        "/workspace/port-acceptance/native-work-items/installed-workloads/action/work_items_actions.py",
+        "-a",
+        "consume",
+        "--json-input",
+        "/workspace/port-acceptance/native-work-items/installed-workloads/action/devdata/automation-work-items/executions/bd4e9a3fdbb94751a5bd0b454b5c0bce/action-parameters.json"
+      ],
+      "exit": 0,
+      "input_id": "6860abb8-896d-4790-a0bb-e8ab74ab65fa",
+      "input_state": "COMPLETED",
+      "output_id": "b7a27f94-37e2-4d5e-b7dc-3cbfb6b4ed65",
+      "parent_id": "6860abb8-896d-4790-a0bb-e8ab74ab65fa",
+      "payload": {
+        "observed": 7
+      }
+    },
+    {
+      "kind": "action",
+      "mode": "sqlite",
+      "debug": true,
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/actions-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "adapter": "debugpy",
+      "source": "/workspace/port-acceptance/native-work-items/installed-workloads/action/work_items_actions.py",
+      "line": 12,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0,
+      "input_id": "1e1b0ac3-1aa2-4a47-b06b-9aa8ac45f990",
+      "input_state": "COMPLETED",
+      "output_id": "f15c528c-b107-4f85-8cc4-4c30df7d40cc",
+      "parent_id": "1e1b0ac3-1aa2-4a47-b06b-9aa8ac45f990",
+      "payload": {
+        "observed": 7
+      }
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "debug": false,
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "-m",
+        "robocorp.tasks",
+        "run",
+        "/workspace/port-acceptance/native-work-items/installed-workloads/robot/work_items_tasks.py",
+        "-t",
+        "consume"
+      ],
+      "exit": 0,
+      "output": [
+        {
+          "payload": {
+            "observed": 7
+          },
+          "files": {}
+        }
+      ]
+    },
+    {
+      "kind": "robot",
+      "mode": "file",
+      "debug": true,
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "adapter": "debugpy",
+      "source": "/workspace/port-acceptance/native-work-items/installed-workloads/robot/work_items_tasks.py",
+      "line": 8,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0,
+      "output": [
+        {
+          "payload": {
+            "observed": 7
+          },
+          "files": {}
+        }
+      ]
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "debug": false,
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "command": [
+        "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+        "-m",
+        "robocorp.tasks",
+        "run",
+        "/workspace/port-acceptance/native-work-items/installed-workloads/robot/work_items_tasks.py",
+        "-t",
+        "consume"
+      ],
+      "exit": 0,
+      "input_id": "f7871c00-1c42-4eca-8f6e-74509c20dd10",
+      "input_state": "COMPLETED",
+      "output_id": "38c735fc-dffc-4a5a-839e-1b05021d4b23",
+      "parent_id": "f7871c00-1c42-4eca-8f6e-74509c20dd10",
+      "payload": {
+        "observed": 7
+      }
+    },
+    {
+      "kind": "robot",
+      "mode": "sqlite",
+      "debug": true,
+      "python": "/workspace/port-acceptance/restart-2.20.5/automation-published-smoke-kcqpn1k2/robots-home/holotree/a1b568a_c5e81ff_691db988/bin/python3",
+      "sdk": "0.4.4",
+      "adapter": "debugpy",
+      "source": "/workspace/port-acceptance/native-work-items/installed-workloads/robot/work_items_tasks.py",
+      "line": 8,
+      "stopped": "breakpoint",
+      "breakpoint_cleared_before_resume": true,
+      "exit": 0,
+      "input_id": "203b4d79-8e1d-4d12-9a06-aaad47b855a0",
+      "input_state": "COMPLETED",
+      "output_id": "585fdb98-d8c7-44d2-a364-809798458f69",
+      "parent_id": "203b4d79-8e1d-4d12-9a06-aaad47b855a0",
+      "payload": {
+        "observed": 7
+      }
+    }
+  ]
+}

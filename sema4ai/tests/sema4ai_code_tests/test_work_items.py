@@ -136,7 +136,7 @@ def test_work_items_removal(
     def run():
         ret = client.execute_command(
             SEMA4AI_LIST_WORK_ITEMS_INTERNAL,
-            [{"robot": robot, "increment_output": True}],
+            [{"robot": robot, "increment_output": True, "prune_output": True}],
         )
         action_result = ret["result"]
         assert action_result["success"]

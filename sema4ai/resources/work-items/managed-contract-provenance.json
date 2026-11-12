@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/joshyorko/actions",
+  "source_sha": "f1b11838674494cd6a34d343b97404cbb1537004",
+  "source_path": "docs/contracts/work-items/managed-v1.json",
+  "sha256": "d8eb71c42f0b544dd15638420305eda6013b413a0b2c03b9894dd0900fab047d",
+  "license": "Apache-2.0",
+  "status": "Reviewed unreleased candidate contract; published Runtime 1.0.4 remains a separate protocol",
+  "contract": "actions.managed-work-items/v1",
+  "minimum_runtime": "1.1.0a13",
+  "minimum_sdk": "0.5.0a1",
+  "source_blob": "3a34f69c7770de072427fddb79bf0d4cc39da06f",
+  "canonical_sha256": "f815b507681e5ed0a3bfe761a3d12aed47d84d4fef4b74413431ddd138401d69"
+}

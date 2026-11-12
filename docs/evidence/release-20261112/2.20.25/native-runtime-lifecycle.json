@@ -1,0 +1,17 @@
+{
+  "scope": "Real installed Code terminal ownership and public Runtime executable startup/shutdown against synthetic package; no managed fixture or invocation.",
+  "checks": [
+    {
+      "check": "Native installed Runtime start and real loopback OpenAPI",
+      "httpStatus": 200,
+      "owned": true
+    },
+    {
+      "check": "Only owned terminal disposal stops listener",
+      "listenerAbsent": true
+    }
+  ],
+  "startedOwnedTerminal": true,
+  "ownershipKind": "owned-running",
+  "passed": true
+}

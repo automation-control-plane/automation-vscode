@@ -14,16 +14,73 @@ import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobo
 import { resolveInterpreter } from "./activities";
 import { feedback } from "./rcc";
 import { ResourcesTreeDataProvider } from "./viewsResources";
-import { WorkItem, WorkItemsInfo, ActionResultWorkItems, InterpreterInfo, LibraryVersionInfoDict } from "./protocols";
+import { WorkItem, WorkItemsInfo, ActionResultWorkItems, LibraryVersionInfoDict } from "./protocols";
+
+const NATIVE_WORK_ITEMS_VERSION = "0.4.4";
+
+interface WorkItemsSupport {
+    nativeSupported: boolean;
+    errorMessage?: string;
+}
+
+async function resolveWorkItemsSupport(manifest: string): Promise<WorkItemsSupport> {
+    const interpreterResult = await resolveInterpreter(manifest);
+    if (!interpreterResult.success) {
+        return { nativeSupported: false, errorMessage: "Error resolving interpreter info: " + interpreterResult.message };
+    }
+    const interpreter = interpreterResult.result;
+    if (!interpreter) {
+        return { nativeSupported: false, errorMessage: "Unable to resolve interpreter for: " + manifest };
+    }
+    if (!interpreter.environ) {
+        return { nativeSupported: false, errorMessage: "Unable to resolve interpreter environment based on: " + manifest };
+    }
+    const condaPrefix = interpreter.environ.CONDA_PREFIX;
+    if (!condaPrefix) {
+        return { nativeSupported: false, errorMessage: "CONDA_PREFIX not available in environment." };
+    }
+
+    try {
+        // The LSP verifier checks a minimum version. Query the installed owned SDK
+        // independently so native routing can enforce the bridge's exact version.
+        const owned: LibraryVersionInfoDict = await vscode.commands.executeCommand(SEMA4AI_VERIFY_LIBRARY_VERSION_INTERNAL, {
+            conda_prefix: condaPrefix, libs_and_version: [["actions-work-items", "0"]],
+        });
+        const ownedVersion = owned?.success && owned.result?.library === "actions-work-items" ? owned.result.version : undefined;
+        if (ownedVersion === NATIVE_WORK_ITEMS_VERSION) {
+            return { nativeSupported: true };
+        }
+        const requirement = `Native Work Items requires actions-work-items==${NATIVE_WORK_ITEMS_VERSION}.`;
+        const actual = ownedVersion
+            ? ` Found actions-work-items==${ownedVersion} in this package environment.`
+            : ` The owned SDK could not be verified. ${owned?.message || "No installed actions-work-items version was returned."}`;
+        const errorMessage = requirement + actual;
+        if (basename(manifest) === "package.yaml") {
+            return { nativeSupported: false, errorMessage };
+        }
+
+        // Robot packages can still use their explicitly supported legacy file
+        // workflow. A legacy SDK never enables the native editor or Action support.
+        const legacy: LibraryVersionInfoDict = await vscode.commands.executeCommand(SEMA4AI_VERIFY_LIBRARY_VERSION_INTERNAL, {
+            conda_prefix: condaPrefix, libs_and_version: [["rpaframework", "11.3"], ["robocorp-workitems", "0.0.1"]],
+        });
+        if (legacy?.success && ["rpaframework", "robocorp-workitems"].includes(legacy.result?.library)) {
+            return { nativeSupported: false };
+        }
+        return { nativeSupported: false, errorMessage };
+    } catch (error) {
+        const errorMessage = "Error verifying Work Items SDK version.";
+        logError(errorMessage, error, "WORKITEM_VERIFY_SDK_VERSION");
+        return { nativeSupported: false, errorMessage };
+    }
+}
 
 const WORK_ITEM_TEMPLATE = `[
   {
       "payload": {
          "message": "Hello World!"
       },
-      "files": {
-          "orders.xlsx": "orders.xlsx"
-      }
+      "files": {}
   }
 ]`;
 
@@ -168,6 +225,18 @@ export async function convertOutputWorkItemToInput(item: WorkItemFSEntry): Promi
 
 export async function newWorkItemInWorkItemsTree(): Promise<void> {
     const workItemInfo = await getWorkItemInfo();
+    const manifest = workItemInfo?.robot_yaml;
+    if (manifest) {
+        const support = await resolveWorkItemsSupport(manifest);
+        if (support.errorMessage) {
+            await vscode.window.showErrorMessage(support.errorMessage);
+            return;
+        }
+        if (support.nativeSupported) {
+            await vscode.commands.executeCommand("automation.workItems.open");
+            return;
+        }
+    }
 
     let workItemName: string = await vscode.window.showInputBox({
         "prompt": "Please provide work item name",
@@ -212,13 +281,14 @@ export async function deleteWorkItemInWorkItemsTree(item: WorkItemFSEntry): Prom
 export function openWorkItemHelp() {
     vscode.env.openExternal(
         vscode.Uri.parse(
-            "https://robocorp.com/docs/developer-tools/visual-studio-code/extension-features#using-work-items"
+            "https://github.com/automation-control-plane/automation-vscode/blob/port/published-rcc-actions-20261022/docs/compatibility-port.md"
         )
     );
 }
 
 export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBase {
     private workItemsInfo: WorkItemsInfo | undefined = undefined;
+    private nativeSupported = false;
 
     protected PATTERN_TO_LISTEN: string = "**/devdata/**";
 
@@ -227,6 +297,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
     }
 
     private async handleRoot(): Promise<WorkItemFSEntry[]> {
+        this.nativeSupported = false;
         const elements: WorkItemFSEntry[] = [];
 
         const robotEntry: RobotEntry = getSelectedRobot();
@@ -269,7 +340,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
         let hasOutputFolder = workItemsResult.result?.output_folder_path;
 
         if (hasInputFolder || hasOutputFolder) {
-            let errorMsg = await this.collectRpaFrameworkRequirementsErrorMessage(robot);
+            let errorMsg = await this.collectWorkItemsRequirementsErrorMessage(robot);
             if (errorMsg) {
                 elements.push({
                     name: errorMsg,
@@ -301,54 +372,10 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
         return elements;
     }
 
-    /**
-     *
-     * @returns an error message if something isn't correct with the rpa framework or an empty string otherwise.
-     */
-    private async collectRpaFrameworkRequirementsErrorMessage(robot: string): Promise<string> {
-        let interpreter: InterpreterInfo | undefined = undefined;
-        let interpreterResult = await resolveInterpreter(robot);
-        let msg: string = "";
-
-        if (!interpreterResult.success) {
-            return "Error resolving interpreter info: " + interpreterResult.message;
-        }
-        interpreter = interpreterResult.result;
-        if (!interpreter) {
-            return "Unable to resolve interpreter for: " + robot;
-        }
-        if (!interpreter.environ) {
-            return "Unable to resolve interpreter environment based on: " + robot;
-        }
-
-        let env = interpreter.environ;
-        let condaPrefix = env["CONDA_PREFIX"];
-        if (!condaPrefix) {
-            return "CONDA_PREFIX not available in environment.";
-        }
-
-        let libraryVersionInfoActionResult: LibraryVersionInfoDict;
-        try {
-            libraryVersionInfoActionResult = await vscode.commands.executeCommand(
-                SEMA4AI_VERIFY_LIBRARY_VERSION_INTERNAL,
-                {
-                    "conda_prefix": condaPrefix,
-                    "libs_and_version": [
-                        ["rpaframework", "11.3"],
-                        ["robocorp-workitems", "0.0.1"], // Any version will do
-                    ],
-                }
-            );
-
-            if (!libraryVersionInfoActionResult["success"]) {
-                return libraryVersionInfoActionResult["message"];
-            }
-        } catch (error) {
-            msg = "Error verifying rpaframework version.";
-            logError(msg, error, "WORKITEM_VERIFY_RPA_VERSION");
-            return msg;
-        }
-        return "";
+    private async collectWorkItemsRequirementsErrorMessage(robot: string): Promise<string> {
+        const support = await resolveWorkItemsSupport(robot);
+        this.nativeSupported = support.nativeSupported;
+        return support.errorMessage || "";
     }
 
     private handleChild(element: WorkItemFSEntry): WorkItemFSEntry[] {
@@ -435,6 +462,8 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                 treeItem.iconPath = new vscode.ThemeIcon("sign-out");
             } else if (element.kind === "inputWorkItemDir") {
                 treeItem.iconPath = new vscode.ThemeIcon("sign-in");
+            } else if (this.nativeSupported && (element.kind === "inputWorkItem" || element.kind === "outputWorkItem")) {
+                treeItem.command = { command: "automation.workItems.open", title: "Edit Work Item", arguments: [element] };
             }
         }
         return treeItem;

@@ -25,11 +25,11 @@ class _HttpConnectionHelper:
     def login(self) -> None:
         from http.cookies import SimpleCookie
 
-        import sema4ai_http
+        import actions_http
 
         login_url = f"{self._http_url}/api/login"
 
-        login_response = sema4ai_http.post(
+        login_response = actions_http.post(
             login_url,
             json={"password": self._http_password, "username": self._http_user},
         )
@@ -78,14 +78,14 @@ class _HttpConnectionHelper:
         Returns:
             A tuple of columns and rows.
         """
-        import sema4ai_http
+        import actions_http
 
         log.info(f"Running sql:\n{sql}")
         self._login_if_needed()
 
         url = self._http_url + "/api/sql/query"
 
-        result = sema4ai_http.post(
+        result = actions_http.post(
             url,
             json={"query": sql, "context": {"db": database or ""}},
             headers=self._session_headers,
@@ -112,11 +112,11 @@ class _HttpConnectionHelper:
     def _upload_file(self, file_path: Path, table_name: str) -> None:
         import json
 
-        import sema4ai_http
+        import actions_http
 
         file_name = file_path.name
         data = file_path.read_bytes()
-        result = sema4ai_http.put(
+        result = actions_http.put(
             f"{self._http_url}/api/files/{table_name}",
             fields={
                 "file": (file_name, data),

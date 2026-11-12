@@ -5,6 +5,7 @@ import { afterActionPackageCreated, askActionPackageTargetDir } from "./actionPa
 import { langServer } from "../extension";
 import { logError, OUTPUT_CHANNEL } from "../channel";
 import { PackageYamlName } from "../protocols";
+import { legacyVendorIntegrationsEnabled } from "../legacyIntegrations";
 
 export const importActionPackage = async (agentPath?: string) => {
     // We have 2 different ways of importing an action:
@@ -29,7 +30,7 @@ export const importActionPackage = async (agentPath?: string) => {
             "detail": "Import action package from zip file",
             "action": "from_local_path",
         },
-    ];
+    ].filter(option => option.action !== "from_gallery" || legacyVendorIntegrationsEnabled());
 
     let selectedItem: QuickPickItemWithAction = await showSelectOneQuickPick(options, "Select kind of action import");
     if (!selectedItem) {

@@ -9,6 +9,7 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import { fileExists, getExtensionRelativeFile, makeDirs, verifyFileExists } from "./files";
 import {
     collectBaseEnv,
+    createEnvWithRobocorpHome,
     feedbackRobocorpCodeError,
     getRccLocation,
     getRobocorpHome,
@@ -21,7 +22,7 @@ import {
 import { Timing } from "./time";
 import { execFilePromise, ExecFileReturn } from "./subprocess";
 import { sleep } from "./time";
-import { getProceedwithlongpathsdisabled, setProceedwithlongpathsdisabled } from "./robocorpSettings";
+import { getProceedwithlongpathsdisabled, setProceedwithlongpathsdisabled, getLanguageServerPython } from "./robocorpSettings";
 import { ActionResult, InterpreterInfo } from "./protocols";
 import { join } from "path";
 import { GLOBAL_STATE } from "./extension";
@@ -106,13 +107,13 @@ async function enableWindowsLongPathSupport(rccLocation: string) {
     try {
         try {
             // Expected failure if not admin.
-            await execFilePromise(rccLocation, ["configure", "longpaths", "--enable", "--bundled", "--sema4ai"], {
+            await execFilePromise(rccLocation, ["configure", "longpaths", "--enable", "--bundled", "--robocorp"], {
                 env: { ...process.env },
             });
             await sleep(100);
         } catch (error) {
             // Expected error (it means we need an elevated shell to run the command).
-            await runAsAdminWin32(rccLocation, ["configure", "longpaths", "--enable", "--bundled", "--sema4ai"], {
+            await runAsAdminWin32(rccLocation, ["configure", "longpaths", "--enable", "--bundled", "--robocorp"], {
                 ...process.env,
             });
             // Wait a second for the command to be executed as admin before proceeding.
@@ -217,7 +218,7 @@ async function verifyLongPathSupportOnWindows(
                 const NO = "No (don't warn again)";
 
                 let result = await window.showErrorMessage(
-                    "Windows long paths support is not enabled. Would you like to have Sema4.ai enable it now?",
+                    "Windows long paths support is not enabled. Would you like to have Automation enable it now?",
                     {
                         "modal": true,
                         "detail":
@@ -238,19 +239,19 @@ async function verifyLongPathSupportOnWindows(
                     } else {
                         let result = await window.showErrorMessage(
                             "It was not possible to automatically enable windows long path support. " +
-                                "Please follow the instructions from https://robocorp.com/docs/troubleshooting/windows-long-path (press Ok to open in browser).",
+                                "Please follow Microsoft's Windows long path documentation (press Ok to open in browser).",
                             { "modal": true },
                             "Ok"
                             // Auto-cancel in modal
                         );
                         if (result == "Ok") {
                             await env.openExternal(
-                                Uri.parse("https://robocorp.com/docs/troubleshooting/windows-long-path")
+                                Uri.parse("https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation")
                             );
                         }
                     }
                 } else if (result == MANUALLY) {
-                    await env.openExternal(Uri.parse("https://robocorp.com/docs/troubleshooting/windows-long-path"));
+                    await env.openExternal(Uri.parse("https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation"));
                 } else if (result == NO) {
                     await setProceedwithlongpathsdisabled(true);
                     return true;
@@ -308,7 +309,7 @@ export async function basicValidations(
     // Check that ROBOCORP_HOME is valid (i.e.: doesn't have any spaces in it).
     let rccDiagnostics: RCCDiagnostics | undefined = await configDiagnosticsPromise;
     if (!rccDiagnostics) {
-        let msg: string = "There was an error getting RCC diagnostics. Sema4.ai will not be started!";
+        let msg: string = "There was an error getting RCC diagnostics. Automation will not be started!";
         if (!failsPreventStartup) {
             msg = "There was an error getting RCC diagnostics.";
         }
@@ -362,7 +363,7 @@ export async function basicValidations(
         robocorpHome = uriResult[0].fsPath;
         rccDiagnostics = await runConfigDiagnostics(rccLocation, robocorpHome);
         if (!rccDiagnostics) {
-            let msg: string = "There was an error getting RCC diagnostics. Sema4.ai will not be started!";
+            let msg: string = "There was an error getting RCC diagnostics. Automation will not be started!";
             if (!failsPreventStartup) {
                 msg = "There was an error getting RCC diagnostics.";
             }
@@ -515,10 +516,10 @@ async function createDefaultEnv(
 
 /**
  * Shows a messages saying that the extension is disabled (as an error message to the user)
- * and logs it to OUTPUT > Sema4.ai.
+ * and logs it to OUTPUT > Automation.
  */
 function disabled(msg: string): undefined {
-    msg = "Sema4.ai extension disabled. Reason: " + msg;
+    msg = "Automation extension disabled. Reason: " + msg;
     OUTPUT_CHANNEL.appendLine(msg);
     window.showErrorMessage(msg);
     OUTPUT_CHANNEL.show();
@@ -561,8 +562,8 @@ class StartupHelper {
                 this.robotConda = getExtensionRelativeFile("../../bin/create_env/conda_vscode_windows_amd64.yaml");
                 break;
             default:
-                this.robotConda = getExtensionRelativeFile("../../bin/create_env/conda.yaml");
-                break;
+                this.error("INIT_UNSUPPORTED_PLATFORM", `No supported Automation bootstrap descriptor for ${process.platform}/${process.arch}.`);
+                return;
         }
 
         if (!this.robotConda) {
@@ -612,6 +613,17 @@ export const CACHE_KEY_LAST_WORKED = "LAST_WORKED";
  * Provides the python information needed to start the language server.
  */
 export async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | undefined> {
+    const configuredPython = getLanguageServerPython();
+    if (configuredPython) {
+        if (!(await fileExists(configuredPython))) {
+            throw new Error("Configured language-server Python does not exist: " + configuredPython);
+        }
+        return {
+            pythonExe: configuredPython,
+            environ: createEnvWithRobocorpHome(await getRobocorpHome()),
+            additionalPythonpathEntries: [],
+        };
+    }
     const getRccLocationPromise: Promise<string | undefined> = getRccLocation();
 
     const startupHelper = new StartupHelper();
@@ -660,7 +672,7 @@ export async function getLanguageServerPythonInfoUncached(): Promise<Interpreter
     let result: ExecFileReturn | undefined = await window.withProgress(
         {
             location: ProgressLocation.Notification,
-            title: "Sema4.ai",
+            title: "Automation",
             cancellable: false,
         },
         async (progress: Progress<{ message?: string; increment?: number }>): Promise<ExecFileReturn> | undefined => {
