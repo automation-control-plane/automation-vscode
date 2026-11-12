@@ -1,0 +1,117 @@
+{
+  "source_commit": "b3d41af2c5c4fa01c2821e48521326b3737f7a92",
+  "endpoint": "http://127.0.0.1:35631",
+  "scope": "synthetic single-principal real SQL/direct Robot; source Runtime host, not installed CLI or RCC",
+  "versions": {
+    "actions-runtime": "1.1.0",
+    "actions-core": "1.1.0",
+    "actions-work-items": "0.5.0"
+  },
+  "no_invocation": true,
+  "unauthenticated_schema_status": 401,
+  "schema_status": 200,
+  "schema_sha256": "3e8d2c028e7da40299ef43a12af42509f0c9a465d406060a735a4d88839c47e1",
+  "capabilities_status": 200,
+  "capabilities_sha256": "747a37ef2142010c6151484fdf3c09f70933f3ab6b72c3c78050c7637ee27310",
+  "server_discovery": {
+    "cacheScope": "private",
+    "capabilities": {
+      "prompts": {
+        "listChanged": false
+      },
+      "resources": {
+        "listChanged": false,
+        "subscribe": false
+      },
+      "tools": {
+        "listChanged": false
+      }
+    },
+    "resultType": "complete",
+    "supportedVersions": [
+      "2026-07-28"
+    ],
+    "ttlMs": 0,
+    "_meta": {
+      "io.modelcontextprotocol/serverInfo": {
+        "name": "Action Server",
+        "version": ""
+      }
+    }
+  },
+  "native_read_only": {
+    "candidate": "2.20.22",
+    "source_runtime": "b3d41af2c5c4fa01c2821e48521326b3737f7a92",
+    "native_connect": true,
+    "local_private_credential_ui": true,
+    "explicit_secure_secret_service": true,
+    "discovery_denied": true,
+    "invocations": 0,
+    "claims": 0,
+    "enqueues": 0,
+    "native_discovery_status": "Runtime did not confirm the canonical tool result. Inspect retained execution state; no automatic retry.",
+    "queue_selection_succeeded_before_discovery": true
+  },
+  "client_preflight": {
+    "endpoint": "http://127.0.0.1:35631",
+    "source_commit": "b3d41af2c5c4fa01c2821e48521326b3737f7a92",
+    "versions": {
+      "actions-runtime": "1.1.0",
+      "actions-core": "1.1.0",
+      "actions-work-items": "0.5.0"
+    },
+    "invocations": 0,
+    "capabilities": {
+      "schema_version": "actions.managed-work-items/v1",
+      "runtime_version": "1.1.0",
+      "sdk_version": "0.5.0",
+      "workspace_id": "318beb55-d732-4183-860a-b20f05cd333d",
+      "operations": [
+        "queues.list",
+        "items.list",
+        "items.get",
+        "runs.get",
+        "runs.logs",
+        "items.enqueue",
+        "reviews.list",
+        "reviews.decide",
+        "items.claim",
+        "items.renew",
+        "items.cancel",
+        "artifacts.read",
+        "items.complete"
+      ],
+      "permissions": [
+        "work_items.read",
+        "work_items.enqueue",
+        "work_items.claim",
+        "work_items.complete",
+        "work_items.retry",
+        "work_items.cancel",
+        "work_items.review",
+        "work_items.artifact.read"
+      ],
+      "backend": "sqlite",
+      "time_authority": "database",
+      "modes": [
+        "reviewed",
+        "consumer"
+      ]
+    },
+    "accepted": false,
+    "error": "Runtime did not confirm the canonical tool result. Inspect retained execution state; no automatic retry."
+  },
+  "local_setup": {
+    "doctor": "passed",
+    "bootstrap": "passed",
+    "toolkit_tests": {
+      "passed": 247,
+      "skipped": 5
+    },
+    "fixture_source": "b3d41af2c5c4fa01c2821e48521326b3737f7a92",
+    "private_directory_mode": "0700",
+    "private_test_bearer_mode": "0600",
+    "no_credential_values_in_receipt": true,
+    "transport": "local loopback; no SSH or network configuration changes"
+  }
+}

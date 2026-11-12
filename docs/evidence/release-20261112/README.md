@@ -21,7 +21,10 @@ profile. Both Action and Robot File/SQLite Run and Debug pass: eight distinct
 native launches, four real breakpoint events and continues, exit zero, exact
 output values, and SQLite COMPLETED inputs with authoritative output parent_id.
 [Exact receipts, output projections, hashes, and test scope](qualification.json)
-are retained separately from earlier CLI/DAP attachment/replay evidence.
+are retained separately from earlier CLI/DAP evidence. Native file-picker upload,
+attachment-copy Run, read-only output, Save to a new file, and edited replay also
+pass with exact unchanged source/attachment bytes; see
+[native attachment/replay receipts](native-attachment-replay.json).
 
 Source checks: 163 Node tests pass. Focused Python checks pass 56 with one
 historical workflow-retirement skip. Three historical vendor-service tests could
@@ -35,8 +38,16 @@ for a screenshot.
 
 ## Remaining release gates
 
-Managed native acceptance awaits the Actions owner's secret-free local fixture
-recipe and exact source. The NVIDIA source Runtime/direct Robot probe is separate
+Pinned RCC Doctor/Bootstrap and 247 Toolkit tests (5 skips) pass for the local
+fixture at Actions `b3d41af2c5c4fa01c2821e48521326b3737f7a92`. The exact installed
+managed HTTP client accepts its schema/capabilities; unauthenticated schema reads
+return 401, authenticated reads return 200. Live MCP protocol, server identity,
+model visibility and all three required input schemas negotiate exactly. Native
+secure connection and queue selection pass. Read-only `canvas_open` returns an
+explicit error, so execution discovery and all native managed mutations remain
+unqualified. No enqueue, claim or invoke was sent. The Actions owner is inspecting
+the fixture's canonical discovery setup; no client authority/schema guard changed.
+[Live read-only receipts](managed-readonly.json) retain the exact scope. The NVIDIA source Runtime/direct Robot probe is separate
 evidence, not this extension's native Run acceptance or installed Runtime/RCC
 proof. No historical endpoint is adopted. Negotiate live tools, schemas, protocol,
 model authority and queue-specific capabilities before execution. Preserve
