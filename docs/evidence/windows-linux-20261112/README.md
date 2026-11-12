@@ -92,3 +92,14 @@ The next run uses standard private debugpy logs and retains only bounded scrubbe
 fatal lines, never complete logs or launch environments. No SDK or adapter type
 change is guessed. Four diagnostic security tests and six harness boundary tests
 pass; actual native workload acceptance remains pending.
+
+## Adapter and native terminal diagnostics
+
+[Run43310745992](windows-adapter-channel-close.json) retained a launcher channel
+WinError10038 and no initiating exception. The target Python identity matches.
+The collector regression exposed discarded JSON-encoded diagnostic text; the
+fix decodes only explicit diagnostic scalar fields and adds bounded owned
+ptyhost tails. Stable shell-integration observation retains scrubbed fatal lines
+from test-owned terminals without reading command-line data. The regression
+failed before the collector fix; all five diagnostic tests pass afterward.
+This remains diagnosis, not a speculative product fix or Windows acceptance.

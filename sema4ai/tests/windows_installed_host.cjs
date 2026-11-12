@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const cp = require('node:child_process');
 const http = require('node:http');
 const vscode = require('vscode');
-const {scrubDiagnostic, exceptionSummary} = require('./windows_diagnostic.cjs');
+const {scrubDiagnostic, exceptionSummary, fatalDiagnosticLines} = require('./windows_diagnostic.cjs');
 
 const root = process.env.AUTOMATION_WINDOWS_QA;
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -114,6 +114,7 @@ exports.run = async () => {
         const bridgeFile = path.join(extension.extensionPath, 'src/sema4ai_code/work_items_native.py');
         const attachment = fs.readFileSync(path.join(root, 'workspace/attachment-proof.txt'));
         const seen = new Set();
+        const ownedDebugTerminals = new Set();
         for (const kind of ['action', 'robot']) {
             const folder = path.join(root, 'workspace', kind), manifest = path.join(folder, kind === 'action' ? 'package.yaml' : 'robot.yaml');
             const resolved = await vscode.commands.executeCommand('sema4ai.resolveInterpreter', {target_robot: manifest});
@@ -147,6 +148,32 @@ exports.run = async () => {
                     Object.assign(config, {package: manifest, actionName: action.name, uri: action.uri, jsonInput: prepared.parameters});
                 } else Object.assign(config, {robot: manifest, task: 'Copy Work Item Attachment'});
                 let exited, terminated = false, stopped = false, nativeError;
+                const priorTerminals = new Set(vscode.window.terminals);
+                let captureTerminal = true;
+                const retainTerminalLines = text => {
+                    const lines = fatalDiagnosticLines(text, root);
+                    if (lines.length) {report.nativeTerminalFatal = [...(report.nativeTerminalFatal || []), ...lines].slice(-30); save();}
+                };
+                report.currentCase.nativeTerminalStreamSupported = typeof vscode.window.onDidStartTerminalShellExecution === 'function';
+                const shellObserver = report.currentCase.nativeTerminalStreamSupported ? vscode.window.onDidStartTerminalShellExecution(event => {
+                    if (priorTerminals.has(event.terminal) && !ownedDebugTerminals.has(event.terminal)) return;
+                    ownedDebugTerminals.add(event.terminal);
+                    void (async () => {
+                        let buffer = '';
+                        for await (const chunk of event.execution.read()) {
+                            if (!captureTerminal) break;
+                            buffer = (buffer + chunk).slice(-16384);
+                            const lines = buffer.split(/\r?\n/); buffer = lines.pop() || '';
+                            retainTerminalLines(lines.join('\n'));
+                        }
+                        if (captureTerminal && buffer) retainTerminalLines(buffer);
+                    })().catch(error => {report.nativeTerminalDiagnosticError = exceptionSummary(error, root); save();});
+                }) : undefined;
+                const terminalObserver = vscode.window.onDidCloseTerminal(closed => {
+                    if (!priorTerminals.has(closed) || ownedDebugTerminals.has(closed)) {
+                        report.nativeTerminalExit = {code: closed.exitStatus?.code}; save();
+                    }
+                });
                 const breakpoint = new vscode.SourceBreakpoint(new vscode.Location(vscode.Uri.file(source), new vscode.Position(stopLine - 1, 0)));
                 if (debug) vscode.debug.addBreakpoints([breakpoint]);
                 const tracker = vscode.debug.registerDebugAdapterTrackerFactory('*', {createDebugAdapterTracker: session => {
@@ -190,7 +217,11 @@ exports.run = async () => {
                     report.currentCase.stage = 'native-debugging-started'; save();
                     await waitFor(() => {if (nativeError) throw Error(nativeError); return exited !== undefined && terminated;}, 180000);
                     assert.equal(exited, 0); assert.equal(stopped, debug);
-                } finally {tracker.dispose(); ended.dispose(); vscode.debug.removeBreakpoints([breakpoint]);}
+                } finally {
+                    if (nativeError) await sleep(300); // Allow already-emitted terminal diagnostics to drain; never retry.
+                    captureTerminal = false; shellObserver?.dispose(); terminalObserver.dispose();
+                    tracker.dispose(); ended.dispose(); vscode.debug.removeBreakpoints([breakpoint]);
+                }
                 const state = bridge('list'); let output;
                 if (mode === 'file') {
                     const file = prepared.env.RC_WORKITEM_OUTPUT_PATH, data = JSON.parse(fs.readFileSync(file));

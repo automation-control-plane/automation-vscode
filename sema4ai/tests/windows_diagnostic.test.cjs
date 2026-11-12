@@ -31,3 +31,20 @@ test('private adapter log collection retains fatal lines without environment or 
         assert.equal(JSON.stringify(result).includes('A'.repeat(48)), false);
     } finally {fs.rmSync(root, {recursive: true});}
 });
+test('collector decodes only diagnostic protocol fields and inspects owned ptyhost failures', () => {
+    const fs = require('node:fs'), path = require('node:path'), os = require('node:os');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-diagnostic-'));
+    try {
+        fs.mkdirSync(path.join(root, 'debugpy-private'));
+        fs.writeFileSync(path.join(root, 'debugpy-private/debugpy.launcher-7.log'),
+            '    "output": "ModuleNotFoundError: No module named example\\n",\n    "exitCode": 1,\n    "env": {"private":"synthetic"}');
+        fs.mkdirSync(path.join(root, 'profile/logs/20261112T000000'), {recursive: true});
+        fs.writeFileSync(path.join(root, 'profile/logs/20261112T000000/ptyhost.log'),
+            'Error: CreateProcess failed\nError Authorization: Bearer synthetic');
+        const result = collectAdapterFailures(root);
+        assert.ok(result.files.some(item => item.fatalLines.some(line => line.includes('ModuleNotFoundError'))));
+        assert.ok(result.files.some(item => item.protocol?.some(field => field.field === 'exitCode' && field.value === 1)));
+        assert.ok(result.files.some(item => item.file === 'ptyhost.log' && item.fatalLines.some(line => line.includes('CreateProcess failed'))));
+        assert.equal(JSON.stringify(result).includes('synthetic'), false);
+    } finally {fs.rmSync(root, {recursive: true});}
+});
