@@ -59,10 +59,10 @@ async function hasUnresolvedJournal(directory: string): Promise<boolean> {
                 if (command.idempotency_key !== match[1]) return true;
                 let primary: any;
                 try {primary = JSON.parse(await fs.promises.readFile(path.join(directory, match[1] + ".receipt.json"), "utf8"));}
-                catch (error) {if (error.code === "ENOENT") return true; throw error;}
-                if (primary?.denied === true) {
-                    if (typeof primary.status !== "number" || ![401, 403, 404, 409, 413, 422].includes(primary.status) ||
-                        (primary.code !== undefined && typeof primary.code !== "string")) return true;
+                catch (error) {if (error.code !== "ENOENT") throw error;}
+                if (primary === undefined || primary?.denied === true) {
+                    if (primary !== undefined && (typeof primary.status !== "number" || ![401, 403, 404, 409, 413, 422].includes(primary.status) ||
+                        (primary.code !== undefined && typeof primary.code !== "string"))) return true;
                     let proof: any;
                     try {proof = JSON.parse(await fs.promises.readFile(path.join(directory, match[1] + ".reconciliation-receipt.json"), "utf8"));}
                     catch (error) {if (error.code === "ENOENT") return true; throw error;}
@@ -240,10 +240,10 @@ export class ManagedWorkItemsView {
             if (command.idempotency_key !== key) throw Error("Retained request scope/identity mismatch; preserve the journal and inspect it.");
             let receipt: unknown;
             try {receipt = JSON.parse(await fs.promises.readFile(path.join(journalDir, key + ".receipt.json"), "utf8"));}
-            catch (error) {if (error.code !== "ENOENT") throw error; pending.set(key, {key, command, state: "uncertain"}); continue;}
-            if (receipt && typeof receipt === "object" && !Array.isArray(receipt) && "denied" in receipt && receipt.denied === true) {
+            catch (error) {if (error.code !== "ENOENT") throw error;}
+            if (receipt === undefined || (receipt && typeof receipt === "object" && !Array.isArray(receipt) && "denied" in receipt && receipt.denied === true)) {
                 const denial = receipt as Record<string, unknown>;
-                if (typeof denial.status !== "number" || ![401, 403, 404, 409, 413, 422].includes(denial.status) || (denial.code !== undefined && typeof denial.code !== "string")) throw Error("Legacy denial receipt is malformed; preserve the journal and inspect it.");
+                if (denial !== undefined && (typeof denial.status !== "number" || ![401, 403, 404, 409, 413, 422].includes(denial.status) || (denial.code !== undefined && typeof denial.code !== "string"))) throw Error("Legacy denial receipt is malformed; preserve the journal and inspect it.");
                 let reconciled: unknown;
                 try {reconciled = JSON.parse(await fs.promises.readFile(path.join(journalDir, key + ".reconciliation-receipt.json"), "utf8"));}
                 catch (error) {if (error.code !== "ENOENT") throw error; pending.set(key, {key, command, state: "uncertain"}); continue;}

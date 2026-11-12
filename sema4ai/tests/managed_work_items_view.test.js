@@ -153,6 +153,18 @@ test('Native managed controller preserves exact targets, grants, artifacts and u
         assert.ok((await fs.stat(path.join(journalDir,first.idempotency_key+'.reconciliation-receipt.json'))).isFile());
         view=create();await connect();assert.equal(posted.at(-1).pending.length,0,'canonical reconnect restores the exact-key success receipt');
         view=create();connectEndpoint=endpoint+'/';await connect();assert.equal(posted.at(-1).pending.length,0,'legacy-scope migration restores the separate success receipt');connectEndpoint=undefined;
+        await fs.rm(path.join(journalDir,first.idempotency_key+'.receipt.json'));
+        await fs.rm(path.join(legacyDir,first.idempotency_key+'.receipt.json'));
+        view=create();await connect();assert.equal(posted.at(-1).pending.length,0,'a lost response without a primary receipt restores its validated replay proof');
+        await fs.mkdir(foreignDir);
+        const completedForeignCommand={...first,idempotency_key:foreignKey};
+        const completedForeignProof=JSON.parse(await fs.readFile(path.join(journalDir,first.idempotency_key+'.reconciliation-receipt.json'),'utf8'));
+        Object.assign(completedForeignProof,{idempotency_key:foreignKey,command:completedForeignCommand});
+        await fs.writeFile(path.join(foreignDir,foreignKey+'.request.json'),JSON.stringify(completedForeignCommand));
+        await fs.writeFile(path.join(foreignDir,foreignKey+'.reconciliation-receipt.json'),JSON.stringify(completedForeignProof));
+        view=create();await connect();assert.equal(posted.at(-1).pending.length,0,'fully validated completed history is not mistaken for unattributed uncertainty');
+        assert.ok(!(await fs.readdir(journalDir)).includes(foreignKey+'.request.json'),'completed foreign history is not imported');
+        await fs.rm(foreignDir,{recursive:true});
         await view.handle({op:'managed.queue',queue:JSON.stringify(queue)});
         item.claim={queue,item_id:I,owner_id:I,epoch:3};item.lease_deadline_ms='1000';item.queue_state='IN_PROGRESS';item.business_state='running';
         await view.handle({op:'managed.item',id:I});
