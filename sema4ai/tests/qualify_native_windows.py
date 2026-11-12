@@ -114,6 +114,7 @@ def main():
         npm_cli = Path(npm).parent / "node_modules/npm/bin/npm-cli.js"
         if not node or not npm_cli.is_file():
             raise RuntimeError("Prepared Node/npm entry point unavailable")
+        run([node, "--test", str(extension / "tests/windows_diagnostic.test.cjs")], "diagnostic-boundaries")
         run([node, str(npm_cli), "ci"], "npm-ci")
         run([node, str(npm_cli), "run", "vsce:package", "--", "--target", "win32-x64", "--out", str(vsix)], "package")
         report["artifact"] = {"filename": vsix.name, "sha256": digest(vsix), "size": vsix.stat().st_size}

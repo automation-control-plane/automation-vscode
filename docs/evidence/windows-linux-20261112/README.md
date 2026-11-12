@@ -71,3 +71,14 @@ records registry identity separately, waits boundedly for post-trust discovery,
 and requires the exact canonical verified install directory, version and
 manifest digest. The previous receipt does not establish timing versus path
 mismatch, so neither is claimed as the cause. No native workload ran.
+
+## Native activation and platform probes passed
+
+[Run43308046985](windows-native-adapter-failure.json) passed exact registry/
+manifest identity, cold Windows bootstrap/LSP activation, verified Windows tool
+downloads and scoped native Win32 inspection. The first workload hit the native
+debug adapter error hook, whose old handler discarded the underlying exception.
+The next diagnostic run retains scrubbed exception/response/exit metadata and
+command names only. No launch environment/arguments are dumped and no workload
+assertion is relaxed. The underlying adapter cause remains unestablished until
+that actual receipt is available. Three diagnostic security regressions pass.

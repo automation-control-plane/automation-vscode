@@ -6,6 +6,7 @@ const crypto = require('node:crypto');
 const cp = require('node:child_process');
 const http = require('node:http');
 const vscode = require('vscode');
+const {scrubDiagnostic, exceptionSummary} = require('./windows_diagnostic.cjs');
 
 const root = process.env.AUTOMATION_WINDOWS_QA;
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -138,6 +139,7 @@ exports.run = async () => {
                 const stopLine = lines.findIndex((line, index) => index > start && line.includes('value = item.payload')) + 1;
                 assert.ok(stopLine > 0);
                 const name = 'Owned Windows ' + queue;
+                report.currentCase = {kind, mode, operation: debug ? 'debug' : 'run', stage: 'prepared', adapterTypes: [], commands: []}; save();
                 const config = {type: 'sema4ai', request: 'launch', name, noDebug: !debug, automationWorkItems: prepared.env};
                 if (kind === 'action') {
                     const actions = await vscode.commands.executeCommand('sema4ai.listActions.internal', {action_package: vscode.Uri.file(manifest).toString()});
@@ -149,7 +151,20 @@ exports.run = async () => {
                 if (debug) vscode.debug.addBreakpoints([breakpoint]);
                 const tracker = vscode.debug.registerDebugAdapterTrackerFactory('*', {createDebugAdapterTracker: session => {
                     if (session.name !== name) return;
-                    return {onDidSendMessage(message) {
+                    report.currentCase.adapterTypes.push(session.type); save();
+                    return {onWillReceiveMessage(message) {
+                        if (message.type === 'request' && /^[A-Za-z]{1,40}$/.test(message.command || '') && report.currentCase.commands.length < 30) {
+                            report.currentCase.commands.push(message.command); save();
+                        }
+                    }, onDidSendMessage(message) {
+                        if (message.type === 'response' && message.success === false) {
+                            report.nativeProtocolFailure = {adapterType: session.type, command: message.command,
+                                message: scrubDiagnostic(message.message || message.body?.error?.format, root)}; save();
+                        }
+                        if (message.type === 'event' && message.event === 'output' && message.body?.category === 'stderr') {
+                            const text = scrubDiagnostic(message.body.output, root);
+                            if (text) {report.nativeStderr = [...(report.nativeStderr || []), text].slice(-8); save();}
+                        }
                         if (message.type !== 'event') return;
                         if (message.event === 'exited') exited = message.body?.exitCode;
                         if (message.event === 'stopped') {
@@ -157,11 +172,17 @@ exports.run = async () => {
                             stopped = true; vscode.debug.removeBreakpoints([breakpoint]);
                             void session.customRequest('continue', {threadId: message.body.threadId}).catch(() => {nativeError = 'Native continue failed';});
                         }
-                    }, onError() {nativeError = 'Native debug adapter error';}};
+                    }, onError(error) {
+                        report.nativeAdapterFailure = {adapterType: session.type, error: exceptionSummary(error, root)};
+                        save(); nativeError = 'Native debug adapter error';
+                    }, onExit(code, signal) {
+                        report.nativeAdapterExit = {adapterType: session.type, code, signal}; save();
+                    }};
                 }});
                 const ended = vscode.debug.onDidTerminateDebugSession(session => {if (session.name === name) terminated = true;});
                 try {
                     assert.ok(await vscode.debug.startDebugging(vscode.workspace.getWorkspaceFolder(vscode.Uri.file(manifest)), config));
+                    report.currentCase.stage = 'native-debugging-started'; save();
                     await waitFor(() => {if (nativeError) throw Error(nativeError); return exited !== undefined && terminated;}, 180000);
                     assert.equal(exited, 0); assert.equal(stopped, debug);
                 } finally {tracker.dispose(); ended.dispose(); vscode.debug.removeBreakpoints([breakpoint]);}

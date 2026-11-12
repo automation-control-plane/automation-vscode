@@ -1,0 +1,106 @@
+{
+  "checked_at_utc": "2026-11-12T21:20:10.220190+00:00",
+  "run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43308046985",
+  "verified_progress": [
+    "Workspace trust enabled and exact synthetic folder granted, no parent trust",
+    "Exact installed directory, version and manifest identity",
+    "Cold Windows RCC bootstrap and actual language-server activation",
+    "Pinned Windows RCC/Runtime downloads and versions",
+    "Installed Win32 inspector found its own scoped native window"
+  ],
+  "first_fatal_gate": "Native debug adapter error before the first completed workload case",
+  "precise_underlying_cause": "Not established by the old receipt: onError discarded the actual exception. This is not a registry/path/activation failure.",
+  "bounded_change": "Retain scrubbed adapter exception/code/message, command names only, failed response metadata, bounded stderr and adapter exit. Never retain launch arguments, full environments or raw private logs. All workload assertions remain unchanged.",
+  "validation": "Three diagnostic security tests and changed Python/JS syntax pass; next exact-head native run required.",
+  "native_host_receipt": {
+    "platform": "win32",
+    "scope": "Actual installed Windows Code Extension Host, native registered debug adapters and SDK outputs; not a panel-button or Windows managed acceptance claim.",
+    "cases": [],
+    "checks": [
+      "Installed cold RCC Windows bootstrap and real language-server activation",
+      {
+        "tool": "rcc",
+        "version": "v18.19.8",
+        "sha256": "f5e868af05382731f6675d98ed6ead7c7e95b250466bc5fee054b41817280a89"
+      },
+      {
+        "tool": "action-server",
+        "version": "1.1.0",
+        "sha256": "44507e8dcd82fb367c616c699957611096bc05ff2ae5e0f41a11b98a98332098"
+      }
+    ],
+    "passed": false,
+    "workspaceTrust": {
+      "enabled": true,
+      "initiallyTrusted": false,
+      "folderCount": 1,
+      "exactSyntheticWorkspace": true,
+      "canonicalWorkspaceSha256": "ba77e48d990c2f3204b4b6dedef8ebcdf541c28dc29e98cd2397b45907c36aae",
+      "currentWorkspaceGranted": true
+    },
+    "extensionDiscovery": {
+      "initiallyAvailable": true,
+      "initialRegistry": [
+        {
+          "id": "automation-control-plane.automation-vscode",
+          "version": "2.20.26",
+          "directory": "automation-control-plane.automation-vscode-2.20.26"
+        },
+        {
+          "id": "ms-python.debugpy",
+          "version": "2026.6.0",
+          "directory": "ms-python.debugpy-2026.6.0-win32-x64"
+        },
+        {
+          "id": "ms-python.python",
+          "version": "2026.10.0",
+          "directory": "ms-python.python-2026.10.0-win32-x64"
+        },
+        {
+          "id": "ms-python.vscode-pylance",
+          "version": "2026.4.1",
+          "directory": "ms-python.vscode-pylance-2026.4.1"
+        },
+        {
+          "id": "ms-python.vscode-python-envs",
+          "version": "1.42.0",
+          "directory": "ms-python.vscode-python-envs-1.42.0-win32-x64"
+        },
+        {
+          "id": "task-local.windows-qualification",
+          "version": "0.0.1",
+          "directory": "controller"
+        }
+      ],
+      "expectedDirectory": "automation-control-plane.automation-vscode-2.20.26",
+      "expectedVersion": "2.20.26",
+      "actualDirectory": "automation-control-plane.automation-vscode-2.20.26",
+      "exactCanonicalDirectoryMatch": true,
+      "exactManifestMatch": true
+    },
+    "version": "2.20.26",
+    "debugger": [
+      {
+        "id": "ms-python.python",
+        "version": "2026.10.0"
+      },
+      {
+        "id": "ms-python.debugpy",
+        "version": "2026.6.0"
+      }
+    ],
+    "windowsIntegration": {
+      "native_win32": true,
+      "comtypes_import": true,
+      "installed_windows_inspector_found_owned_window": true,
+      "scope": "One owned Tk/Win32 window; no Java or broad inspector acceptance"
+    },
+    "blocker": "Error: Native debug adapter error"
+  },
+  "failed_native_artifact": {
+    "filename": "automation-vscode-2.20.26-win32-x64.vsix",
+    "sha256": "8b18008536064f4c61af92e56e2cf32ca81a2248988945ba9e66fd08e35f3444",
+    "size": 2223847
+  },
+  "windows_qualified": false
+}
