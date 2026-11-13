@@ -1,30 +1,47 @@
-# 2.20.27 candidate qualification
+# 2.20.27 release candidate qualification
 
-This candidate contains merged runtime Python path and optional editor integration fixes
-from PRs #7/#8. It is not published. See [source and gate ledger](qualification.json).
+This candidate delivers the merged runtime Python path and optional editor fixes from
+PRs #7/#8. It is not published. [Source and asset ledger](qualification.json).
 
-The final integrated Windows run failed before activation, despite successful packaging,
-installation registration, payload identity and unit contracts. Its artifact and failure
-remain attributed to their original source and hash. No product regression was proven.
+## Fresh native Windows
 
-The existing sole Windows lab owner identified the passing harness sequence: controller-local
-Code API import, exact native UI workspace trust, product registration, then lazy import of
-the unchanged original acceptance harness. Qualification now follows that sequence and
-pins the same Python/debugpy inputs without extension-pack dependencies. Prepared Python
-is explicitly available only on Code's child PATH. No global PATH, trust/registry/security
-setting or original workload assertion was changed. Native CI must prove this new sequence;
-its pending status is not a pass and the exited lab has not been restarted.
+[Run43442026636](https://github.com/automation-control-plane/automation-vscode/actions/runs/43442026636)
+passed for branch ec84e799. Its tested merge source has the identical complete tree.
+The exact [installed-host receipt](windows/installed-host.json) proves eight
+Action/Robot × File/SQLite × Run/Debug cases, four real breakpoint cases, attachments,
+edited replay, flat/src Action input creation and metadata, cold RCC/LS startup,
+pinned tool downloads, Runtime startup/stop and untouched occupied-listener refusal.
+All753 source/archive/installed payloads match. Raw Windows VSIX bytes are retained.
 
-[Fresh Linux evidence](linux-qualification.json) verifies the exact 2.20.27 VSIX with official
-checksum-pinned Code, compares all 753 source/archive/installed payloads, and runs discovery,
-metadata/input and mocked optional-integration contracts against installed code. It is not
-GUI, debugger or cold-RCC acceptance. The artifact is preserved outside the repository at
-`/tmp/automation-2.20.27/953932d6/automation-vscode-2.20.27-linux-x64.vsix`.
+The prior integrated run43431154086 failed before product activation. The corrected
+harness explicitly supplies prepared Python only on the Code child PATH and uses a
+controller-local bootstrap to grant exact-workspace native UI trust before importing
+the unchanged acceptance harness. Providers are pinned to the observed lab setup.
+[Entry receipt](windows/trust-entry.json) and [qualification receipt](windows/qualification.json)
+record the original harness hash and enforced trust/identity gates. No global PATH,
+registry, firewall, trust store or product assertion was changed. The fresh hosted pass
+qualifies this recipe; it is not a relabeling of the older independent lab passes.
 
-Full Node 24 coverage is 179/179 after updating stale tool identity assertions to the
-currently published RCC/Runtime pins and aligning the codegen test inventory. Acceptance
-assertions were retained, including fail-closed trust/import tests. Historical lab proofs,
-provider-matrix gaps, broader UI and cold-reset limits remain separate.
+## Fresh Linux
 
-Release remains gated on fresh native Windows artifact/installed acceptance, matching
-source/payload checks, final asset checksums and parent-owned consequential approvals.
+[Linux receipt](linux-qualification.json) verifies the exact2.20.27 VSIX using official
+checksum-pinned Code, all753 source/archive/installed payloads, installed-backend
+listing/metadata/input contracts and installed-JS optional-integration unit contracts.
+It does not claim GUI, debugger or cold-RCC acceptance. Source953932d6 differs from the
+qualified Windows branch only in excluded evidence files. [Cross-platform comparison](payload-comparison.json)
+finds only320 CRLF text-member differences; neither asset was normalized or repacked.
+
+Full Node24 coverage passes179/179. Focused Python checks pass23/23; harness boundaries
+pass9/9 and trust/import unit checks4/4. Stale tool identity expectations were updated
+to verified published RCC/Runtime pins; exact assertions and codegen parity are retained.
+
+## Limits and remaining approval
+
+The installed optional-provider matrix, Linux GUI/debugger/cold-RCC, Windows managed UI,
+Mac and broader UI gates remain separate. No release-wide or universal feature claim
+is made. Previous release limitations and backend-owned defects remain unchanged.
+The exited independent lab has not been restarted and its sole owner retains control.
+
+The release packet contains the two exact qualified VSIXs, sanitized QA receipts and
+checksums. Parent approval to merge PR9 and publish the owned release remains required.
+No tag, Marketplace or public release action has been performed.

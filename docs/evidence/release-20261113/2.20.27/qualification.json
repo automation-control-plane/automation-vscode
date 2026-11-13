@@ -1,11 +1,11 @@
 {
   "candidate": "2.20.27",
-  "status": "qualification in progress; not released",
+  "status": "fresh Windows/Linux candidate qualified within recorded scopes; not released",
   "merged_fixes_source": "e2276fbbae009f6db61af392deb9fd9c3cc72fe9",
   "linux_qualified_source": "953932d645753d589d13e2543eef197dd2b2dccf",
   "native_bootstrap_source": "93d126000035c36287e4e0ab4ec69528ca615b42",
-  "native_run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43441476353",
-  "native_status": "pending at capture; not a pass",
+  "native_run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43442026636",
+  "native_status": "passed; verified actual installed host8cases/4breakpoints",
   "failed_integrated_run": {
     "url": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43431154086",
     "pr_head": "ad61583b7e3131510ba979ac034738ab3697dfee",
@@ -21,10 +21,30 @@
     "trust_import_contracts_passed": 4
   },
   "limits": [
-    "No 2.20.27 native Windows pass yet",
-    "Linux proof is actual CLI installation and installed payload contracts, not GUI/debugger/cold RCC proof",
-    "Old lab passes are not acceptance for these new artifacts",
-    "No merge, tag, release or Marketplace publication performed",
-    "Existing lab owner alone controls guest; exited lab was not restarted"
+    "Only recorded2.20.27 artifacts receive these results; old lab receipts are not substituted",
+    "Linux scope remains actualCLI install/payload/backend and mocked editor contracts",
+    "No merge, tag or release publication performed",
+    "No guest or updater/environment changes; exited lab not restarted"
+  ],
+  "qualified_branch_head": "ec84e799b59624bba983ed413864d10380986118",
+  "native_ci_source": "bc7bad6f98113d8d921eb48f75b5a09e9e27a9e0",
+  "native_complete_tree_equals_qualified_branch": true,
+  "native_cases": 8,
+  "native_real_breakpoints": 4,
+  "installed_payloads_each": 753,
+  "windows_asset": {
+    "filename": "automation-vscode-2.20.27-win32-x64.vsix",
+    "sha256": "2d08e9f2c2160169f165c2dda7ba9b88002b0dcafda0b543b4ffa2752d8fdd89",
+    "size": 2225192
+  },
+  "linux_asset": {
+    "filename": "automation-vscode-2.20.27-linux-x64.vsix",
+    "sha256": "7b9fdba31d658f6b7e4d19dc97f7abce23ac0883aac186104a190086302a84bf"
+  },
+  "original_acceptance_harness_unchanged": true,
+  "remaining_gates": [
+    "Parent approval to merge preparation PR9 and publish owned2.20.27 release",
+    "No Marketplace or Mac publication",
+    "Full optional-provider installed matrix, Linux GUI/debugger/cold-RCC, Windows managed UI and broader UI are not certified"
   ]
 }
