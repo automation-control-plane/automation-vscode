@@ -64,6 +64,7 @@ import {
     updateActionInputsMetadata,
 } from "./actionInputs";
 import { langServer } from "../extension";
+import { createActionInputDirectory } from "../extensionStorage";
 import { fetchDataServerStatus, verifyDataExtensionIsInstalled } from "../dataExtension";
 
 export interface QuickPickItemAction extends QuickPickItem {
@@ -612,7 +613,7 @@ advised to regenerate it as it may not work with future versions of the extensio
             }
             inputValue = input.inputs.find((input) => input.inputName === selectedInput).inputValue;
         }
-        const tempInputFile = path.join(os.tmpdir(), `sema4ai_vscode_extension_input_${nameSlugified}.json`);
+        const tempInputFile = path.join(await createActionInputDirectory(), "input.json");
         await writeToFile(tempInputFile, JSON.stringify(inputValue, null, 4));
         targetInput = tempInputFile;
 

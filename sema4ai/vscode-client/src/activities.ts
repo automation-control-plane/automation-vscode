@@ -1,4 +1,5 @@
 import { publishedWorkItemEnvironment } from "./runtimePaths";
+import { getExtensionStorage } from "./extensionStorage";
 import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 import {
     commands,
@@ -900,6 +901,7 @@ export async function updateLaunchEnvironmentCommonTasksAndActions(
     targetYaml?: string
 ): Promise<Record<string, string>> {
     const newEnv = applyOutViewIntegrationEnvVars(environment);
+    newEnv.AUTOMATION_EXTENSION_STORAGE = environment.AUTOMATION_EXTENSION_STORAGE || getExtensionStorage();
 
     const externalApiUrl: unknown = legacyVendorIntegrationsEnabled() ? await langServer.sendRequest("getExternalApiUrl") : undefined;
     if (typeof externalApiUrl === "string" && externalApiUrl) {

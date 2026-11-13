@@ -67,6 +67,7 @@ TREE_VIEW_CONTAINERS = [
                     # See: https://code.visualstudio.com/api/references/contribution-points#contributes.menus
                     # for targets
                     "view/title": [
+                        Menu("automation.rcc.setup", MenuGroup.NAVIGATION),
                         Menu("sema4ai.refreshRobotsView", MenuGroup.NAVIGATION),
                         Menu(
                             "sema4ai.createTaskOrActionOrAgentPackage",

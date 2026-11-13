@@ -187,7 +187,8 @@ import { Mutex } from "./mutex";
 import { mergeEnviron } from "./subprocess";
 import { feedback } from "./rcc";
 import { showSubmitIssueUI } from "./submitIssue";
-import { profileImport, profileSwitch } from "./profiles";
+import { profileImport, profileSwitch, showRccSetup } from "./profiles";
+import { getExtensionStorage, initializeExtensionStorage } from "./extensionStorage";
 import { registerLinkProviders } from "./robo/linkProvider";
 import { runRobocorpTasks } from "./robo/runRobocorpTasks";
 import { RobotOutputViewProvider } from "./output/outView";
@@ -325,7 +326,8 @@ const serverOptions: ServerOptions = async function () {
             executableAndEnvEnviron = executableAndEnv.environ;
         }
 
-        let finalEnv = mergeEnviron({ ...executableAndEnvEnviron, PYTHONPATH: src });
+        let finalEnv = mergeEnviron({ ...executableAndEnvEnviron, PYTHONPATH: src,
+            AUTOMATION_EXTENSION_STORAGE: getExtensionStorage() });
         const serverProcess = cp.spawn(executableAndEnv.pythonExe, args, {
             env: finalEnv,
             cwd: path.dirname(executableAndEnv.pythonExe),
@@ -343,9 +345,11 @@ async function notifyOfInitializationErrorShowOutputTab(msg?: string) {
         msg = getLanguageServerStartup().status === "failed" ? getLanguageServerStartup().message :
             "Automation language services are not ready. See Output > Automation for startup details.";
     }
-    const choices = getLanguageServerStartup().status === "failed" ? ["Show Output > Automation", "Retry startup"] : ["Show Output > Automation"];
+    const choices = getLanguageServerStartup().status === "failed" ? ["Show Output > Automation", "RCC Profiles / Setup Diagnostics", "Retry startup"] : ["Show Output > Automation", "RCC Profiles / Setup Diagnostics"];
     const selection = await window.showErrorMessage(msg, ...choices);
-    if (selection === "Retry startup") {
+    if (selection === "RCC Profiles / Setup Diagnostics") {
+        await showRccSetup();
+    } else if (selection === "Retry startup") {
         await commands.executeCommand("workbench.action.reloadWindow");
     } else if (selection === "Show Output > Automation") {
         OUTPUT_CHANNEL.show();
@@ -536,8 +540,6 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(SEMA4AI_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW, newWorkItemInWorkItemsTree);
     C.register(SEMA4AI_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW, deleteWorkItemInWorkItemsTree);
     C.register(SEMA4AI_HELP_WORK_ITEMS, openWorkItemHelp);
-    C.register(SEMA4AI_PROFILE_IMPORT, async () => await profileImport());
-    C.register(SEMA4AI_PROFILE_SWITCH, async () => await profileSwitch());
     C.register(SEMA4AI_ACTION_SERVER_CLOUD_LOGIN, async () => await actionServerCloudLogin());
     C.register(SEMA4AI_ACTION_SERVER_PACKAGE_PUBLISH, publishActionPackage);
     C.register(SEMA4AI_ACTION_SERVER_PACKAGE_BUILD, buildActionPackage);
@@ -719,6 +721,7 @@ function checkDeprecatedRobocorpCoreExtension() {
 }
 
 export async function activate(context: ExtensionContext) {
+    initializeExtensionStorage(context.globalStorageUri.fsPath);
     beginLanguageServerStartup();
     initializeRuntimeOwnership(context.workspaceState);
     GLOBAL_STATE = context.globalState;
@@ -754,6 +757,9 @@ interface ExecuteWorkspaceCommandArgs {
 }
 
 export async function doActivate(context: ExtensionContext, C: CommandRegistry) {
+    C.registerWithoutStub("automation.rcc.setup", showRccSetup);
+    C.registerWithoutStub(SEMA4AI_PROFILE_IMPORT, profileImport);
+    C.registerWithoutStub(SEMA4AI_PROFILE_SWITCH, profileSwitch);
     registerNativeWorkItems(context);
     // Note: register the submit issue actions early on so that we can later actually
     // report startup errors.

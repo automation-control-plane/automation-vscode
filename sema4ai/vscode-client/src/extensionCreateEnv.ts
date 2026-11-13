@@ -26,6 +26,7 @@ import { getProceedwithlongpathsdisabled, setProceedwithlongpathsdisabled, getLa
 import { ActionResult, InterpreterInfo } from "./protocols";
 import { join } from "path";
 import { GLOBAL_STATE } from "./extension";
+import { openDiagnosticsHelp, resolveDiagnosticsHelp } from "./diagnosticsHelp";
 
 async function resolveDrive(driveLetter: string): Promise<string | undefined> {
     const output = await execFilePromise(
@@ -156,7 +157,7 @@ async function isLongPathSupportEnabledOnWindows(rccLocation: string, robocorpHo
         } catch (error) {
             // Ignore error
         }
-        OUTPUT_CHANNEL.appendLine("Windows long paths support enabled");
+        OUTPUT_CHANNEL.appendLine(enabled ? "Windows long paths support enabled" : "Windows long paths support disabled");
         return enabled;
     } catch (error) {
         OUTPUT_CHANNEL.appendLine("Windows long paths support not enabled. Error: " + error.message);
@@ -383,13 +384,6 @@ export async function basicValidations(
         }
     }
 
-    function createOpenUrl(failedCheck) {
-        return (value) => {
-            if (value == "Open troubleshoot URL") {
-                env.openExternal(Uri.parse(failedCheck.url));
-            }
-        };
-    }
     let canProceed: boolean = true;
     for (const failedCheck of rccDiagnostics.failedChecks) {
         if (failedCheck.status == STATUS_FATAL) {
@@ -410,10 +404,15 @@ export async function basicValidations(
         if (func) {
             // Warning or error pop-up will be shown
             // Add link to help if available
-            if (failedCheck.url) {
-                func(failedCheck.message, "Open troubleshoot URL").then(createOpenUrl(failedCheck));
+            if (resolveDiagnosticsHelp(failedCheck.url)) {
+                Promise.resolve(func(failedCheck.message, "Open troubleshoot URL")).then(async (value) => {
+                    if (value === "Open troubleshoot URL") {
+                        await openDiagnosticsHelp(failedCheck.url, (url) => env.openExternal(Uri.parse(url)),
+                            (message) => window.showWarningMessage(message));
+                    }
+                }).catch(() => OUTPUT_CHANNEL.appendLine("RCC troubleshooting help could not be displayed. See the Automation diagnostics output."));
             } else {
-                func(failedCheck.message);
+                func(`${failedCheck.message} Troubleshooting link unavailable. See the Automation output for RCC diagnostics.`);
             }
         }
     }
