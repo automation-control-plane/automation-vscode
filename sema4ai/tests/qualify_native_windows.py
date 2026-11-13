@@ -6,6 +6,7 @@ Only public receipts go in public/. Private Code/RCC logs stay outside it.
 import argparse
 import hashlib
 import json
+import ntpath
 import os
 from pathlib import Path
 import shutil
@@ -39,6 +40,15 @@ def clean_environment(source, extra=None):
 def digest(path):
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def code_path(path):
+    """Match Code's drive-letter URI spelling without changing the owned path."""
+    value = ntpath.normpath(str(path))
+    drive, tail = ntpath.splitdrive(value)
+    if len(drive) != 2 or drive[1] != ":" or not tail.startswith("\\"):
+        raise ValueError("Code qualification requires an absolute local Windows path")
+    return drive.lower() + tail
 
 
 def code_cli_entry(code_root):
@@ -133,12 +143,12 @@ def main():
         extract_archive(archive, code_root)
         code = code_root / "Code.exe"
         profile, extensions = root / "profile", root / "extensions"
-        cli = [str(code), str(code_cli_entry(code_root))]
+        cli = [code_path(code), code_path(code_cli_entry(code_root))]
         cli_env = {**env, "ELECTRON_RUN_AS_NODE": "1"}
-        run([*cli, f"--user-data-dir={profile}", f"--extensions-dir={extensions}",
-             "--install-extension", str(vsix)], "install-vsix", environment=cli_env)
+        run([*cli, f"--user-data-dir={code_path(profile)}", f"--extensions-dir={code_path(extensions)}",
+             "--install-extension", code_path(vsix)], "install-vsix", environment=cli_env)
         # Public debugger prerequisite, no publisher account or credential.
-        run([*cli, f"--user-data-dir={profile}", f"--extensions-dir={extensions}",
+        run([*cli, f"--user-data-dir={code_path(profile)}", f"--extensions-dir={code_path(extensions)}",
              "--install-extension", "ms-python.python"], "install-python", environment=cli_env)
         installed = next(p for p in extensions.glob("automation-control-plane.automation-vscode-*") if p.is_dir())
         mismatches = []
@@ -186,11 +196,11 @@ def main():
         ui_python = driver_venv / "Scripts/python.exe"
         run([str(ui_python), "-m", "pip", "install", "--disable-pip-version-check", "--no-input", "playwright==1.52.0"], "ui-driver-dependencies")
         with (root / "extension-host.private.log").open("wb") as log:
-            child = subprocess.Popen([str(code), f"--user-data-dir={profile}",
-                f"--extensions-dir={extensions}", f"--extensionDevelopmentPath={controller}",
-                f"--extensionTestsPath={test_path}", "--skip-welcome", "--skip-release-notes",
+            child = subprocess.Popen([code_path(code), f"--user-data-dir={code_path(profile)}",
+                f"--extensions-dir={code_path(extensions)}", f"--extensionDevelopmentPath={code_path(controller)}",
+                f"--extensionTestsPath={code_path(test_path)}", "--skip-welcome", "--skip-release-notes",
                 "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=18527",
-                str(workspace)], env=env, stdout=log, stderr=subprocess.STDOUT)
+                code_path(workspace)], env=env, stdout=log, stderr=subprocess.STDOUT)
             run([str(ui_python), str(extension / "tests/windows_workspace_trust.py"),
                  "--state", str(root)], "workspace-trust-ui")
             try:
