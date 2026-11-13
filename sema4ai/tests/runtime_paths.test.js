@@ -31,9 +31,9 @@ test("Windows paths retain their drive and separators", () => {
 test("Published artifacts have exact identity and no architecture fallback", () => {
     assert.equal(
         publishedTool("rcc", "linux", "x64").sha256,
-        "f8e0394be7f47ee84d6f4cd734822b87b492a4d6102f977f6a18f29453703d48"
+        "ea8dc96e66d7a81536b03a344b4eaf44bbd94122585954e70290bd466f5de4b6"
     );
-    assert.equal(publishedTool("action-server", "win32", "x64").name, "actions-runtime-1.0.4-windows64.exe");
+    assert.equal(publishedTool("action-server", "win32", "x64").name, "actions-runtime-1.1.0-windows64.exe");
     assert.throws(() => publishedTool("rcc", "linux", "arm64"), /No published/);
 });
 

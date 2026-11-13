@@ -51,6 +51,18 @@ def code_path(path):
     return drive.lower() + tail
 
 
+def code_environment(source, python_executable):
+    """Give Code/debug adapters the prepared Python, without host PATH changes."""
+    inherited = next((value for key, value in source.items() if key.upper() == "PATH"), "")
+    result = {key: value for key, value in source.items() if key.upper() != "PATH"}
+    directory = ntpath.dirname(code_path(python_executable))
+    entries = [directory, ntpath.join(directory, "Scripts")]
+    if inherited:
+        entries.append(inherited)
+    result["PATH"] = ";".join(entries)
+    return result
+
+
 def code_cli_entry(code_root):
     candidates = [code_root / "resources/app/out/cli.js", *code_root.glob("*/resources/app/out/cli.js")]
     present = [entry for entry in candidates if entry.is_file()]
@@ -117,6 +129,11 @@ def main():
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\FileSystem") as key:
             if winreg.QueryValueEx(key, "LongPathsEnabled")[0] != 1:
                 raise RuntimeError("Windows long paths are disabled; no registry change attempted")
+        env = code_environment(env, sys.executable)
+        selected_python = shutil.which("python.exe", path=env["PATH"])
+        if not selected_python or ntpath.normcase(selected_python) != ntpath.normcase(sys.executable):
+            raise RuntimeError("Code child PATH does not resolve the prepared Python")
+        report["prepared_python_on_code_path"] = True
         report["source"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, env=env, text=True).strip()
         version = json.loads((extension / "package.json").read_text())["version"]
         vsix = public / f"automation-vscode-{version}-win32-x64.vsix"

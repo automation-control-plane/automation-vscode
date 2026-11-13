@@ -50,6 +50,16 @@ class WindowsQualificationBoundaries(unittest.TestCase):
             with self.assertRaises(ValueError):
                 driver.code_path(value)
 
+    def test_code_child_uses_prepared_python_without_mutating_inherited_path(self):
+        inherited = {"Path": r"C:\Tools;C:\Windows", "HOME": "owned-home"}
+        original = inherited.copy()
+        result = driver.code_environment(inherited, r"C:\Prepared Python\python.exe")
+        self.assertEqual(inherited, original)
+        self.assertNotIn("Path", result)
+        self.assertEqual(result["PATH"], r"c:\Prepared Python;c:\Prepared Python\Scripts;C:\Tools;C:\Windows")
+        self.assertEqual(result["HOME"], "owned-home")
+        self.assertEqual(driver.code_environment({}, r"D:\Python\python.exe")["PATH"], r"d:\Python;d:\Python\Scripts")
+
     def test_official_versioned_cli_layout_is_resolved(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
