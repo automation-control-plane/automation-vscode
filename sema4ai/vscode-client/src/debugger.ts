@@ -1,5 +1,6 @@
 import { getRccLocation as getConfiguredRcc } from "./rcc";
 import { runtimeEnvironment } from "./runtimePaths";
+import { getExtensionStorage } from "./extensionStorage";
 import * as path from "path";
 import * as fs from "fs";
 import {
@@ -22,10 +23,7 @@ import {
     SEMA4AI_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
 } from "./robocorpCommands";
 import { globalCachedPythonInfo } from "./extension";
-import {
-    disablePythonTerminalActivateEnvironment,
-    isPyDevDebuggerPythonExtensionInstalled,
-} from "./pythonExtIntegration";
+import { disablePythonTerminalActivateEnvironment } from "./pythonExtIntegration";
 import { InterpreterInfo } from "./protocols";
 
 interface ActionResult {
@@ -34,38 +32,47 @@ interface ActionResult {
     result: any;
 }
 
+function ownedPythonRun(configuration: DebugConfiguration): DebugConfiguration {
+    return {
+        ...configuration,
+        type: "sema4ai",
+        noDebug: true,
+        automationResolvedPython: true,
+        terminal: configuration.terminal || (configuration.console === "internalConsole" ? "none" :
+            configuration.console === "externalTerminal" ? "external" : "integrated"),
+    };
+}
+
 export async function updateDebugConfigurationAndAutoActivatePythonExtension(
     debugConfiguration: DebugConfiguration
 ): Promise<DebugConfiguration | undefined> {
     const isPythonRun = debugConfiguration && debugConfiguration.type && debugConfiguration.type == "python";
     if (isPythonRun) {
-        let extension = extensions.getExtension("ms-python.python");
-        if (extension) {
-            if (!extension.isActive) {
-                // i.e.: Auto-activate python extension for the launch as the extension
-                // is only activated for debug on the resolution, whereas in this case
-                // the launch is already resolved.
-                await extension.activate();
+        if (debugConfiguration.noDebug === true) return ownedPythonRun(debugConfiguration);
+        for (const [id, type] of [["ms-python.debugpy", "debugpy"], ["ms-python.python", "python"],
+            ["fabioz.vscode-pydev-python-debugger", "pydevd"]]) {
+            const extension = extensions.getExtension(id);
+            const contributions: unknown = extension?.packageJSON?.contributes?.debuggers;
+            if (!extension || !Array.isArray(contributions) || !contributions.some(value =>
+                value !== null && typeof value === "object" && "type" in value && value.type === type)) continue;
+            try {
+                if (!extension.isActive) await extension.activate();
+            } catch {
+                await window.showErrorMessage(`Unable to activate Python debugging provider ${id}. Check its extension output and try again.`);
+                return;
             }
-        } else if (await isPyDevDebuggerPythonExtensionInstalled()) {
-            let extension = extensions.getExtension("fabioz.vscode-pydev-python-debugger");
-            if (extension) {
-                if (!extension.isActive) {
-                    // i.e.: Auto-activate python extension for the launch as the extension
-                    // is only activated for debug on the resolution, whereas in this case
-                    // the launch is already resolved.
-                    await extension.activate();
-                }
-            }
-            debugConfiguration.type = "pydevd";
-            debugConfiguration.pythonExecutable = debugConfiguration.python;
-        } else {
-            const msg =
-                "It's not possible to make a python launch without the ms-python.python or fabioz.vscode-pydev-python-debugger extension installed.";
-            OUTPUT_CHANNEL.appendLine(msg);
-            window.showErrorMessage(msg);
-            return;
+            debugConfiguration.type = type;
+            if (type === "pydevd") debugConfiguration.pythonExecutable = debugConfiguration.python;
+            return debugConfiguration;
         }
+        const msg = "Python Debug requires a supported debugger contribution: ms-python.debugpy (Python Debugger), " +
+            "legacy ms-python.python with a python adapter, or fabioz.vscode-pydev-python-debugger. " +
+            "Ordinary Run does not require these extensions.";
+        OUTPUT_CHANNEL.appendLine(msg);
+        if (await window.showErrorMessage(msg, "Open Python Debugger") === "Open Python Debugger") {
+            await commands.executeCommand("extension.open", "ms-python.debugpy");
+        }
+        return;
     }
 
     return debugConfiguration;
@@ -89,6 +96,12 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
         debugConfiguration: DebugConfiguration,
         token?: CancellationToken
     ): Promise<DebugConfiguration> {
+        if (token?.isCancellationRequested) return;
+        if (debugConfiguration.automationResolvedPython === true) {
+            if (debugConfiguration.noDebug === true) return debugConfiguration;
+            await window.showErrorMessage("The owned Python execution adapter supports Run only. Select Debug to resolve a supported Python debugger.");
+            return;
+        }
         let isActionPackageLaunch = false;
         let targetYaml;
         if (debugConfiguration.robot) {
@@ -256,6 +269,10 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
             window.showErrorMessage(actionResult.message);
             return;
         }
+        if (token?.isCancellationRequested) return;
+        result.noDebug = debugConfiguration.noDebug;
+        if (debugConfiguration.terminal) result.terminal = debugConfiguration.terminal;
+        if (isActionPackageLaunch) result.automationRuntimeKind = "actions";
         result = await updateDebugConfigurationAndAutoActivatePythonExtension(result);
         if (!result) return;
 
@@ -272,8 +289,9 @@ export function registerDebugger() {
         if (!env) {
             env = {};
         }
-        const homes = runtimeEnvironment("robots", roboConfig.getHome());
-        env = { ...homes, ...env, AUTOMATION_RCC_LOCATION: await getConfiguredRcc() };
+        const homes = runtimeEnvironment(config.automationRuntimeKind === "actions" ? "actions" : "robots", roboConfig.getHome());
+        env = { ...homes, ...env, AUTOMATION_RCC_LOCATION: await getConfiguredRcc(),
+            AUTOMATION_EXTENSION_STORAGE: env.AUTOMATION_EXTENSION_STORAGE || getExtensionStorage() };
         let targetMain: string = path.resolve(__dirname, "../../src/sema4ai_code_debug_adapter/__main__.py");
         if (!fs.existsSync(targetMain)) {
             window.showWarningMessage("Error. Expected: " + targetMain + " to exist.");
