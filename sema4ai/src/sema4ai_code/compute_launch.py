@@ -96,8 +96,10 @@ def _compute_action_package_launch(
     if python_exe:
         result["python"] = python_exe
 
-    if env:
-        result["env"] = env
+    if env or additional_pythonpath_entries:
+        from sema4ai_code.robo.pythonpath import package_environment
+
+        result["env"] = package_environment(env or {}, additional_pythonpath_entries or [])
 
     return {"success": True, "message": None, "result": result}
 

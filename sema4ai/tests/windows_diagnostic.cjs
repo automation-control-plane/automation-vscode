@@ -29,8 +29,15 @@ function collectAdapterFailures(root) {
     const codeLogs = path.join(root, 'profile/logs');
     if (fs.existsSync(codeLogs)) {
         for (const entry of fs.readdirSync(codeLogs, {withFileTypes: true}).filter(entry => entry.isDirectory()).slice(0, 10)) {
-            const file = path.join(codeLogs, entry.name, 'ptyhost.log');
-            if (fs.existsSync(file) && fs.lstatSync(file).isFile()) inputs.push({name: 'ptyhost.log', file, source: 'code-pty'});
+            const session = path.join(codeLogs, entry.name);
+            const candidates = ['ptyhost.log', 'main.log', 'sharedprocess.log'];
+            for (const window of fs.readdirSync(session, {withFileTypes: true}).filter(item => item.isDirectory() && /^window\d+$/.test(item.name)).slice(0, 4)) {
+                candidates.push(`${window.name}/renderer.log`, `${window.name}/exthost/exthost.log`);
+            }
+            for (const name of candidates) {
+                const file = path.join(session, name);
+                if (fs.existsSync(file) && fs.lstatSync(file).isFile()) inputs.push({name, file, source: name === 'ptyhost.log' ? 'code-pty' : 'code-discovery'});
+            }
         }
     }
     const files = inputs.map(({name, file, source}) => {
@@ -60,7 +67,7 @@ function collectAdapterFailures(root) {
 
 function fatalDiagnosticLines(text, root) {
     return String(text).split(/\r?\n/).filter(line =>
-        /[A-Za-z_.]+(?:Error|Exception)|Fatal Python error|Traceback|uncaught|Unhandled|failed|cannot|not found|Errno|WinError|^E\+\d/i.test(line))
+        /[A-Za-z_.]+(?:Error|Exception)|Fatal Python error|Traceback|uncaught|Unhandled|failed|cannot|not found|Errno|WinError|^E\+\d|extension.*(?:incompat|invalid|disabled|ignor|skip|scan)|onEnablementChanged|_deltaExtensions|workspace.*trust/i.test(line))
         .map(line => scrubDiagnostic(line, root)).filter(Boolean);
 }
 
