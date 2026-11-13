@@ -30,7 +30,7 @@ def clean_environment(source, extra=None):
     result = {key: value for key, value in source.items() if key.upper() in SYSTEM_KEYS}
     result.update(PYTHONNOUSERSITE="1", PYTHONUTF8="1")
     if extra:
-        task_keys = {"HOME", "ACTIONS_HOME", "ROBOTS_HOME", "RCC_HOLOTREE_MODE", "AUTOMATION_WINDOWS_QA", "DEBUGPY_LOG_DIR", "CI"}
+        task_keys = {"HOME", "ACTIONS_HOME", "ROBOTS_HOME", "RCC_HOLOTREE_MODE", "AUTOMATION_WINDOWS_QA", "DEBUGPY_LOG_DIR", "CI", "AUTOMATION_WINDOWS_QA_PHASE"}
         if any(key.upper() not in SYSTEM_KEYS | task_keys for key in extra):
             raise ValueError("Unapproved QA environment variable")
         result.update(extra)
@@ -204,21 +204,33 @@ def main():
         run([sys.executable, "-m", "venv", str(driver_venv)], "ui-driver-venv")
         ui_python = driver_venv / "Scripts/python.exe"
         run([str(ui_python), "-m", "pip", "install", "--disable-pip-version-check", "--no-input", "playwright==1.52.0"], "ui-driver-dependencies")
-        with (root / "extension-host.private.log").open("wb") as log:
-            child = subprocess.Popen([code_path(code), f"--user-data-dir={code_path(profile)}",
-                f"--extensions-dir={code_path(extensions)}", f"--extensionDevelopmentPath={code_path(controller)}",
-                f"--extensionTestsPath={code_path(test_path)}", "--skip-welcome", "--skip-release-notes",
-                "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=18527",
-                code_path(workspace)], env=env, stdout=log, stderr=subprocess.STDOUT)
-            run([str(ui_python), str(extension / "tests/windows_workspace_trust.py"),
-                 "--state", str(root)], "workspace-trust-ui")
-            try:
-                status = child.wait(timeout=2400)
-            except subprocess.TimeoutExpired:
-                raise RuntimeError("Native Extension Host acceptance timed out; no replay attempted")
-        host = public / "installed-host.json"
-        if status != 0 or not host.exists() or not json.loads(host.read_text()).get("passed"):
-            raise RuntimeError("Actual installed Extension Host did not pass; see sanitized host receipt")
+        # Trust must be granted in the actual test-host window. Its initial
+        # restricted extension registry is not acceptance: start the same host
+        # afresh after that window records the exact workspace trust decision.
+        for phase in ("trust", "acceptance"):
+            host = public / "installed-host.json"
+            host.unlink(missing_ok=True)
+            with (root / f"extension-host-{phase}.private.log").open("wb") as log:
+                child = subprocess.Popen([code_path(code), f"--user-data-dir={code_path(profile)}",
+                    f"--extensions-dir={code_path(extensions)}", f"--extensionDevelopmentPath={code_path(controller)}",
+                    f"--extensionTestsPath={code_path(test_path)}", "--skip-welcome", "--skip-release-notes",
+                    "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=18527",
+                    code_path(workspace)], env={**env, "AUTOMATION_WINDOWS_QA_PHASE": phase},
+                    stdout=log, stderr=subprocess.STDOUT)
+                if phase == "trust":
+                    run([str(ui_python), str(extension / "tests/windows_workspace_trust.py"),
+                         "--state", str(root)], "workspace-trust-ui")
+                try:
+                    status = child.wait(timeout=2400)
+                except subprocess.TimeoutExpired:
+                    raise RuntimeError("Native Extension Host acceptance timed out; no replay attempted")
+            receipt = json.loads(host.read_text()) if host.exists() else {}
+            if status != 0 or not receipt.get("passed") or receipt.get("phase") != phase:
+                raise RuntimeError(f"Actual installed Extension Host {phase} did not pass; see sanitized host receipt")
+            if phase == "trust":
+                shutil.copyfile(host, public / "test-host-trust.json")
+                report["checks"].append("Exact test-host workspace trusted through UI; no acceptance claimed from restricted host")
+                save()
         report["checks"].append("Actual installed Extension Host completed all required native gates")
         report["passed"] = True
     except Exception as error:
