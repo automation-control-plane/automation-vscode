@@ -148,6 +148,16 @@ def main():
         # Public debugger prerequisite, no publisher account or credential.
         run([*cli, f"--user-data-dir={code_path(profile)}", f"--extensions-dir={code_path(extensions)}",
              "--install-extension", "ms-python.python"], "install-python", environment=cli_env)
+        # Compare on-disk registration with the later native API registry. Do not
+        # serialize installation metadata, machine paths, or arbitrary extensions.
+        admitted = {"automation-control-plane.automation-vscode", "ms-python.python",
+                    "ms-python.debugpy", "ms-python.vscode-pylance"}
+        registry = json.loads((extensions / "extensions.json").read_text())
+        report["disk_registered_extension_ids"] = sorted({
+            item.get("identifier", {}).get("id") for item in registry
+            if item.get("identifier", {}).get("id") in admitted
+        })
+        save()
         installed = next(p for p in extensions.glob("automation-control-plane.automation-vscode-*") if p.is_dir())
         mismatches = []
         with zipfile.ZipFile(vsix) as zipped:
