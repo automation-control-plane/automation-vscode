@@ -42,6 +42,14 @@ class WindowsQualificationBoundaries(unittest.TestCase):
             self.assertFalse(trust_driver.native_workspace_bound({"workspaceTrust": {**trust, **changed}}, folder))
         self.assertFalse(trust_driver.native_workspace_bound({}, folder))
 
+    def test_code_paths_share_drive_spelling_without_lowercasing_names(self):
+        for drive in ("C", "c", "D", "d"):
+            value = drive + ":/Owned Fixture/Controller/tests.cjs"
+            self.assertEqual(driver.code_path(value), drive.lower() + ":\\Owned Fixture\\Controller\\tests.cjs")
+        for value in ("relative/path", "C:relative", "\\\\server\\share\\fixture"):
+            with self.assertRaises(ValueError):
+                driver.code_path(value)
+
     def test_official_versioned_cli_layout_is_resolved(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
