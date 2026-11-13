@@ -2,14 +2,17 @@ const {test} = require("node:test");
 const assert = require("node:assert/strict");
 const Module = require("node:module");
 let extension, environmentsExtension, resolvedInterpreter, resourceConfig, environmentsEnabled;
+let analysisRegistered = false, analysisPaths = [], analysisWrites = [], analysisFailure;
+let analysisUpdateAttempts = 0;
 const output = [];
+const errorLogs = [];
 const resource = {fsPath: "/work/action-package/package.yaml", toString: () => "file:///work/action-package/package.yaml"};
 
 test("Task code lens does not start a debug session when debugger resolution declines", async () => {
     const calls = [];
     const original = Module._load;
     Module._load = function(name, parent, ...args) {
-        if (parent?.filename.endsWith("/robo/runRobocorpTasks.js")) {
+        if (parent?.filename.replaceAll("\\", "/").endsWith("/robo/runRobocorpTasks.js")) {
             if (name === "vscode") return {
                 commands: {executeCommand: async () => ({success: false, message: "No fixture interpreter"})},
                 debug: {startDebugging: (...args) => calls.push(args)},
@@ -32,7 +35,7 @@ test("Native Python launch refuses a missing debugger instead of selecting absen
     let installed;
     const original = Module._load;
     Module._load = function(name, parent, ...args) {
-        if (parent?.filename.endsWith("/debugger.js")) {
+        if (parent?.filename.replaceAll("\\", "/").endsWith("/debugger.js")) {
             if (name === "vscode") return {
                 extensions: {getExtension: id => installed?.id === id ? installed : undefined},
                 window: {showErrorMessage: message => messages.push(message)},
@@ -64,8 +67,16 @@ const vscode = {
     Uri: {file: fsPath => ({fsPath})},
     workspace: {
         getConfiguration: (_, uri) => {resourceConfig = uri; return {
-            get: key => key === "useEnvironmentsExtension" ? false : "/legacy/python",
-            inspect: () => ({globalValue: environmentsEnabled}), update: async () => {},
+            get: key => key === "analysis.extraPaths" ? analysisPaths : key === "useEnvironmentsExtension" ? false : "/legacy/python",
+            inspect: key => key === "analysis.extraPaths" ? (analysisRegistered ? {defaultValue: []} : {globalValue: analysisPaths}) : ({globalValue: environmentsEnabled}),
+            update: async (key, value, target) => {
+                if (key !== "analysis.extraPaths") return;
+                analysisUpdateAttempts++;
+                assert.equal(analysisRegistered, true, "Unregistered configuration must never be written");
+                if (analysisFailure) throw analysisFailure;
+                analysisWrites.push({value, target});
+                analysisPaths = value;
+            },
         };},
         getWorkspaceFolder: () => ({}),
     },
@@ -74,10 +85,10 @@ const vscode = {
 };
 const load = Module._load;
 Module._load = function(name, parent, main) {
-    if (parent?.filename.endsWith("/pythonExtIntegration.js")) {
+    if (parent?.filename.replaceAll("\\", "/").endsWith("/pythonExtIntegration.js")) {
         if (name === "vscode") return vscode;
         if (name === "./activities") return {resolveInterpreter: async () => resolvedInterpreter};
-        if (name === "./channel") return {logError: assert.fail, OUTPUT_CHANNEL: {appendLine: value => output.push(value)}};
+        if (name === "./channel") return {logError: (...args) => errorLogs.push(args), OUTPUT_CHANNEL: {appendLine: value => output.push(value)}};
         if (name === "./progress") return {handleProgressMessage() {}};
         if (name === "./robocorpSettings") return {getAutosetpythonextensioninterpreter: () => true};
         return {};
@@ -110,6 +121,17 @@ test("Current Python lookup resolves the selected environment and never reports 
     extension.exports.environments.resolveEnvironment = async () => undefined;
     assert.equal(await integration.getPythonExecutable(resource), undefined);
     assert.ok(output.some(line => line.includes("resolved executable: unresolved")));
+});
+
+test("Explicit Python lookup still logs provider query errors", async () => {
+    const start = errorLogs.length;
+    extension = {isActive: true, exports: {ready: Promise.resolve(), environments: {
+        getActiveEnvironmentPath: () => {throw Error("fixture lookup failure");},
+        resolveEnvironment: async () => undefined,
+    }}};
+    assert.equal(await integration.getPythonExecutable(resource), undefined);
+    assert.equal(errorLogs.slice(start).length, 1);
+    assert.match(errorLogs[start][1].message, /fixture lookup failure/);
 });
 
 test("Automatic package selection waits for the asynchronous Python API update", async () => {
@@ -186,4 +208,97 @@ test("Explicitly disabled Python Environments keeps the scoped legacy API withou
         await integration.setPythonInterpreterForPythonExtension("/rcc/bin/python", resource);
         assert.deepEqual(calls, [["/rcc/bin/python", resource]]);
     } finally {environmentsExtension = undefined; environmentsEnabled = undefined;}
+});
+
+
+test("Absent Python tooling skips unregistered analysis on repeated document updates", async () => {
+    extension = undefined;
+    analysisRegistered = false; analysisPaths = []; analysisWrites = []; analysisUpdateAttempts = 0;
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["/work/src"]}};
+    const start = output.length;
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.deepEqual(analysisWrites, []);
+    assert.equal(analysisUpdateAttempts, 0);
+    assert.equal(output.slice(start).filter(line => line.includes("analysis.extraPaths")).length, 1);
+    assert.equal(output.slice(start).filter(line => line.includes("Install ms-python.python")).length, 1);
+    analysisPaths = ["stale-user/path"];
+    await integration.autoUpdateInterpreter(resource);
+    assert.deepEqual(analysisWrites, []);
+    assert.equal(analysisUpdateAttempts, 0);
+    assert.equal(output.slice(start).filter(line => line.includes("analysis.extraPaths")).length, 1);
+});
+
+test("Python API selection succeeds with an unregistered analysis setting", async () => {
+    analysisRegistered = false; analysisWrites = []; analysisUpdateAttempts = 0;
+    let selected = 0;
+    extension = {isActive: true, exports: {environments: {updateActiveEnvironmentPath: async () => selected++}}};
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["/work/src"]}};
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.equal(selected, 1);
+    assert.deepEqual(analysisWrites, []);
+    assert.equal(analysisUpdateAttempts, 0);
+});
+
+test("Registered analysis works independently of Python and preserves existing paths without repeated writes", async () => {
+    analysisRegistered = true; analysisPaths = []; analysisWrites = [];
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["/work/empty"]}};
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.deepEqual(analysisWrites, [{value: ["/work/empty"], target: 3}]);
+
+    extension = undefined;
+    analysisRegistered = true;
+    analysisPaths = ["user/path", "C:\\work\\src"];
+    const original = analysisPaths;
+    analysisWrites = [];
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["C:/work/src", "/work/support", "/work/support"]}};
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.deepEqual(original, ["user/path", "C:\\work\\src"]);
+    assert.deepEqual(analysisWrites, [{value: ["user/path", "C:\\work\\src", "/work/support"], target: 3}]);
+    resolvedInterpreter.result.additionalPythonpathEntries = ["/work/new"];
+    await integration.autoUpdateInterpreter(resource);
+    assert.deepEqual(analysisPaths, ["user/path", "C:\\work\\src", "/work/support", "/work/new"]);
+});
+
+test("Repeated automatic Python query failures are deduplicated and do not block RCC or analysis", async () => {
+    analysisRegistered = true; analysisPaths = []; analysisWrites = [];
+    let selected = 0;
+    extension = {isActive: true, exports: {ready: Promise.resolve(), environments: {
+        getActiveEnvironmentPath: () => {throw Error("fixture automatic lookup failure");},
+        resolveEnvironment: async () => undefined,
+        updateActiveEnvironmentPath: async () => selected++,
+    }}};
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["/work/src"]}};
+    const start = output.length;
+    const errorStart = errorLogs.length;
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.equal(selected, 2);
+    assert.deepEqual(analysisPaths, ["/work/src"]);
+    assert.equal(output.slice(start).filter(line => line.includes("Optional Python interpreter query failed")).length, 1);
+    assert.equal(errorLogs.slice(errorStart).length, 0);
+});
+
+test("Failing Python API does not prevent registered analysis integration", async () => {
+    analysisRegistered = true; analysisPaths = []; analysisWrites = [];
+    extension = {isActive: true, exports: {environments: {updateActiveEnvironmentPath: async () => {throw Error("fixture provider unavailable");}}}};
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["/work/src"]}};
+    assert.equal(await integration.autoUpdateInterpreter(resource), true);
+    assert.deepEqual(analysisPaths, ["/work/src"]);
+});
+
+test("Failing analysis does not invalidate RCC resolution or repeat diagnostics", async () => {
+    analysisRegistered = true; analysisPaths = []; analysisWrites = [];
+    let selected = 0;
+    extension = {isActive: true, exports: {environments: {updateActiveEnvironmentPath: async () => selected++}}};
+    resolvedInterpreter = {success: true, result: {pythonExe: "/rcc/bin/python", additionalPythonpathEntries: ["/work/src"]}};
+    analysisFailure = Error("fixture analysis unavailable");
+    const start = output.length;
+    try {
+        assert.equal(await integration.autoUpdateInterpreter(resource), true);
+        assert.equal(await integration.autoUpdateInterpreter(resource), true);
+        assert.equal(selected, 2);
+        assert.equal(output.slice(start).filter(line => line.includes("Optional Python analysis update failed")).length, 1);
+    } finally {analysisFailure = undefined;}
 });
