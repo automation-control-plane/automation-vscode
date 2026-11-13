@@ -1,0 +1,30 @@
+{
+  "candidate": "2.20.27",
+  "status": "qualification in progress; not released",
+  "merged_fixes_source": "e2276fbbae009f6db61af392deb9fd9c3cc72fe9",
+  "linux_qualified_source": "953932d645753d589d13e2543eef197dd2b2dccf",
+  "native_bootstrap_source": "93d126000035c36287e4e0ab4ec69528ca615b42",
+  "native_run": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43441476353",
+  "native_status": "pending at capture; not a pass",
+  "failed_integrated_run": {
+    "url": "https://github.com/automation-control-plane/automation-vscode/actions/runs/43431154086",
+    "pr_head": "ad61583b7e3131510ba979ac034738ab3697dfee",
+    "tested_merge": "033e2908a7272b3f9b18db9daf9545d1e744a1a4",
+    "vsix_sha256": "274859715c51058e7136e63cf2d78c08d6609b8ce266340574431e0196aac7f3",
+    "classification": "pre-activation harness registry failure after exact workspace trust; no product workload ran"
+  },
+  "local_checks": {
+    "node": "24.22.3",
+    "node_tests_passed": 179,
+    "focused_python_passed": 23,
+    "windows_driver_contracts_passed": 9,
+    "trust_import_contracts_passed": 4
+  },
+  "limits": [
+    "No 2.20.27 native Windows pass yet",
+    "Linux proof is actual CLI installation and installed payload contracts, not GUI/debugger/cold RCC proof",
+    "Old lab passes are not acceptance for these new artifacts",
+    "No merge, tag, release or Marketplace publication performed",
+    "Existing lab owner alone controls guest; exited lab was not restarted"
+  ]
+}
