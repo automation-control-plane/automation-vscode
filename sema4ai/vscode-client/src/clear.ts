@@ -1,5 +1,6 @@
 import { OUTPUT_CHANNEL, logError } from "./channel";
 import { createEnvWithRobocorpHome, feedbackRobocorpCodeError } from "./rcc";
+import { runtimeMetadataDirectory } from "./extensionStorage";
 import { execFilePromise, ExecFileReturn } from "./subprocess";
 import * as path from "path";
 import * as fs from "fs";
@@ -78,8 +79,18 @@ async function removeCaches(dirPath: string, level: number, removeDirsArray: str
 }
 
 export async function clearRobocorpCodeCaches(robocorpHome: string) {
-    let robocorpCodePath = path.join(robocorpHome, ".sema4ai_code");
-    removeCaches(robocorpCodePath, 0, []);
+    const robocorpCodePath = runtimeMetadataDirectory(robocorpHome);
+    let info: fs.Stats;
+    try {
+        info = await fs.promises.lstat(robocorpCodePath);
+    } catch (error) {
+        if (error instanceof Error && "code" in error && error.code === "ENOENT") return;
+        throw error;
+    }
+    if (!info.isDirectory() || info.isSymbolicLink()) {
+        throw new Error("Refusing to clear extension metadata through a non-directory or symbolic link.");
+    }
+    await removeCaches(robocorpCodePath, 0, []);
 }
 
 export async function computeEnvsToCollect(

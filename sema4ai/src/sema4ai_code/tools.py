@@ -30,12 +30,12 @@ _tool_info_map = {
         version_command=("--version",),
     ),
     Tool.ACTION_SERVER: ToolInfo(
-        mutex_name="sema4ai-get-action-server",
+        mutex_name="automation-get-action-server",
         executable_name="action-server",
         version_command=("version",),
     ),
     Tool.AGENT_CLI: ToolInfo(
-        mutex_name="sema4ai-get-agent-cli",
+        mutex_name="automation-get-agent-cli",
         executable_name="agent-cli",
         version_command=("--version",),
     ),

@@ -3,6 +3,7 @@ import * as path from "path";
 import * as pathModule from "path";
 import * as os from "os";
 import { runtimeHomes, runtimeEnvironment } from "./runtimePaths";
+import { runtimeMetadataDirectory } from "./extensionStorage";
 import { legacyVendorIntegrationsEnabled } from "./legacyIntegrations";
 import { publishedTool, extensionIdentity } from "./publishedTools";
 import { createHash } from "crypto";
@@ -151,7 +152,7 @@ function getBaseAsZipBasename() {
  */
 async function getBaseAsZipDownloadLocation(): Promise<string> {
     const robocorpHome = await getRobocorpHome();
-    let robocorpCodePath = path.join(robocorpHome, ".sema4ai_code");
+    let robocorpCodePath = runtimeMetadataDirectory(robocorpHome);
     return path.join(robocorpCodePath, getBaseAsZipBasename());
 }
 
@@ -681,11 +682,11 @@ export async function collectBaseEnv(
 ): Promise<IEnvInfo | undefined> {
     let spaceName = "vscode-base-v01-" + robotCondaHash.substring(0, 6);
 
-    let robocorpCodePath = path.join(robocorpHome, ".sema4ai_code");
+    let robocorpCodePath = runtimeMetadataDirectory(robocorpHome);
     let spaceInfoPath = path.join(robocorpCodePath, spaceName);
     const spaceInfoPathExists = fs.existsSync(spaceInfoPath);
     OUTPUT_CHANNEL.appendLine("Found base environment info on: " + spaceInfoPathExists);
-    let rccEnvInfoCachePath = path.join(spaceInfoPath, "rcc_env_info_sema4ai.json");
+    let rccEnvInfoCachePath = path.join(spaceInfoPath, "rcc-env-info.json");
     try {
         if (!spaceInfoPathExists) {
             fs.mkdirSync(spaceInfoPath, { "recursive": true });
