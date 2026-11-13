@@ -129,7 +129,7 @@ export async function autoUpdateInterpreter(docUri: Uri): Promise<boolean> {
     if (additional && additional.length > 0) {
         try {
             const config = workspace.getConfiguration("python", docUri);
-            if (!config.inspect<string[]>("analysis.extraPaths")) {
+            if (!Array.isArray(config.inspect<string[]>("analysis.extraPaths")?.defaultValue)) {
                 optionalIntegrationStatus("analysis-absent", "Optional python.analysis.extraPaths is not registered. Install an analysis provider to enable editor import analysis; Automation runtime discovery is independent.");
             } else {
                 // Additive ownership: retain all effective user/provider paths in order.
@@ -423,11 +423,15 @@ export async function getPythonExecutable(
             return execCommand;
         }
     } catch (error) {
-        logError(
-            "Error when querying about python executable path from vscode-python.",
-            error,
-            "PYTHON_EXT_NO_PYTHON_EXECUTABLE"
-        );
+        if (showInOutput) {
+            logError(
+                "Error when querying about python executable path from vscode-python.",
+                error,
+                "PYTHON_EXT_NO_PYTHON_EXECUTABLE"
+            );
+        } else {
+            optionalIntegrationStatus("python-query", `Optional Python interpreter query failed: ${error}. RCC Python remains resolved.`);
+        }
         return undefined;
     }
 }
