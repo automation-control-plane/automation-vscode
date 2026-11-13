@@ -31,7 +31,12 @@ def collect_lint_errors(pm: PluginManager, doc: IDocument) -> list:
                 doc.uri
             )
             if interpreter_info is not None:
-                environ = interpreter_info.get_environ()
+                from sema4ai_code.robo.pythonpath import package_environment
+
+                environ = package_environment(
+                    interpreter_info.get_environ(),
+                    interpreter_info.get_additional_pythonpath_entries(),
+                )
                 python_exe = interpreter_info.get_python_exe()
                 future = launch_and_return_future(
                     [python_exe, lint_in_target_env.__file__],

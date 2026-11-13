@@ -122,6 +122,30 @@ exports.run = async () => {
             const info = resolved.result, env = environment(info.environ);
             const home = kind === 'action' ? 'actions' : 'robots';
             assert.ok(info.pythonExe.toLowerCase().startsWith(path.join(root, home).toLowerCase()));
+            if (kind === 'action') {
+                // Only new disposable fixtures under this driver's exact synthetic workspace.
+                const {createActionInputs} = require(path.join(extension.extensionPath, 'vscode-client/out/robo/actionInputs'));
+                for (const layout of ['flat', 'src']) {
+                    const fixture = fs.mkdtempSync(path.join(root, 'workspace', `pythonpath-${layout}-`));
+                    const source = layout === 'src' ? path.join(fixture, 'src') : fixture;
+                    const support = path.join(fixture, 'support');
+                    fs.mkdirSync(source, {recursive: true}); fs.mkdirSync(support);
+                    const fixtureManifest = path.join(fixture, 'package.yaml');
+                    fs.writeFileSync(fixtureManifest, fs.readFileSync(manifest, 'utf8') + `\npythonpath:\n  - ${layout === 'src' ? 'src' : '.'}\n  - support\n`);
+                    fs.writeFileSync(path.join(support, 'fixture_support.py'), "VALUE = 'discovery only'\n");
+                    const actionFile = path.join(source, 'example_actions.py');
+                    fs.writeFileSync(actionFile, "from actions import action\nfrom fixture_support import VALUE\n@action\ndef example(name: str = 'world') -> str:\n    \"\"\"Return a fixture greeting.\n\n    Args:\n        name: Who to greet.\n    \"\"\"\n    return VALUE + name\n");
+                    const target = path.join(fixture, 'input.json');
+                    assert.equal(await createActionInputs(vscode.Uri.file(actionFile), 'example', target, fixture, false), true);
+                    const created = JSON.parse(fs.readFileSync(target));
+                    assert.equal(created.metadata.actionName, 'example');
+                    assert.equal(created.metadata.inputFileVersion, 'v3');
+                    assert.equal(created.inputs.length, 1);
+                    const metadata = await vscode.commands.executeCommand('sema4ai.getActionsMetadata', vscode.Uri.file(fixture).toString());
+                    assert.ok(metadata.actions.some(action => action.name === 'example'));
+                    report.checks.push({operation: 'installed Action input creation and metadata', layout, runtimePythonpath: true}); save();
+                }
+            }
             for (const mode of ['file', 'sqlite']) for (const debug of [false, true]) {
                 const queue = `native-${kind}-${mode}-${debug ? 'debug' : 'run'}`;
                 function bridge(op, values = {}) {
