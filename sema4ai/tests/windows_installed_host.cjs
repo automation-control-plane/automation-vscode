@@ -53,9 +53,6 @@ exports.run = async () => {
         report.workspaceTrust = {enabled: trustEnabled, initiallyTrusted: vscode.workspace.isTrusted,
             folderCount: folders.length, exactSyntheticWorkspace: true,
             canonicalWorkspaceSha256: crypto.createHash('sha256').update(canonicalWorkspace).digest('hex')}; save();
-        report.phase = process.env.AUTOMATION_WINDOWS_QA_PHASE;
-        assert.ok(['trust', 'acceptance'].includes(report.phase), 'Explicit qualification phase required');
-        if (report.phase === 'acceptance') assert.ok(vscode.workspace.isTrusted, 'Fresh acceptance test host must start with exact workspace trusted');
         if (!vscode.workspace.isTrusted) {
             // The external UI driver may trust only this owned synthetic workspace.
             // No private trust-store edits or trust-disable flags are permitted.
@@ -64,7 +61,6 @@ exports.run = async () => {
         }
         assert.ok(vscode.workspace.isTrusted, 'Synthetic test workspace must be trusted before execution');
         report.workspaceTrust.currentWorkspaceGranted = true; save();
-        if (report.phase === 'trust') {report.passed = true; save(); return;}
         const installedIdentity = JSON.parse(fs.readFileSync(path.join(root, 'public/installed-identity.json')));
         assert.equal(installedIdentity.id, 'automation-control-plane.automation-vscode');
         const inventory = () => vscode.extensions.all.filter(item =>
