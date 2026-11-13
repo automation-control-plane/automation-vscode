@@ -27,7 +27,7 @@ def main():
     workspace = root / "workspace"
     if not workspace.is_dir() or workspace.is_symlink():
         raise RuntimeError("Owned synthetic workspace is missing or linked")
-    host_receipt = root / "public/installed-host.json"
+    host_receipt = root / "public/trust-entry.json"
     receipt = {"scope": "Trust only the task-owned synthetic workspace through native Code UI",
                "parent_trust_selected": False, "trust_enforcement_disabled": False,
                "passed": False}

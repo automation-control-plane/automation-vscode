@@ -1,0 +1,13 @@
+{
+  "scope": "Trust only the task-owned synthetic workspace through native Code UI",
+  "parent_trust_selected": false,
+  "trust_enforcement_disabled": false,
+  "passed": true,
+  "exact_workspace_bound_by_native_api": true,
+  "loopback_code_ui_connected": true,
+  "exact_workspace_path_visible": false,
+  "author_trust_button_count": 0,
+  "trust_button_count": 1,
+  "native_trust_button_clicked": true,
+  "observed_native_workspace_trusted": true
+}

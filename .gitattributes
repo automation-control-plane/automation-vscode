@@ -56,3 +56,4 @@ sema4ai/tests/fixtures/native_work_items/attachment-proof.txt -text
 
 # Preserve native CI receipts exactly, including their checksum-file byte identity.
 docs/evidence/release-20261112/2.20.26/windows/* -text
+docs/evidence/release-20261113/2.20.27/windows/* -text

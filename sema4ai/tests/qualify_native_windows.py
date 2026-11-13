@@ -51,6 +51,18 @@ def code_path(path):
     return drive.lower() + tail
 
 
+def code_environment(source, python_executable):
+    """Give Code/debug adapters the prepared Python, without host PATH changes."""
+    inherited = next((value for key, value in source.items() if key.upper() == "PATH"), "")
+    result = {key: value for key, value in source.items() if key.upper() != "PATH"}
+    directory = ntpath.dirname(code_path(python_executable))
+    entries = [directory, ntpath.join(directory, "Scripts")]
+    if inherited:
+        entries.append(inherited)
+    result["PATH"] = ";".join(entries)
+    return result
+
+
 def code_cli_entry(code_root):
     candidates = [code_root / "resources/app/out/cli.js", *code_root.glob("*/resources/app/out/cli.js")]
     present = [entry for entry in candidates if entry.is_file()]
@@ -117,6 +129,11 @@ def main():
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\FileSystem") as key:
             if winreg.QueryValueEx(key, "LongPathsEnabled")[0] != 1:
                 raise RuntimeError("Windows long paths are disabled; no registry change attempted")
+        env = code_environment(env, sys.executable)
+        selected_python = shutil.which("python.exe", path=env["PATH"])
+        if not selected_python or ntpath.normcase(selected_python) != ntpath.normcase(sys.executable):
+            raise RuntimeError("Code child PATH does not resolve the prepared Python")
+        report["prepared_python_on_code_path"] = True
         report["source"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, env=env, text=True).strip()
         version = json.loads((extension / "package.json").read_text())["version"]
         vsix = public / f"automation-vscode-{version}-win32-x64.vsix"
@@ -127,7 +144,8 @@ def main():
         npm_cli = Path(npm).parent / "node_modules/npm/bin/npm-cli.js"
         if not node or not npm_cli.is_file():
             raise RuntimeError("Prepared Node/npm entry point unavailable")
-        run([node, "--test", str(extension / "tests/windows_diagnostic.test.cjs")], "diagnostic-boundaries")
+        run([node, "--test", str(extension / "tests/windows_diagnostic.test.cjs"),
+             str(extension / "tests/windows_trusted_entry.test.cjs")], "diagnostic-and-trust-boundaries")
         run([node, str(npm_cli), "ci"], "npm-ci")
         run([node, str(npm_cli), "run", "vsce:package", "--", "--target", "win32-x64", "--out", str(vsix)], "package")
         run([node, "--test", str(extension / "tests/python_integration.test.js")], "optional-python-unit-tests")
@@ -150,7 +168,9 @@ def main():
              "--install-extension", code_path(vsix)], "install-vsix", environment=cli_env)
         # Public debugger prerequisite, no publisher account or credential.
         run([*cli, f"--user-data-dir={code_path(profile)}", f"--extensions-dir={code_path(extensions)}",
-             "--install-extension", "ms-python.python"], "install-python", environment=cli_env)
+             "--install-extension", "ms-python.python@2026.10.0", "--do-not-include-pack-dependencies"], "install-python", environment=cli_env)
+        run([*cli, f"--user-data-dir={code_path(profile)}", f"--extensions-dir={code_path(extensions)}",
+             "--install-extension", "ms-python.debugpy@2026.6.0", "--do-not-include-pack-dependencies"], "install-debugpy", environment=cli_env)
         # Compare on-disk registration with the later native API registry. Do not
         # serialize installation metadata, machine paths, or arbitrary extensions.
         admitted = {"automation-control-plane.automation-vscode", "ms-python.python",
@@ -202,6 +222,13 @@ def main():
         (controller / "package.json").write_text(json.dumps({"name": "windows-qualification",
             "publisher": "task-local", "version": "0.0.1", "engines": {"vscode": "^1.101.0"}}))
         test_path = extension / "tests/windows_installed_host.cjs"
+        entry_path = controller / "entry.cjs"
+        entry_path.write_text("const originalHarness = " + json.dumps(code_path(test_path)) + ";\n" +
+                              (extension / "tests/windows_trusted_entry.cjs").read_text(), encoding="utf-8")
+        report["acceptance_harness_sha256"] = digest(test_path)
+        report["controller_entry_sha256"] = digest(entry_path)
+        report["debugger_versions"] = {"ms-python.python": "2026.10.0", "ms-python.debugpy": "2026.6.0"}
+        save()
         driver_venv = root / "ui-driver"
         run([sys.executable, "-m", "venv", str(driver_venv)], "ui-driver-venv")
         ui_python = driver_venv / "Scripts/python.exe"
@@ -209,7 +236,7 @@ def main():
         with (root / "extension-host.private.log").open("wb") as log:
             child = subprocess.Popen([code_path(code), f"--user-data-dir={code_path(profile)}",
                 f"--extensions-dir={code_path(extensions)}", f"--extensionDevelopmentPath={code_path(controller)}",
-                f"--extensionTestsPath={code_path(test_path)}", "--skip-welcome", "--skip-release-notes",
+                f"--extensionTestsPath={code_path(entry_path)}", "--skip-welcome", "--skip-release-notes",
                 "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=18527",
                 code_path(workspace)], env=env, stdout=log, stderr=subprocess.STDOUT)
             run([str(ui_python), str(extension / "tests/windows_workspace_trust.py"),

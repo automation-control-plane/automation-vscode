@@ -1,0 +1,1954 @@
+{
+  "scope": "Scrubbed fatal lines only; raw debugpy logs remain private",
+  "privateLogFilesFound": 20,
+  "files": [
+    {
+      "file": "debugpy.adapter-10148.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "af138fb76ca5b118dddaa6075a59902d6048a1bfec5083ecda3b5bc44c72a061",
+      "fatalLines": [
+        "D+00001.301: /handling #6 request \"<redacted>\" from Client[1]/",
+        "D+00001.301: /handling #6 request \"<redacted>\" from Client[1]/",
+        "D+00002.839: Exiting message loop for channel Server[1]: [WinError 10038] An operation was attempted on something that is not a socket",
+        "D+00003.386: Exiting message loop for channel Launcher[1]: [WinError 10038] An operation was attempted on something that is not a socket"
+      ],
+      "protocol": [
+        {
+          "field": "event",
+          "value": "stopped"
+        },
+        {
+          "field": "event",
+          "value": "stopped"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "continued"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "event",
+          "value": "continued"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.adapter-2608.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "d55a8ade4955c05f4a57cdefa6681d5ca571f2136ebd5b7d6f59025874a0d5dc",
+      "fatalLines": [
+        "D+00000.752: /handling #6 request \"<redacted>\" from Client[1]/",
+        "D+00000.753: /handling #6 request \"<redacted>\" from Client[1]/",
+        "D+00001.866: Exiting message loop for channel Server[1]: [WinError 10038] An operation was attempted on something that is not a socket",
+        "E+00001.934: /handling #15 request \"threads\" from Client[1]/",
+        "D+00002.409: Exiting message loop for channel Launcher[1]: [WinError 10038] An operation was attempted on something that is not a socket"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "stopped"
+        },
+        {
+          "field": "event",
+          "value": "stopped"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "continued"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "event",
+          "value": "continued"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": false
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.adapter-5456.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "94a00b97f0a524cdb7fe35ad375da54b20ca84b88f3a603fb8dcf904a8cd7726",
+      "fatalLines": [
+        "D+00001.779: Exiting message loop for channel Launcher[1]: [WinError 10038] An operation was attempted on something that is not a socket"
+      ],
+      "protocol": [
+        {
+          "field": "event",
+          "value": "output"
+        },
+        {
+          "field": "event",
+          "value": "output"
+        },
+        {
+          "field": "command",
+          "value": "initialize"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "initialize"
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "command",
+          "value": "runInTerminal"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "runInTerminal"
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "process"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "process"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.adapter-6648.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "705297873550773cf343528c7c6e89f0c10e3fd1d0d557e22791cec31a9c8935",
+      "fatalLines": [
+        "D+00009.172: Exiting message loop for channel Launcher[1]: [WinError 10038] An operation was attempted on something that is not a socket"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "initialize"
+        },
+        {
+          "field": "event",
+          "value": "output"
+        },
+        {
+          "field": "event",
+          "value": "output"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "initialize"
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "command",
+          "value": "runInTerminal"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "runInTerminal"
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "process"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "process"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.adapter-7140.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "535c51cb8efb36e912f886f52b988af70bee1d79c10fdc1fd9e4a030fc483d12",
+      "fatalLines": [
+        "D+00001.510: /handling #6 request \"<redacted>\" from Client[1]/",
+        "D+00001.511: /handling #6 request \"<redacted>\" from Client[1]/",
+        "D+00003.047: Exiting message loop for channel Server[1]: [WinError 10038] An operation was attempted on something that is not a socket",
+        "D+00003.589: Exiting message loop for channel Launcher[1]: [WinError 10038] An operation was attempted on something that is not a socket"
+      ],
+      "protocol": [
+        {
+          "field": "event",
+          "value": "stopped"
+        },
+        {
+          "field": "event",
+          "value": "stopped"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "continued"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "event",
+          "value": "continued"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.adapter-8180.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "e90639150aa6fb820e316823fca6a06337019e32623d6c45f623a0eeecd81179",
+      "fatalLines": [
+        "D+00001.639: /handling #6 request \"<redacted>\" from Client[1]/",
+        "D+00001.640: /handling #6 request \"<redacted>\" from Client[1]/",
+        "D+00002.770: Exiting message loop for channel Server[1]: [WinError 10038] An operation was attempted on something that is not a socket",
+        "E+00002.840: /handling #15 request \"threads\" from Client[1]/",
+        "D+00003.309: Exiting message loop for channel Launcher[1]: [WinError 10038] An operation was attempted on something that is not a socket"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "stopped"
+        },
+        {
+          "field": "event",
+          "value": "stopped"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "continued"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "event",
+          "value": "continued"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "thread"
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "success",
+          "value": false
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "disconnect"
+        },
+        {
+          "field": "event",
+          "value": "debugpySockets"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.launcher-5096.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "4772110157499d54a2f564ae2da8ccee4b50af6fd7c242fec910d7ca55e2aea2",
+      "fatalLines": [
+        "             Environment variables: {'ACTIONS_HOME': '<qa-root>\\\\actions', 'APPDATA': 'C:\\\\Users\\\\runneradmin\\\\AppData\\\\Roaming', '<redacted>': '<qa-root>', 'CI': '1', 'COMSPEC': 'C:\\\\Windows\\\\system32\\\\cmd.exe', 'DEBUGPY_LOG_DIR': '<qa-root>\\\\debugpy-private', 'HOME': '<qa-root>\\\\home', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\\\Users\\\\runneradmin', 'LOCALAPPDATA': 'C:\\\\Users\\\\runneradmin\\\\AppData\\\\Local', '<redacted>': '4', 'PATH': '<qa-root>\\\\actions\\\\holotree\\\\<redacted>;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\mingw-w64\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\usr\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Scripts;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\bin;C:\\\\Program Files\\\\PowerShell\\\\7;C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.22.2\\\\x64;C:\\\\Program Files\\\\MongoDB\\\\Server\\\\7.0\\\\bin;C:\\\\vcpkg;C:\\\\tools\\\\zstd;C:\\\\hostedtoolcache\\\\windows\\\\stack\\\\3.11.1\\\\x64;C:\\\\cabal\\\\bin;C:\\\\ghcup\\\\bin;C:\\\\mingw64\\\\bin;C:\\\\Program Files\\\\dotnet;C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.4\\\\bin;C:\\\\Program Files\\\\R\\\\R-4.6.2\\\\bin\\\\x64;C:\\\\SeleniumWebDrivers\\\\GeckoDriver;C:\\\\SeleniumWebDrivers\\\\EdgeDriver;C:\\\\SeleniumWebDrivers\\\\ChromeDriver;C:\\\\Program Files (x86)\\\\sbt\\\\bin;C:\\\\Program Files (x86)\\\\GitHub CLI;C:\\\\Program Files\\\\Git\\\\bin;C:\\\\Program Files (x86)\\\\pipx_bin;C:\\\\npm\\\\prefix;C:\\\\hostedtoolcache\\\\windows\\\\go\\\\1.24.13\\\\x64\\\\bin;C:\\\\hostedtoolcache\\\\windows\\\\Ruby\\\\3.3.13\\\\x64\\\\bin;C:\\\\Program Files\\\\OpenSSL\\\\bin;C:\\\\tools\\\\kotlinc\\\\bin;C:\\\\hostedtoolcache\\\\windows\\\\<redacted>\\\\17.0.21-9\\\\x64\\\\bin;C:\\\\Program Files\\\\ImageMagick-7.1.2-Q16-HDRI;C:\\\\Program Files\\\\Microsoft SDKs\\\\Azure\\\\CLI2\\\\wbin;C:\\\\ProgramData\\\\kind;C:\\\\ProgramData\\\\Chocolatey\\\\bin;C:\\\\Windows\\\\system32;C:\\\\Windows;C:\\\\Windows\\\\System32\\\\Wbem;C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0;C:\\\\Windows\\\\System32\\\\OpenSSH;C:\\\\Program Files\\\\WSL;C:\\\\Program Files\\\\Microsoft\\\\Web Platform Installer;C:\\\\Program Files\\\\Microsoft SQL Server\\"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "process"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.launcher-6100.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "9914a688f308b16e331184ccb766e1bb0cf2e472ea94317ca60facd985d08704",
+      "fatalLines": [],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "process"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.launcher-6620.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "b48ffc663366ec3b00515c7aeef159f46acc31425e7c57da645301ff93efff58",
+      "fatalLines": [
+        "             Environment variables: {'ACTIONS_HOME': '<qa-root>\\\\actions', 'APPDATA': 'C:\\\\Users\\\\runneradmin\\\\AppData\\\\Roaming', '<redacted>': '<qa-root>', 'CI': '1', 'COMSPEC': 'C:\\\\Windows\\\\system32\\\\cmd.exe', 'DEBUGPY_LOG_DIR': '<qa-root>\\\\debugpy-private', 'HOME': '<qa-root>\\\\home', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\\\Users\\\\runneradmin', 'LOCALAPPDATA': 'C:\\\\Users\\\\runneradmin\\\\AppData\\\\Local', '<redacted>': '4', 'PATH': '<qa-root>\\\\actions\\\\holotree\\\\<redacted>;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\mingw-w64\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\usr\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Scripts;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\bin;C:\\\\Program Files\\\\PowerShell\\\\7;C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.22.2\\\\x64;C:\\\\Program Files\\\\MongoDB\\\\Server\\\\7.0\\\\bin;C:\\\\vcpkg;C:\\\\tools\\\\zstd;C:\\\\hostedtoolcache\\\\windows\\\\stack\\\\3.11.1\\\\x64;C:\\\\cabal\\\\bin;C:\\\\ghcup\\\\bin;C:\\\\mingw64\\\\bin;C:\\\\Program Files\\\\dotnet;C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.4\\\\bin;C:\\\\Program Files\\\\R\\\\R-4.6.2\\\\bin\\\\x64;C:\\\\SeleniumWebDrivers\\\\GeckoDriver;C:\\\\SeleniumWebDrivers\\\\EdgeDriver;C:\\\\SeleniumWebDrivers\\\\ChromeDriver;C:\\\\Program Files (x86)\\\\sbt\\\\bin;C:\\\\Program Files (x86)\\\\GitHub CLI;C:\\\\Program Files\\\\Git\\\\bin;C:\\\\Program Files (x86)\\\\pipx_bin;C:\\\\npm\\\\prefix;C:\\\\hostedtoolcache\\\\windows\\\\go\\\\1.24.13\\\\x64\\\\bin;C:\\\\hostedtoolcache\\\\windows\\\\Ruby\\\\3.3.13\\\\x64\\\\bin;C:\\\\Program Files\\\\OpenSSL\\\\bin;C:\\\\tools\\\\kotlinc\\\\bin;C:\\\\hostedtoolcache\\\\windows\\\\<redacted>\\\\17.0.21-9\\\\x64\\\\bin;C:\\\\Program Files\\\\ImageMagick-7.1.2-Q16-HDRI;C:\\\\Program Files\\\\Microsoft SDKs\\\\Azure\\\\CLI2\\\\wbin;C:\\\\ProgramData\\\\kind;C:\\\\ProgramData\\\\Chocolatey\\\\bin;C:\\\\Windows\\\\system32;C:\\\\Windows;C:\\\\Windows\\\\System32\\\\Wbem;C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0;C:\\\\Windows\\\\System32\\\\OpenSSH;C:\\\\Program Files\\\\WSL;C:\\\\Program Files\\\\Microsoft\\\\Web Platform Installer;C:\\\\Program Files\\\\Microsoft SQL Server\\"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "process"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.launcher-7124.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "ac08c293119bad503a42edc1146d8dd2e9cd43803ae2cb2768572572e73a9b08",
+      "fatalLines": [
+        "             Environment variables: {'ACTIONS_HOME': '<qa-root>\\\\actions', 'APPDATA': 'C:\\\\Users\\\\runneradmin\\\\AppData\\\\Roaming', '<redacted>': '<qa-root>', 'CI': '1', 'COMSPEC': 'C:\\\\Windows\\\\system32\\\\cmd.exe', 'DEBUGPY_LOG_DIR': '<qa-root>\\\\debugpy-private', 'HOME': '<qa-root>\\\\home', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\\\Users\\\\runneradmin', 'LOCALAPPDATA': 'C:\\\\Users\\\\runneradmin\\\\AppData\\\\Local', '<redacted>': '4', 'PATH': '<qa-root>\\\\actions\\\\holotree\\\\<redacted>;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\mingw-w64\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\usr\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Scripts;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\bin;C:\\\\Program Files\\\\PowerShell\\\\7;C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.22.2\\\\x64;C:\\\\Program Files\\\\MongoDB\\\\Server\\\\7.0\\\\bin;C:\\\\vcpkg;C:\\\\tools\\\\zstd;C:\\\\hostedtoolcache\\\\windows\\\\stack\\\\3.11.1\\\\x64;C:\\\\cabal\\\\bin;C:\\\\ghcup\\\\bin;C:\\\\mingw64\\\\bin;C:\\\\Program Files\\\\dotnet;C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.4\\\\bin;C:\\\\Program Files\\\\R\\\\R-4.6.2\\\\bin\\\\x64;C:\\\\SeleniumWebDrivers\\\\GeckoDriver;C:\\\\SeleniumWebDrivers\\\\EdgeDriver;C:\\\\SeleniumWebDrivers\\\\ChromeDriver;C:\\\\Program Files (x86)\\\\sbt\\\\bin;C:\\\\Program Files (x86)\\\\GitHub CLI;C:\\\\Program Files\\\\Git\\\\bin;C:\\\\Program Files (x86)\\\\pipx_bin;C:\\\\npm\\\\prefix;C:\\\\hostedtoolcache\\\\windows\\\\go\\\\1.24.13\\\\x64\\\\bin;C:\\\\hostedtoolcache\\\\windows\\\\Ruby\\\\3.3.13\\\\x64\\\\bin;C:\\\\Program Files\\\\OpenSSL\\\\bin;C:\\\\tools\\\\kotlinc\\\\bin;C:\\\\hostedtoolcache\\\\windows\\\\<redacted>\\\\17.0.21-9\\\\x64\\\\bin;C:\\\\Program Files\\\\ImageMagick-7.1.2-Q16-HDRI;C:\\\\Program Files\\\\Microsoft SDKs\\\\Azure\\\\CLI2\\\\wbin;C:\\\\ProgramData\\\\kind;C:\\\\ProgramData\\\\Chocolatey\\\\bin;C:\\\\Windows\\\\system32;C:\\\\Windows;C:\\\\Windows\\\\System32\\\\Wbem;C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0;C:\\\\Windows\\\\System32\\\\OpenSSH;C:\\\\Program Files\\\\WSL;C:\\\\Program Files\\\\Microsoft\\\\Web Platform Installer;C:\\\\Program Files\\\\Microsoft SQL Server\\"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "process"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.launcher-7464.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "afb8b67a2b811ec2c3aaccabc8d399c398e6f9185e3689a7e302de2954f77c7c",
+      "fatalLines": [
+        "             Environment variables: {'ACTIONS_HOME': '<qa-root>\\\\actions', 'APPDATA': 'C:\\\\Users\\\\runneradmin\\\\AppData\\\\Roaming', '<redacted>': '<qa-root>', 'CI': '1', 'COMSPEC': 'C:\\\\Windows\\\\system32\\\\cmd.exe', 'DEBUGPY_LOG_DIR': '<qa-root>\\\\debugpy-private', 'HOME': '<qa-root>\\\\home', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\\\Users\\\\runneradmin', 'LOCALAPPDATA': 'C:\\\\Users\\\\runneradmin\\\\AppData\\\\Local', '<redacted>': '4', 'PATH': '<qa-root>\\\\actions\\\\holotree\\\\<redacted>;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\mingw-w64\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\usr\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Library\\\\bin;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\Scripts;<qa-root>\\\\actions\\\\holotree\\\\<redacted>\\\\bin;C:\\\\Program Files\\\\PowerShell\\\\7;C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.22.2\\\\x64;C:\\\\Program Files\\\\MongoDB\\\\Server\\\\7.0\\\\bin;C:\\\\vcpkg;C:\\\\tools\\\\zstd;C:\\\\hostedtoolcache\\\\windows\\\\stack\\\\3.11.1\\\\x64;C:\\\\cabal\\\\bin;C:\\\\ghcup\\\\bin;C:\\\\mingw64\\\\bin;C:\\\\Program Files\\\\dotnet;C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.4\\\\bin;C:\\\\Program Files\\\\R\\\\R-4.6.2\\\\bin\\\\x64;C:\\\\SeleniumWebDrivers\\\\GeckoDriver;C:\\\\SeleniumWebDrivers\\\\EdgeDriver;C:\\\\SeleniumWebDrivers\\\\ChromeDriver;C:\\\\Program Files (x86)\\\\sbt\\\\bin;C:\\\\Program Files (x86)\\\\GitHub CLI;C:\\\\Program Files\\\\Git\\\\bin;C:\\\\Program Files (x86)\\\\pipx_bin;C:\\\\npm\\\\prefix;C:\\\\hostedtoolcache\\\\windows\\\\go\\\\1.24.13\\\\x64\\\\bin;C:\\\\hostedtoolcache\\\\windows\\\\Ruby\\\\3.3.13\\\\x64\\\\bin;C:\\\\Program Files\\\\OpenSSL\\\\bin;C:\\\\tools\\\\kotlinc\\\\bin;C:\\\\hostedtoolcache\\\\windows\\\\<redacted>\\\\17.0.21-9\\\\x64\\\\bin;C:\\\\Program Files\\\\ImageMagick-7.1.2-Q16-HDRI;C:\\\\Program Files\\\\Microsoft SDKs\\\\Azure\\\\CLI2\\\\wbin;C:\\\\ProgramData\\\\kind;C:\\\\ProgramData\\\\Chocolatey\\\\bin;C:\\\\Windows\\\\system32;C:\\\\Windows;C:\\\\Windows\\\\System32\\\\Wbem;C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0;C:\\\\Windows\\\\System32\\\\OpenSSH;C:\\\\Program Files\\\\WSL;C:\\\\Program Files\\\\Microsoft\\\\Web Platform Installer;C:\\\\Program Files\\\\Microsoft SQL Server\\"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "process"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.launcher-8960.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "ebe60bb9fb4f5d6049c3e4012ea79b698e14797648ca2ac9ab11b9803b3d7e30",
+      "fatalLines": [],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "process"
+        },
+        {
+          "field": "success",
+          "value": true
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "event",
+          "value": "exited"
+        },
+        {
+          "field": "exitCode",
+          "value": 0
+        },
+        {
+          "field": "event",
+          "value": "terminated"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.pydevd.3528.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "6b7757007eff1a6982a1fdcb6b01b86b9b66cf58b9f407cc663c1d4de3f95489",
+      "fatalLines": [
+        "0.00s - sending cmd (http_json) -->           CMD_RETURN {\"type\": \"response\", \"request_seq\": 4, \"success\": true, \"command\": \"initialize\", \"seq\": 8, \"body\": {\"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": [{\"filter\": \"raised\", \"label\": \"Raised Exceptions\", \"default\": false}, {\"filter\": \"uncaught\", \"label\": \"Uncaught Exceptions\", \"default\": true}, {\"filter\": \"userUnhandled\", \"label\": \"User Uncaught Exceptions\", \"default\": false}], \"supportsStepBack\": false, \"supportsSetVariable\": true, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": [], \"<redacted>\": true, \"<redacted>\": [], \"<redacted>\": [], \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": false, \"supportsLogPoints\": true, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": false, \"<redacted>\": false, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"pydevd\": {\"processId\": 3528}}, \"pydevd_cmd_id\": 502}",
+        "0.00s - Process <redacted>: {",
+        "0.00s - Exceptions to hook on terminate: {'BaseException': <_pydevd_bundle.pydevd_breakpoints.ExceptionBreakpoint object at 0x00000155B6CC67E0>}.",
+        "0.00s - sending cmd (http_json) -->           CMD_RETURN {\"type\": \"response\", \"request_seq\": 8, \"success\": true, \"command\": \"<redacted>\", \"seq\": 20, \"body\": {}, \"pydevd_cmd_id\": 502}",
+        "0.00s - File not traced (not in project): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\site-packages\\robocorp\\tasks\\_exceptions.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\site-packages\\robocorp\\tasks\\_exceptions.py",
+        "0.00s - File not traced (not in project): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\site-packages\\actions\\work_items\\_exceptions.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\site-packages\\actions\\work_items\\_exceptions.py",
+        "0.00s - File not traced (not in project): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\traceback.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\traceback.py"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "pydevdAuthorize"
+        },
+        {
+          "field": "command",
+          "value": "pydevdSystemInfo"
+        },
+        {
+          "field": "command",
+          "value": "pydevdAuthorize"
+        },
+        {
+          "field": "command",
+          "value": "initialize"
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setFunctionBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setExceptionBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "configurationDone"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.pydevd.4240.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "a1aa8ee283a401a1de67299fcd07bde8f2a95284015291995821d18629052ef3",
+      "fatalLines": [
+        "0.00s - sending cmd (http_json) -->           CMD_RETURN {\"type\": \"response\", \"request_seq\": 4, \"success\": true, \"command\": \"initialize\", \"seq\": 8, \"body\": {\"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": [{\"filter\": \"raised\", \"label\": \"Raised Exceptions\", \"default\": false}, {\"filter\": \"uncaught\", \"label\": \"Uncaught Exceptions\", \"default\": true}, {\"filter\": \"userUnhandled\", \"label\": \"User Uncaught Exceptions\", \"default\": false}], \"supportsStepBack\": false, \"supportsSetVariable\": true, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": [], \"<redacted>\": true, \"<redacted>\": [], \"<redacted>\": [], \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": false, \"supportsLogPoints\": true, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": false, \"<redacted>\": false, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"pydevd\": {\"processId\": 4240}}, \"pydevd_cmd_id\": 502}",
+        "0.00s - Process <redacted>: {",
+        "0.00s - Exceptions to hook on terminate: {'BaseException': <_pydevd_bundle.pydevd_breakpoints.ExceptionBreakpoint object at 0x000002070C061430>}.",
+        "0.00s - sending cmd (http_json) -->           CMD_RETURN {\"type\": \"response\", \"request_seq\": 8, \"success\": true, \"command\": \"<redacted>\", \"seq\": 20, \"body\": {}, \"pydevd_cmd_id\": 502}",
+        "0.00s - File not traced (not in project): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\site-packages\\robocorp\\tasks\\_exceptions.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\site-packages\\robocorp\\tasks\\_exceptions.py",
+        "0.00s - File not traced (not in project): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\site-packages\\actions\\work_items\\_exceptions.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\site-packages\\actions\\work_items\\_exceptions.py",
+        "0.00s - File not traced (not in project): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\traceback.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\robots\\holotree\\<redacted>\\Lib\\traceback.py"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "pydevdAuthorize"
+        },
+        {
+          "field": "command",
+          "value": "pydevdSystemInfo"
+        },
+        {
+          "field": "command",
+          "value": "pydevdAuthorize"
+        },
+        {
+          "field": "command",
+          "value": "initialize"
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setFunctionBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setExceptionBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "configurationDone"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.pydevd.7244.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "48758624a46d7b3a5033122077061be8bb6393dd35693921726626e064e1605f",
+      "fatalLines": [
+        "0.00s - sending cmd (http_json) -->           CMD_RETURN {\"type\": \"response\", \"request_seq\": 4, \"success\": true, \"command\": \"initialize\", \"seq\": 8, \"body\": {\"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": [{\"filter\": \"raised\", \"label\": \"Raised Exceptions\", \"default\": false}, {\"filter\": \"uncaught\", \"label\": \"Uncaught Exceptions\", \"default\": true}, {\"filter\": \"userUnhandled\", \"label\": \"User Uncaught Exceptions\", \"default\": false}], \"supportsStepBack\": false, \"supportsSetVariable\": true, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": [], \"<redacted>\": true, \"<redacted>\": [], \"<redacted>\": [], \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": false, \"supportsLogPoints\": true, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": false, \"<redacted>\": false, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"pydevd\": {\"processId\": 7244}}, \"pydevd_cmd_id\": 502}",
+        "0.00s - Process <redacted>: {",
+        "0.00s - Exceptions to hook on terminate: {'BaseException': <_pydevd_bundle.pydevd_breakpoints.ExceptionBreakpoint object at 0x000002D463C5A4B0>}.",
+        "0.00s - sending cmd (http_json) -->           CMD_RETURN {\"type\": \"response\", \"request_seq\": 8, \"success\": true, \"command\": \"<redacted>\", \"seq\": 20, \"body\": {}, \"pydevd_cmd_id\": 502}",
+        "0.00s - File not traced (not in project): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\site-packages\\actions\\_exceptions.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\site-packages\\actions\\_exceptions.py",
+        "0.00s - File not traced (not in project): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\site-packages\\actions\\work_items\\_exceptions.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\site-packages\\actions\\work_items\\_exceptions.py",
+        "0.00s - File not traced (not in project): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\traceback.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\traceback.py"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "pydevdAuthorize"
+        },
+        {
+          "field": "command",
+          "value": "pydevdSystemInfo"
+        },
+        {
+          "field": "command",
+          "value": "pydevdAuthorize"
+        },
+        {
+          "field": "command",
+          "value": "initialize"
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setFunctionBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setExceptionBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "configurationDone"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.pydevd.9196.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "d2d50adc733a8256726f58644f7794840409799795d83d1c8294a65e2b6ccfce",
+      "fatalLines": [
+        "0.00s - sending cmd (http_json) -->           CMD_RETURN {\"type\": \"response\", \"request_seq\": 4, \"success\": true, \"command\": \"initialize\", \"seq\": 8, \"body\": {\"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": [{\"filter\": \"raised\", \"label\": \"Raised Exceptions\", \"default\": false}, {\"filter\": \"uncaught\", \"label\": \"Uncaught Exceptions\", \"default\": true}, {\"filter\": \"userUnhandled\", \"label\": \"User Uncaught Exceptions\", \"default\": false}], \"supportsStepBack\": false, \"supportsSetVariable\": true, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": [], \"<redacted>\": true, \"<redacted>\": [], \"<redacted>\": [], \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": false, \"supportsLogPoints\": true, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"<redacted>\": false, \"<redacted>\": false, \"<redacted>\": false, \"<redacted>\": true, \"<redacted>\": true, \"pydevd\": {\"processId\": 9196}}, \"pydevd_cmd_id\": 502}",
+        "0.00s - Process <redacted>: {",
+        "0.00s - Exceptions to hook on terminate: {'BaseException': <_pydevd_bundle.pydevd_breakpoints.ExceptionBreakpoint object at 0x0000022CF43FA6F0>}.",
+        "0.00s - sending cmd (http_json) -->           CMD_RETURN {\"type\": \"response\", \"request_seq\": 8, \"success\": true, \"command\": \"<redacted>\", \"seq\": 20, \"body\": {}, \"pydevd_cmd_id\": 502}",
+        "0.00s - File not traced (not in project): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\site-packages\\actions\\_exceptions.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\site-packages\\actions\\_exceptions.py",
+        "0.00s - File not traced (not in project): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\site-packages\\actions\\work_items\\_exceptions.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\site-packages\\actions\\work_items\\_exceptions.py",
+        "0.00s - File not traced (not in project): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\traceback.py",
+        "0.00s - File not traced (not in project - <redacted>): <qa-root>\\actions\\holotree\\<redacted>\\Lib\\traceback.py"
+      ],
+      "protocol": [
+        {
+          "field": "command",
+          "value": "pydevdAuthorize"
+        },
+        {
+          "field": "command",
+          "value": "pydevdSystemInfo"
+        },
+        {
+          "field": "command",
+          "value": "pydevdAuthorize"
+        },
+        {
+          "field": "command",
+          "value": "initialize"
+        },
+        {
+          "field": "command",
+          "value": "launch"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setFunctionBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "setExceptionBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "configurationDone"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "setBreakpoints"
+        },
+        {
+          "field": "command",
+          "value": "continue"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        },
+        {
+          "field": "command",
+          "value": "threads"
+        }
+      ]
+    },
+    {
+      "file": "debugpy.server-3528.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "6783cf3a276a4b28dac9498b804b3df375b0cfe81e250dc4737013a9915942fb",
+      "fatalLines": [
+        "             Traceback (most recent call last):",
+        "                 log.reraise_exception(",
+        "               File \"d:\\a\\_temp\\owned-vscode\\extensions\\ms-python.debugpy-2026.6.0-win32-x64\\bundled\\libs\\debugpy\\launcher/../..\\debugpy/..\\debugpy\\common\\log.py\", line 222, in reraise_exception",
+        "                 _exception(format_string, *args, **kwargs)"
+      ],
+      "protocol": []
+    },
+    {
+      "file": "debugpy.server-4240.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "6cf00ac6c73568e702e1e5b1149fc221e0c1f1763e18f2e30f2ca1fdadee6415",
+      "fatalLines": [
+        "             Traceback (most recent call last):",
+        "                 log.reraise_exception(",
+        "               File \"d:\\a\\_temp\\owned-vscode\\extensions\\ms-python.debugpy-2026.6.0-win32-x64\\bundled\\libs\\debugpy\\launcher/../..\\debugpy/..\\debugpy\\common\\log.py\", line 222, in reraise_exception",
+        "                 _exception(format_string, *args, **kwargs)"
+      ],
+      "protocol": []
+    },
+    {
+      "file": "debugpy.server-7244.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "d1b0131e40fb3e5b26058cb8b18df097e87355d8bd836388aa9df8da3736b8c0",
+      "fatalLines": [
+        "             Traceback (most recent call last):",
+        "                 log.reraise_exception(",
+        "               File \"d:\\a\\_temp\\owned-vscode\\extensions\\ms-python.debugpy-2026.6.0-win32-x64\\bundled\\libs\\debugpy\\launcher/../..\\debugpy/..\\debugpy\\common\\log.py\", line 222, in reraise_exception",
+        "                 _exception(format_string, *args, **kwargs)"
+      ],
+      "protocol": []
+    },
+    {
+      "file": "debugpy.server-9196.log",
+      "source": "debugpy",
+      "inspectedTailSha256": "beb915ccf6880a58da8fb6194dd0ae509e99a6182f83fb3c79e6834f773b9fc5",
+      "fatalLines": [
+        "             Traceback (most recent call last):",
+        "                 log.reraise_exception(",
+        "               File \"d:\\a\\_temp\\owned-vscode\\extensions\\ms-python.debugpy-2026.6.0-win32-x64\\bundled\\libs\\debugpy\\launcher/../..\\debugpy/..\\debugpy\\common\\log.py\", line 222, in reraise_exception",
+        "                 _exception(format_string, *args, **kwargs)"
+      ],
+      "protocol": []
+    },
+    {
+      "file": "ptyhost.log",
+      "source": "code-pty",
+      "inspectedTailSha256": "1f336abef4122422373d63e44f9d09e871a640d9a99f89781bdb8541c8fbb1d7",
+      "fatalLines": [
+        "2026-11-13 14:27:45.324 [warning] Shell integration cannot be enabled for executable \"d:\\a\\_temp\\owned-vscode\\extensions\\<redacted>.automation-vscode-2.20.27\\bin\\actions-runtime-1.1.0-windows64.exe\" and args [\"start\",\"--address=127.0.0.1\",\"--port=18526\",\"--datadir=<qa-root>\\\\actions\\\\action-server\\\\vscode-74a8999c0acc\"]"
+      ],
+      "protocol": []
+    },
+    {
+      "file": "main.log",
+      "source": "code-discovery",
+      "inspectedTailSha256": "ab2c5525e547d6cbc907d1ec0b85a675fc779766a3047b97b0bca76a6e43614d",
+      "fatalLines": [],
+      "protocol": []
+    },
+    {
+      "file": "sharedprocess.log",
+      "source": "code-discovery",
+      "inspectedTailSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "fatalLines": [],
+      "protocol": []
+    },
+    {
+      "file": "window1/renderer.log",
+      "source": "code-discovery",
+      "inspectedTailSha256": "b008c9a7f62d79606091527db418798065713cedd83085d4d284c1d4f5a829a2",
+      "fatalLines": [
+        "2026-11-13 14:25:14.650 [info] <redacted>: extension 'TypeScriptTeam.jsts-chat-features' is disabled",
+        "2026-11-13 14:25:14.651 [info] <redacted>: extension 'GitHub.copilot-chat' is disabled",
+        "2026-11-13 14:25:14.651 [info] <redacted>: extension 'vscode.git' is disabled",
+        "2026-11-13 14:25:14.652 [info] <redacted>: extension 'vscode.terminal-suggest' is disabled",
+        "2026-11-13 14:25:14.652 [info] <redacted>: extension 'vscode.<redacted>' is disabled",
+        "2026-11-13 14:25:14.653 [info] <redacted>: extension '<redacted>.automation-vscode' is disabled",
+        "2026-11-13 14:25:14.653 [info] <redacted>: extension 'ms-python.debugpy' is disabled",
+        "2026-11-13 14:25:14.653 [info] <redacted>: extension 'ms-python.python' is disabled",
+        "2026-11-13 14:25:14.910 [info] <redacted>.<redacted>.scannedExtensions: TypeScriptTeam.jsts-chat-features,vscode.bat,vscode.clojure,vscode.coffeescript,vscode.<redacted>,GitHub.copilot-chat,vscode.cpp,vscode.csharp,vscode.css,vscode.<redacted>,vscode.dart,vscode.debug-auto-launch,vscode.debug-server-ready,vscode.diff,vscode.docker,vscode.dotenv,vscode.emmet,vscode.extension-editing,vscode.fsharp,vscode.git,vscode.git-base,vscode.github,vscode.<redacted>,vscode.go,vscode.groovy,vscode.grunt,vscode.gulp,vscode.handlebars,vscode.hlsl,vscode.html,vscode.<redacted>,vscode.ini,vscode.ipynb,vscode.jake,vscode.java,vscode.javascript,vscode.json,vscode.<redacted>,vscode.julia,vscode.latex,vscode.less,vscode.log,vscode.lua,vscode.make,vscode.markdown,vscode.<redacted>,vscode.markdown-math,vscode.merge-conflict,vscode.<redacted>,vscode.<redacted>,ms-vscode.js-debug,ms-vscode.js-debug-companion,ms-vscode.<redacted>,vscode.<redacted>,vscode.npm,vscode.objective-c,vscode.perl,vscode.php,vscode.<redacted>,vscode.powershell,vscode.prompt,vscode.pug,vscode.python,vscode.r,vscode.razor,vscode.references-view,vscode.restructuredtext,vscode.ruby,vscode.rust,vscode.scss,vscode.search-result,vscode.shaderlab,vscode.shellscript,vscode.simple-browser,vscode.sql,vscode.swift,vscode.terminal-suggest,vscode.theme-abyss,vscode.theme-defaults,vscode.theme-kimbie-dark,vscode.vscode-modern-icons,vscode.theme-monokai,vscode.<redacted>,vscode.theme-quietlight,vscode.theme-red,vscode.vscode-theme-seti,vscode.<redacted>,vscode.<redacted>,vscode.<redacted>,vscode.tunnel-forwarding,vscode.typescript,vscode.<redacted>,vscode.vb,vscode.xml,vscode.yaml,<redacted>.automation-vscode,ms-python.debugpy,ms-python.python,task-local.<redacted>",
+        "2026-11-13 14:25:14.911 [info] <redacted>: extension 'GitHub.copilot-chat' is disabled",
+        "2026-11-13 14:25:15.850 [info] <redacted>.onEnablementChanged fired for typescriptteam.jsts-chat-features, vscode.git, vscode.terminal-suggest, vscode.<redacted>, <redacted>.automation-vscode, ms-python.debugpy, ms-python.python",
+        "2026-11-13 14:25:15.874 [info] <redacted>._deltaExtensions: toAdd: [typescriptteam.jsts-chat-features,vscode.git,vscode.terminal-suggest,vscode.<redacted>,<redacted>.automation-vscode,ms-python.debugpy,ms-python.python] toRemove: []",
+        "2026-11-13 14:27:33.864 [error] CodeExpectedError: Server[pid=4240] disconnected unexpectedly",
+        "    at Wpt.handleErrorResponse (vscode-file://vscode-app/d:<redacted>.desktop.main.js:4177:18679)",
+        "2026-11-13 14:27:43.597 [error] CodeExpectedError: Server[pid=3528] disconnected unexpectedly",
+        "    at Wpt.handleErrorResponse (vscode-file://vscode-app/d:<redacted>.desktop.main.js:4177:18679)"
+      ],
+      "protocol": []
+    },
+    {
+      "file": "window1/exthost/exthost.log",
+      "source": "code-discovery",
+      "inspectedTailSha256": "f13b0b1ce018ef4d42b4914af9b5eb4ee6336fa1c404fdf903fcf6b7747abdef",
+      "fatalLines": [],
+      "protocol": []
+    }
+  ]
+}
