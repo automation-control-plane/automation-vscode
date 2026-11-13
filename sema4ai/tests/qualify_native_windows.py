@@ -30,7 +30,7 @@ def clean_environment(source, extra=None):
     result = {key: value for key, value in source.items() if key.upper() in SYSTEM_KEYS}
     result.update(PYTHONNOUSERSITE="1", PYTHONUTF8="1")
     if extra:
-        task_keys = {"HOME", "ACTIONS_HOME", "ROBOTS_HOME", "RCC_HOLOTREE_MODE", "AUTOMATION_WINDOWS_QA", "DEBUGPY_LOG_DIR"}
+        task_keys = {"HOME", "ACTIONS_HOME", "ROBOTS_HOME", "RCC_HOLOTREE_MODE", "AUTOMATION_WINDOWS_QA", "DEBUGPY_LOG_DIR", "CI"}
         if any(key.upper() not in SYSTEM_KEYS | task_keys for key in extra):
             raise ValueError("Unapproved QA environment variable")
         result.update(extra)
@@ -92,6 +92,7 @@ def main():
         "ROBOTS_HOME": str(root / "robots"), "RCC_HOLOTREE_MODE": "private",
         "AUTOMATION_WINDOWS_QA": str(root),
         "DEBUGPY_LOG_DIR": str(root / "debugpy-private"),
+        "CI": "1",  # Code logs extension enablement transitions only in CI mode.
     })
     for name in ("home", "actions", "robots", "debugpy-private"):
         (root / name).mkdir()

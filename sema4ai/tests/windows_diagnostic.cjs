@@ -67,7 +67,7 @@ function collectAdapterFailures(root) {
 
 function fatalDiagnosticLines(text, root) {
     return String(text).split(/\r?\n/).filter(line =>
-        /[A-Za-z_.]+(?:Error|Exception)|Fatal Python error|Traceback|uncaught|Unhandled|failed|cannot|not found|Errno|WinError|^E\+\d|extension.*(?:incompat|invalid|disabled|ignor|skip|scan)/i.test(line))
+        /[A-Za-z_.]+(?:Error|Exception)|Fatal Python error|Traceback|uncaught|Unhandled|failed|cannot|not found|Errno|WinError|^E\+\d|extension.*(?:incompat|invalid|disabled|ignor|skip|scan)|onEnablementChanged|_deltaExtensions|workspace.*trust/i.test(line))
         .map(line => scrubDiagnostic(line, root)).filter(Boolean);
 }
 

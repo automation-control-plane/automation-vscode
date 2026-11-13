@@ -63,7 +63,7 @@ test('discovery diagnostics inspect owned scanner and extension-host logs withou
     try {
         const session = path.join(root, 'profile/logs/20261113T000000');
         fs.mkdirSync(path.join(session, 'window1/exthost'), {recursive: true});
-        fs.writeFileSync(path.join(session, 'main.log'), 'Extension scanner ignored incompatible extension\nError token=synthetic');
+        fs.writeFileSync(path.join(session, 'main.log'), 'Extension scanner ignored incompatible extension\nAbstractExtensionService.onEnablementChanged fired\nError token=synthetic');
         fs.writeFileSync(path.join(session, 'window1/exthost/exthost.log'), 'Error: extension registration failed');
         const result = collectAdapterFailures(root);
         assert.ok(result.files.some(item => item.source === 'code-discovery' && item.fatalLines.some(line => line.includes('incompatible'))));
