@@ -88,8 +88,11 @@ def main():
         report["version"] = json.loads((installed / "package.json").read_text())["version"]
         runtime_env = {**env, "PYTHONPATH": os.pathsep.join([
             str(installed / "src"), str(installed / "src/sema4ai_code/vendored")])}
-        run([sys.executable, "-m", "pytest", "--noconftest", str(extension / "tests/test_package_pythonpath.py"), "-q"],
+        run([sys.executable, "-m", "pytest", "--noconftest", str(extension / "tests/test_package_pythonpath.py"),
+             str(extension / "tests/test_extension_storage.py"), str(extension / "tests/test_action_nondebug.py"), "-q"],
             "installed-python-discovery-metadata-input-contracts", runtime_env)
+        run([sys.executable, str(extension / "tests/scan_filesystem_ownership.py"), "--vsix", str(args.vsix.resolve()),
+             "--output", str(public / "filesystem-ownership.json")], "exact-vsix-filesystem-ownership")
         wrapper = root / "installed-js.cjs"
         wrapper.write_text("const Module=require('node:module'),path=require('node:path');\n"
                            "const load=Module._load;Module._load=function(name,...args){\n"
@@ -97,6 +100,8 @@ def main():
                            "return load.call(this,name,...args);};require(process.argv[3]);\n")
         run(["node", str(wrapper), str(installed), str(extension / "tests/python_integration.test.js")],
             "installed-js-optional-integration-unit-contracts")
+        run(["node", str(wrapper), str(installed), str(extension / "tests/extension_storage.test.js")],
+            "installed-js-storage-contracts")
         report["passed"] = True
     finally:
         (public / "qualification.json").write_text(json.dumps(report, indent=2) + "\n")
