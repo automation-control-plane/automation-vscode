@@ -163,6 +163,38 @@ class LaunchProcess:
                 % (self._terminal, VALID_TERMINAL_OPTIONS)
             )
 
+        if request.arguments.kwargs.get("automationResolvedPython") is True:
+            if request.arguments.noDebug is not True:
+                return mark_invalid("Resolved Python execution supports noDebug Run only.")
+            launch = request.arguments.kwargs
+            python = launch.get("python")
+            cwd = launch.get("cwd")
+            program = launch.get("program")
+            module = launch.get("module")
+            python_args = launch.get("pythonArgs", [])
+            run_args = launch.get("args", [])
+            if not isinstance(python, str) or not os.path.isabs(python) or not os.path.isfile(python):
+                return mark_invalid("Resolved managed Python executable is unavailable.")
+            if not isinstance(cwd, str) or not os.path.isabs(cwd) or not os.path.isdir(cwd):
+                return mark_invalid("Resolved Python working directory is unavailable.")
+            if bool(program) == bool(module):
+                return mark_invalid("Resolved Python launch requires exactly one program or module.")
+            if program and (not isinstance(program, str) or not os.path.isabs(program) or not os.path.isfile(program)):
+                return mark_invalid("Resolved Python program is unavailable.")
+            if module and (not isinstance(module, str) or not module or module.startswith("-")):
+                return mark_invalid("Resolved Python module is invalid.")
+            for values in (python_args, run_args):
+                if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
+                    return mark_invalid("Resolved Python arguments must be lists of strings.")
+            if any(value in ("-c", "-m", "--") for value in python_args):
+                return mark_invalid("Resolved Python options must not replace its program or module.")
+            self._cwd = cwd
+            target = ["-m", module] if module else [program]
+            self._cmdline = [python, *python_args, *target, *run_args]
+            # Reuse launch()/disconnect()/notify_exit() for terminal ownership,
+            # streaming, cancellation and actual completion receipts.
+            return
+
         try:
             if robot_yaml is None:
                 return mark_invalid("robot not provided in launch.")

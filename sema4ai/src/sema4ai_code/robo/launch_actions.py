@@ -155,7 +155,19 @@ def create_pm():
 
 
 def main():
-    from tempfile import gettempdir
+    if __package__:
+        from ..storage import storage_directory
+    else:
+        # Native launches execute this file with the package's PYTHONPATH. Load
+        # only our adjacent helper, without changing workload import precedence.
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "automation_extension_storage", Path(__file__).resolve().parents[1] / "storage.py"
+        )
+        storage = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(storage)
+        storage_directory = storage.storage_directory
 
     try:
         from .action_runtime import load_actions
@@ -163,8 +175,7 @@ def main():
         from action_runtime import load_actions
     actions, cli = load_actions()
 
-    dir_path = Path(gettempdir()) / "sema4ai-vscode-actions"
-    dir_path.mkdir(parents=True, exist_ok=True)
+    dir_path = storage_directory("action-artifacts")
 
     store_artifacts_at = create_and_rotate_directories(dir_path, "run-action", 20)
     os.environ.pop("ROBOT_ROOT", None)

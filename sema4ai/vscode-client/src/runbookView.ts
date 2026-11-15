@@ -175,6 +175,9 @@ export function registerRunbookWorkspace(context: vscode.ExtensionContext): void
             case "native-settings": await command("workbench.action.openSettings", "@ext:automation-control-plane.automation-vscode"); return;
             case "edit-setting": if (!SETTINGS.some(([key]) => key === target)) throw Error("Unknown setting."); await command("workbench.action.openSettings", "@id:" + target); return;
             case "diagnostics": await command("sema4ai.showOutput"); return;
+            case "rcc-setup": await command("automation.rcc.setup"); return;
+            case "profile-import": await command("sema4ai.profileImport"); return;
+            case "profile-switch": await command("sema4ai.profileSwitch"); return;
             case "logs": await command("sema4ai.python.view.output.focus"); return;
             case "open-run": if (!target || !globalOutputViewState?.runIdToContents.has(target)) throw Error("This run log is no longer retained."); await globalOutputViewState.setCurrentRunId(target); await command("sema4ai.python.view.output.focus"); return;
             case "report-issue": await command("sema4ai.submitIssue"); return;
@@ -184,8 +187,6 @@ export function registerRunbookWorkspace(context: vscode.ExtensionContext): void
             case "create-action": await command("sema4ai.createActionPackage"); return;
             case "create-robot": await command("sema4ai.createRobot"); return;
             case "create-agent": await command("sema4ai.createAgentPackage"); return;
-            case "profile-import": await command("sema4ai.profileImport"); return;
-            case "profile-switch": await command("sema4ai.profileSwitch"); return;
             case "oauth-settings": await command("sema4ai.oauth2.open_settings"); return;
         }
         const selected = getSelectedRobot();

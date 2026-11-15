@@ -225,9 +225,10 @@ class Rcc:
         return self._get_str_optional_setting(SEMA4AI_HOME)
 
     def get_robocorp_code_datadir(self, kind: RuntimeKind = "actions") -> Path:
-        return (
+        from sema4ai_code.storage import runtime_metadata_directory
+
+        return runtime_metadata_directory(
             runtime_homes(self.get_robocorp_home_from_settings())[kind]
-            / ".sema4ai_code"
         )
 
     @property
@@ -1314,7 +1315,7 @@ def make_numbered_in_temp(
     Helper to create a numbered directory in the temp dir with automatic disposal
     of old contents.
     """
-    import tempfile
+    from sema4ai_code.storage import storage_directory
 
     from sema4ai_code.path_operations import (
         LOCK_TIMEOUT,
@@ -1323,8 +1324,8 @@ def make_numbered_in_temp(
     )
 
     user = get_user() or "unknown"
-    temproot = tmpdir if tmpdir else Path(tempfile.gettempdir())
-    rootdir = temproot / f"sema4ai-{user}"
+    temproot = tmpdir if tmpdir else storage_directory("tmp")
+    rootdir = temproot / f"automation-vscode-{user}"
     rootdir.mkdir(exist_ok=True)
     return make_numbered_dir_with_cleanup(
         prefix="rcc-",

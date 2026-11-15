@@ -54,9 +54,10 @@ test("Native Python launch refuses a missing debugger instead of selecting absen
     const missing = {type: "python", python: "/rcc/bin/python"};
     assert.equal(await resolve(missing), undefined);
     assert.equal(missing.type, "python");
-    assert.match(messages[0], /ms-python.python.*fabioz.vscode-pydev-python-debugger/);
+    assert.match(messages[0], /ms-python.debugpy.*fabioz.vscode-pydev-python-debugger/);
     let activated = false;
-    installed = {id: "fabioz.vscode-pydev-python-debugger", isActive: false, activate: async () => {activated = true;}};
+    installed = {id: "fabioz.vscode-pydev-python-debugger", isActive: false,
+        packageJSON: {contributes: {debuggers: [{type: "pydevd"}]}}, activate: async () => {activated = true;}};
     const pydev = await resolve({type: "python", python: "/rcc/bin/python"});
     assert.equal(activated, true);
     assert.equal(pydev.type, "pydevd");

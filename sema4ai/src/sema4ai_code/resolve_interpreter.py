@@ -115,11 +115,13 @@ class _CachedInterpreterInfo:
 
         def on_env_creation_error(result) -> None:
             import tempfile
+            from sema4ai_code.storage import storage_directory
 
             # Note: called only on environment creation (not on all failures).
             endpoint: IEndPoint = endpoint_provider.endpoint
             with tempfile.NamedTemporaryFile(
-                delete=False, suffix=".log", prefix="sema4ai_code_env_error_"
+                delete=False, suffix=".log", prefix="environment-error-",
+                dir=storage_directory("logs"),
             ) as f:
                 if progress_reporter is not None and progress_reporter.cancelled:
                     file_contents = f"""

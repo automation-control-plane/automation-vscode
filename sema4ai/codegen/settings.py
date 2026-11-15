@@ -52,7 +52,7 @@ SETTINGS = [
     Setting(
         "sema4ai.language-server.args",
         [],
-        'Specifies the arguments to be passed to the Automation language server (i.e.: ["-vv", "--log-file=~/sema4ai_code.log"]). Requires a VSCode restart to take effect.',
+        'Specifies the arguments to be passed to the Automation language server (i.e.: ["-vv", "--log-file=~/automation-vscode.log"]). Requires a VSCode restart to take effect.',
         setting_type="array",
         js_type="string[]",
     ),

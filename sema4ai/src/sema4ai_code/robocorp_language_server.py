@@ -176,10 +176,9 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         from sema4ai_code.rcc import Rcc
         from sema4ai_code.vendored_deps.package_deps.pypi_cloud import PyPiCloud
 
-        user_home = os.getenv("ROBOCORP_CODE_USER_HOME", None)
-        if user_home is None:
-            user_home = os.path.expanduser("~")
-        cache_dir = os.path.join(user_home, ".sema4ai", ".cache")
+        from sema4ai_code.storage import extension_storage
+
+        cache_dir = str(extension_storage() / "cache")
 
         log.info(f"Cache dir: {cache_dir}")
 
