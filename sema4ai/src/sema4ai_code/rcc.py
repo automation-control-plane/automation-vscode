@@ -112,13 +112,14 @@ def download_rcc(
     :param force:
         Whether we should overwrite an existing installation.
     """
-    from sema4ai_code.tools import download_tool
+    from sema4ai_code.published_tools import published_tool
+    from sema4ai_code.tools import Tool, download_tool
 
-    RCC_VERSION = "v18.19.8"
+    rcc_version = published_tool(Tool.RCC.value, sys_platform)["version"]
     download_tool(
         Tool.RCC,
         location,
-        RCC_VERSION,
+        rcc_version,
         force=force,
         sys_platform=sys_platform,
         endpoint=endpoint,

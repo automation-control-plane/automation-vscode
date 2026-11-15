@@ -25,6 +25,10 @@ jobs:
   native-windows:
     runs-on: windows-2025
     timeout-minutes: 60
+    env:
+      # This explicit qualification branch must expose candidate acceptance as
+      # its PR check, rather than a green production-pin control run.
+      CANDIDATE_QUALIFICATION: ${{ inputs.candidate_qualification == true || (github.event_name == 'pull_request' && github.head_ref == 'qualify/rcc-18.19.11-runtime-1.1.1') }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -36,12 +40,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Package and qualify exact installed Windows VSIX
-        if: inputs.candidate_qualification != true
+        if: env.CANDIDATE_QUALIFICATION != 'true'
         shell: pwsh
         run: |
           python sema4ai/tests/qualify_native_windows.py --state "$env:RUNNER_TEMP\owned-vscode"
       - name: Verify candidate releases and qualify their installed Windows VSIX
-        if: github.event_name == 'workflow_dispatch' && inputs.candidate_qualification == true
+        if: env.CANDIDATE_QUALIFICATION == 'true'
         shell: pwsh
         run: |
           python sema4ai/tests/qualify_candidate_native_windows.py --state "$env:RUNNER_TEMP\owned-vscode"
@@ -49,7 +53,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: owned-windows-vsix-${{ github.sha }}-${{ inputs.candidate_qualification && 'candidate' || 'pinned' }}
+          name: owned-windows-vsix-${{ github.sha }}-${{ env.CANDIDATE_QUALIFICATION == 'true' && 'candidate' || 'pinned' }}
           if-no-files-found: error
           path: |
             ${{ runner.temp }}/owned-vscode/public/**

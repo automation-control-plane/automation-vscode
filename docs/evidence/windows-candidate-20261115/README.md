@@ -33,6 +33,41 @@ alone would not isolate its Windows extraction cache. The receipt measures the
 Runtime's extracted RCC separately from the outer candidate RCC after installed
 workloads finish; it does not infer composition from version pins alone.
 
+## Second attempt: duplicated download versions
+
+[Run 43757393446](https://github.com/automation-control-plane/automation-vscode/actions/runs/43757393446)
+at `7dfc62527dd62c3d937ba66cb365fb4df69defa2` verified the candidate releases,
+packaged/installed the candidate VSIX, and verified 758 payloads. Native workspace
+trust, exact extension registration and cold language-server bootstrap passed.
+It stopped at the first explicit tool-acquisition assertion before any workload
+cases ran; the normal production-pinned PR checks passed separately and do not
+establish candidate acceptance.
+
+The Python RCC download wrapper still requested literal `v18.19.8`, while the
+candidate manifest declared `v18.19.11`. The shared downloader correctly rejected
+that mismatch. An isolated verified-file fixture reproduced the same ValueError
+before any network or file modification. The Action Server wrapper had the same
+latent mismatch (`1.1.0` versus candidate `1.1.1`). This is duplicated version
+metadata in the extension, not proof that either released binary is incompatible.
+
+Default download versions must come from the manifest. Explicit mismatched
+requests must still fail closed, and existing artifact preservation, SHA checks,
+installed payload equality and workload assertions remain required. Failure
+receipts are retained with the `-7dfc6252` suffix. New acquisition diagnostics
+retain only the tool name and an already-scrubbed failure message.
+
+The correction resolves both default versions from the selected manifest at
+call time. Current production defaults remain unchanged, explicit incompatible
+requests still fail closed, and verified/mismatched existing files retain their
+previous admission/preservation behavior. The combined Python regressions pass
+79 tests, including the new metadata cases and existing OAuth/cache boundaries;
+seven diagnostic-redaction tests also pass. Independent review found no blockers.
+
+The qualification PR's Windows check now selects the candidate path directly.
+Other PR branches and an ordinary dispatch still select production pins. This
+prevents a green pinned control check from concealing a failed out-of-band
+candidate run; candidate acceptance still requires the actual workload receipt.
+
 ## Dispatch
 
 ```sh

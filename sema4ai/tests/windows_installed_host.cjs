@@ -98,7 +98,13 @@ exports.run = async () => {
         assert.ok(python.pythonExe.toLowerCase().startsWith(path.join(root, 'actions').toLowerCase()), 'Cold bootstrap must use the isolated Action home');
         report.checks.push('Installed cold RCC Windows bootstrap and real language-server activation'); save();
         for (const [name, command] of [['rcc', 'sema4ai.rccDownload.internal'], ['action-server', 'sema4ai.actionServerDownload.internal']]) {
-            const acquired = await vscode.commands.executeCommand(command); assert.ok(acquired?.success);
+            const acquired = await vscode.commands.executeCommand(command);
+            if (!acquired?.success) {
+                report.toolAcquisitionFailure = {tool: name,
+                    message: scrubDiagnostic(acquired?.message || 'No successful acquisition result', root)};
+                save();
+            }
+            assert.ok(acquired?.success);
             const pin = JSON.parse(fs.readFileSync(path.join(extension.extensionPath, 'published-tools.json')))[name];
             assert.equal(hash(acquired.result), pin.assets['win32-x64'].sha256);
             const version = execute(acquired.result, name === 'rcc' ? ['version'] : ['version'], root, environment()).trim();

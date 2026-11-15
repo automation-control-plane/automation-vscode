@@ -58,6 +58,7 @@ jobs:
               'sema4ai/tests/sema4ai_code_tests/test_package_yaml_code_actions.py',
               'sema4ai/tests/sema4ai_code_tests/robo/test_collect_actions_ast_discovery.py',
               'sema4ai/tests/sema4ai_code_tests/test_rcc_retry_cache.py',
+              'sema4ai/tests/sema4ai_code_tests/test_tool_download_versions.py',
               'sema4ai/tests/sema4ai_code_tests/robo/test_action_runtime.py',
               *(['sema4ai/tests/test_published_smoke_candidate_manifest.py'] if sys.platform == 'linux' else []),
           ], env=env, check=True)
