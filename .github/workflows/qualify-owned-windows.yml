@@ -2,6 +2,12 @@ name: Qualify owned Windows VSIX
 
 on:
   workflow_dispatch:
+    inputs:
+      candidate_qualification:
+        description: 'Qualify the explicitly pinned candidate RCC and Actions Runtime releases'
+        type: boolean
+        required: false
+        default: false
   pull_request:
     paths:
       - '.github/workflows/qualify-owned-windows.yml'
@@ -30,14 +36,20 @@ jobs:
         with:
           python-version: '3.12'
       - name: Package and qualify exact installed Windows VSIX
+        if: inputs.candidate_qualification != true
         shell: pwsh
         run: |
           python sema4ai/tests/qualify_native_windows.py --state "$env:RUNNER_TEMP\owned-vscode"
+      - name: Verify candidate releases and qualify their installed Windows VSIX
+        if: github.event_name == 'workflow_dispatch' && inputs.candidate_qualification == true
+        shell: pwsh
+        run: |
+          python sema4ai/tests/qualify_candidate_native_windows.py --state "$env:RUNNER_TEMP\owned-vscode"
       - name: Retain only sanitized receipts and exact candidate
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: owned-windows-vsix-${{ github.sha }}
+          name: owned-windows-vsix-${{ github.sha }}-${{ inputs.candidate_qualification && 'candidate' || 'pinned' }}
           if-no-files-found: error
           path: |
             ${{ runner.temp }}/owned-vscode/public/**

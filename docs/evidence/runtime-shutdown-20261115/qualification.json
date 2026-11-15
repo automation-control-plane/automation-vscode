@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-15",
+  "result": "pass_source_defined_shutdown_status_1",
+  "platform": "linux-x64",
+  "run_source": {
+    "commit": "5068bb8540721ceb86817fcc6d01500bec48ff22",
+    "worktree_dirty": true,
+    "loaded_code_sha256": {
+      "sema4ai/src/sema4ai_code/rcc.py": "302803174fbafb0b3056779d2b7eff1665366e4ea8d264bd7beeddfdc2d838bf",
+      "sema4ai/src/sema4ai_code/action_server.py": "e64c13e01f3902b5303dd22a5aaa33bcce1bca20a7a6e05a483ad8c578fc4316",
+      "sema4ai/tests/runtime_smoke.py": "039f276e75494e4d9f7e89cb14c1aa5fb422553983a8d049c50440b9db1a1cf0"
+    },
+    "shutdown_smoke_sha256_at_execution": "dfba9b9600f059fbcd72ce5327d52b89a6126af31294f66af3a038e2f0b190a1",
+    "shutdown_smoke_sha256_at_receipt_validation": "be336f983770d3e2b8555c802e4eb562529391e1ad4023f6b5ef508dd836c0ed"
+  },
+  "candidate_manifest": {
+    "path": "docs/evidence/dogfood-setup-20261115/candidate-tools.json",
+    "sha256": "dbf83bd2148daa22b95c9afb7f3b77080fcfd92a44f9316427987c8aa7ec25cd"
+  },
+  "artifacts": {
+    "rcc": {
+      "version": "v18.19.11",
+      "repository": "joshyorko/rcc",
+      "tag": "v18.19.11",
+      "source_commit": "953eda18d3d1f4a286c17709f282315a2ed16a16",
+      "linux_sha256": "4d68609044d3a39a1728d571d54c77a6174215adb40eb9acd69ce5ad34a6db1f"
+    },
+    "actions_runtime": {
+      "version": "1.1.1",
+      "repository": "joshyorko/actions",
+      "tag": "actions-runtime-1.1.1",
+      "source_commit": "9bfc6ca5337dac14851e5ef3b2ea3a41485c81b2",
+      "linux_sha256": "8c27fbed198aef16c98cdc7a45230fbc4708b06dff1c3523aeddfcdf7840efd0"
+    }
+  },
+  "synthetic_action": {
+    "actions_core": "1.1.0",
+    "result": "Hello HTTP Dakota"
+  },
+  "shutdown": {
+    "endpoint_opt_in": "RC_ADD_SHUTDOWN_API=1",
+    "http_status": 200,
+    "forced_termination": false,
+    "process_exit_code": 1,
+    "log_markers_in_order": [
+      "POST /api/shutdown/ 200 OK",
+      "Stopping action server...",
+      "Exiting action server...",
+      "Error executing action-server: exit status 1"
+    ],
+    "classification": "source-defined KeyboardInterrupt handling; not a clean code-0 exit or compatibility failure"
+  },
+  "embedded_runtime_rcc": {
+    "version": "v18.19.8",
+    "filename": "rcc-18.19.8",
+    "sha256": "ea8dc96e66d7a81536b03a344b4eaf44bbd94122585954e70290bd466f5de4b6",
+    "matches_current_manifest": true
+  },
+  "source_trace": [
+    {
+      "path": "action_server/src/actions/server/_server.py",
+      "lines": "677-693",
+      "effect": "opt-in endpoint sends response then interrupts the main thread"
+    },
+    {
+      "path": "action_server/src/actions/server/_cli_impl.py",
+      "lines": "1238-1249",
+      "effect": "KeyboardInterrupt logs exit and returns status 1 while killing child processes"
+    },
+    {
+      "path": "action_server/src/actions/server/cli.py",
+      "lines": "22-65",
+      "effect": "CLI exits with the returned status"
+    },
+    {
+      "path": "action_server/go-wrapper/main.go",
+      "lines": "395-403",
+      "effect": "wrapper logs and propagates nonzero child exit status"
+    }
+  ],
+  "production_pins_changed": false,
+  "user_home_or_tls_oauth_settings_touched": false,
+  "out_of_scope": [
+    "native Windows or macOS shutdown qualification",
+    "canonical managed Runtime acceptance",
+    "a code-0 exit from the opt-in shutdown endpoint"
+  ]
+}

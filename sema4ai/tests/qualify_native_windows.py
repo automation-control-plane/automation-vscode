@@ -85,20 +85,75 @@ def extract_archive(archive, destination):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--state", type=Path, required=True)
+    parser.add_argument("--extension-source", type=Path)
+    parser.add_argument("--candidate-provenance", type=Path)
     args = parser.parse_args()
+    if (args.extension_source is None) != (args.candidate_provenance is None):
+        raise ValueError("Candidate source and provenance must be provided together")
     if sys.platform != "win32":
         raise RuntimeError("Native Windows is required; packaging on Linux is not acceptance")
     root = args.state.resolve()
+    repository = Path(__file__).resolve().parents[2]
+    production_extension = repository / "sema4ai"
+    extension = args.extension_source.resolve() if args.extension_source else production_extension
+    if not (extension / "package.json").is_file():
+        raise RuntimeError("Extension source copy is missing its package manifest")
+    candidate_provenance = None
+    if args.candidate_provenance:
+        from qualify_candidate_native_windows import verify_staged_source
+
+        provenance = json.loads(args.candidate_provenance.read_text(encoding="utf-8"))
+        if not isinstance(provenance, dict):
+            raise RuntimeError("Candidate provenance has an invalid shape")
+        source_head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=repository, text=True
+        ).strip()
+        candidate_manifest = extension / "published-tools.json"
+        candidate_tools = json.loads(candidate_manifest.read_text(encoding="utf-8"))
+        provenance_tools = provenance.get("tools")
+        if not isinstance(candidate_tools, dict):
+            raise RuntimeError("Candidate manifest has an invalid shape")
+        if (
+            provenance.get("source_head") != source_head
+            or provenance.get("production_manifest_sha256")
+            != digest(production_extension / "published-tools.json")
+            or provenance.get("candidate_manifest_sha256") != digest(candidate_manifest)
+            or provenance.get("candidate_manifest_changes_only") != ["published-tools.json"]
+            or set(candidate_tools) != {"rcc", "action-server"}
+            or not isinstance(provenance_tools, dict)
+            or set(provenance_tools) != {"rcc", "action-server"}
+        ):
+            raise RuntimeError("Candidate provenance or staged manifest does not match the checked source")
+        verify_staged_source(extension.parent, provenance)
+        for tool, expected in provenance_tools.items():
+            manifest_tool = candidate_tools.get(tool)
+            if not isinstance(manifest_tool, dict) or not isinstance(expected, dict):
+                raise RuntimeError("Candidate manifest pin has an invalid shape")
+            assets = manifest_tool.get("assets")
+            asset = assets.get("win32-x64") if isinstance(assets, dict) else None
+            if (
+                manifest_tool.get("version") != expected.get("version")
+                or manifest_tool.get("tag") != expected.get("tag")
+                or manifest_tool.get("source") != expected.get("source_commit")
+                or not isinstance(asset, dict)
+                or asset.get("name") != expected.get("windows_asset")
+                or asset.get("sha256") != expected.get("sha256")
+            ):
+                raise RuntimeError("Candidate manifest pin does not match its verified release provenance")
+        candidate_provenance = provenance
+
     root.mkdir(parents=True, exist_ok=False)
     public = root / "public"
     public.mkdir()
-    repository = Path(__file__).resolve().parents[2]
-    extension = repository / "sema4ai"
     report = {"platform": "win32-x64", "passed": False, "checks": [], "limitations": [
         "Native debug API/registered adapter acceptance; no fabricated Work Items button or managed-server acceptance.",
         "Windows managed UI/server, Java inspector, image/recording and external integrations require separate acceptance.",
         "No Mac or Marketplace publication. No system registry/firewall/service changes.",
     ]}
+    if candidate_provenance:
+        report["candidate"] = candidate_provenance
+        shutil.copyfile(args.candidate_provenance, public / "candidate-provenance.json")
+        shutil.copyfile(extension / "published-tools.json", public / "candidate-manifest.json")
     env = clean_environment(os.environ, {
         "HOME": str(root / "home"), "ACTIONS_HOME": str(root / "actions"),
         "ROBOTS_HOME": str(root / "robots"), "RCC_HOLOTREE_MODE": "private",
