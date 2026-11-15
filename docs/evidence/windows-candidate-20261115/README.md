@@ -28,8 +28,9 @@ requires the subsequent hosted run and its receipts. No workload assertion or
 security guard was removed.
 
 Candidate mode also sets Windows `USERPROFILE`, AppData and temp paths beneath
-the owned test root. The Go wrapper calls `os.UserHomeDir`, so setting `HOME`
-alone would not isolate its Windows extraction cache. The receipt measures the
+the owned test root. The Go wrapper uses `LOCALAPPDATA` on Windows and
+`os.UserHomeDir` on Linux/macOS, so setting `HOME` alone would not isolate its
+Windows extraction cache. The receipt measures the
 Runtime's extracted RCC separately from the outer candidate RCC after installed
 workloads finish; it does not infer composition from version pins alone.
 
@@ -67,6 +68,26 @@ The qualification PR's Windows check now selects the candidate path directly.
 Other PR branches and an ordinary dispatch still select production pins. This
 prevents a green pinned control check from concealing a failed out-of-band
 candidate run; candidate acceptance still requires the actual workload receipt.
+
+## Third attempt: workloads pass, composition lookup fails
+
+[Run 43758865947](https://github.com/automation-control-plane/automation-vscode/actions/runs/43758865947)
+tested feature head `ab98362cf5dc4fb99094f63215a24cc1a3dcdd01` through merge
+source `9cbfe22ab6804412522236df128b865e0c5d28ec`. Its candidate receipts verify
+758 payloads, both candidate asset hashes and versions, all eight exit-zero
+Action/Robot run/debug cases, four real breakpoints, and output, attachment and
+replay preservation. Runtime terminal start/stop and occupied-listener refusal
+also passed. These workload results are retained with the `-ab98362c` suffix.
+
+The overall job still failed: the new bundled-RCC measurement used the Linux
+`HOME/.actions` layout. The actual Windows wrapper uses
+`LOCALAPPDATA/actions/bin/action-server/internal/<version>`; see the
+[released platform switch](https://github.com/joshyorko/actions/blob/9bfc6ca5337dac14851e5ef3b2ea3a41485c81b2/action_server/go-wrapper/main.go#L343-L362).
+The correction derives that path from the already private `LOCALAPPDATA` and
+still refuses missing configuration or missing bundled artifacts. It does not
+search live/runner caches or suppress the composition check. A regression checks
+the Windows layout and rejects a HOME-only environment. Overall qualification
+requires the corrected measurement to complete in the next hosted run.
 
 ## Dispatch
 

@@ -194,3 +194,8 @@ def test_candidate_windows_home_does_not_inherit_or_mutate_runner_profile(tmp_pa
     assert all(Path(result[key]).is_relative_to(tmp_path) for key in ("APPDATA", "LOCALAPPDATA", "TEMP", "TMP"))
     assert result["PATH"] == inherited["PATH"]
     assert result["SSL_CERT_FILE"] == inherited["SSL_CERT_FILE"]
+    internal = module.candidate_runtime_internal_directory(result, "1.1.1")
+    assert internal == (tmp_path / "home/AppData/Local/actions/bin/action-server/internal/1.1.1/_internal/actions/server/bin")
+    assert internal.is_relative_to(tmp_path)
+    with pytest.raises(ValueError, match="LOCALAPPDATA"):
+        module.candidate_runtime_internal_directory({"HOME": str(tmp_path)}, "1.1.1")

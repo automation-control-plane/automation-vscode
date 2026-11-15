@@ -43,12 +43,20 @@ def digest(path):
 
 
 def candidate_home_environment(environment, root):
-    """Go's Windows UserHomeDir uses USERPROFILE, not HOME."""
+    """Keep the LOCALAPPDATA-based wrapper cache and other user paths private."""
     home = root / "home"
     return {**environment, "USERPROFILE": str(home),
             "APPDATA": str(home / "AppData/Roaming"),
             "LOCALAPPDATA": str(home / "AppData/Local"),
             "TEMP": str(root / "tmp"), "TMP": str(root / "tmp")}
+
+
+def candidate_runtime_internal_directory(environment, runtime_version):
+    local = environment.get("LOCALAPPDATA")
+    if not local:
+        raise ValueError("Candidate Runtime requires task-owned LOCALAPPDATA")
+    return (Path(local) / "actions/bin/action-server/internal" / runtime_version
+            / "_internal/actions/server/bin")
 
 
 def code_path(path):
@@ -335,7 +343,8 @@ def main():
         report["checks"].append("Actual installed Extension Host completed all required native gates")
         if candidate_provenance:
             runtime_version = candidate_provenance["tools"]["action-server"]["version"]
-            internal = root / "home/.actions/bin/action-server/internal" / runtime_version / "_internal/actions/server/bin"
+            internal = candidate_runtime_internal_directory(env, runtime_version)
+            report["candidate_runtime_internal_relative_path"] = internal.relative_to(root).as_posix()
             baseline = json.loads((production_extension / "published-tools.json").read_text())["rcc"]
             bundled = []
             for path in sorted(internal.glob("rcc-*")):
