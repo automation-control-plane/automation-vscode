@@ -214,6 +214,13 @@ export async function getRccLocation(): Promise<string | undefined> {
             },
             downloadRcc
         );
+        if (!(await fileExists(location))) {
+            throw new Error("RCC download did not produce a verified executable: " + location);
+        }
+        const downloadedDigest = createHash("sha256").update(fs.readFileSync(location)).digest("hex");
+        if (downloadedDigest !== publishedTool("rcc").sha256) {
+            throw new Error("Downloaded RCC does not match the pinned release and was preserved: " + location);
+        }
     }
     return location;
 }
@@ -343,9 +350,9 @@ export async function runConfigDiagnostics(
         OUTPUT_CHANNEL.appendLine(
             "RCC Diagnostics:" +
                 "\nStdout:\n" +
-                configureLongpathsOutput.stdout +
+                (configureLongpathsOutput?.stdout || "") +
                 "\nStderr:\n" +
-                configureLongpathsOutput.stderr
+                (configureLongpathsOutput?.stderr || "")
         );
         return undefined;
     } finally {

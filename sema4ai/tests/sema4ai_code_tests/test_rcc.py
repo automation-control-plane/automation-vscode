@@ -420,8 +420,7 @@ def test_get_robot_yaml_environ_not_ok(rcc: IRcc, datadir, holotree_manager):
     del commands[:]
     assert command[1:5] == ["holotree", "variables", "--space", "vscode-01"]
 
-    # Calling it a 2nd time after the first one didn't work shouldn't even
-    # call rcc (it'll only be called if the yaml is changed).
+    # A failed setup is retryable without changing the yaml or restarting.
     result = rcc.get_robot_yaml_env_info(
         bad_robot1.robot_yaml,
         bad_robot1.conda_yaml,
@@ -432,8 +431,8 @@ def test_get_robot_yaml_environ_not_ok(rcc: IRcc, datadir, holotree_manager):
 
     assert not result.success
     assert result.message
-    assert not commands
-    assert "Environment from previously broken conda.yaml requested" in result.message
+    assert len(commands) == 1
+    assert commands[0][1:5] == ["holotree", "variables", "--space", "vscode-01"]
 
 
 def test_rcc_timeout(rcc):
