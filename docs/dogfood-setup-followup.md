@@ -148,3 +148,35 @@ outside this follow-up.
 
 No user cache is deleted, existing artifact overwritten, OAuth reference
 migrated, or published asset replaced.
+
+## Final-head Windows README gate failure
+
+Installed Windows run [43743860318](https://github.com/automation-control-plane/automation-vscode/actions/runs/43743860318)
+tested feature head `4d65f565aba1ee36f87fb5606086c74e8f831c1d` through
+GitHub's merge tree `d21e7b0ddd217ca5fbd7f7dcee078d2e93690017`. Its retained
+VSIX has SHA-256 `6cf4eac18a02624df18aad3e3c1667088b8b228b6528a63af392c2ccb6daf164`.
+The job packaged and installed the candidate, then stopped at the exact payload
+comparison before extension-host workloads. Package-path and setup checks passed
+on that head; installed-host acceptance did not.
+
+The retained VSIX proves that `vsce` rewrote three new relative README links.
+The resulting manifest link omitted `sema4ai/`, and the evidence link contained
+`blob/HEAD/../docs`. Those changes also made the packaged README differ from the
+source bytes required by `qualify_native_windows.py`. This is a packaged-document
+defect caught by the provenance gate, not evidence that Action workloads failed.
+The retained artifact alone does not independently establish the installed
+README bytes. The correction uses explicit repository URLs; source-to-VSIX and
+VSIX-to-installed equality and all workload assertions remain required.
+
+A fresh Linux packaging check with the `win32-x64` target verified all 758
+extension payloads, including README, byte-for-byte against source. Its temporary
+VSIX SHA-256 is `8aacdd0adb4ab35de4436382eb1e63ed83d4faebf07e8694e08e99953c600011`.
+That is packaging proof only; a fresh hosted Windows run must still pass the
+installed comparison and workloads. The nine Windows harness boundary tests
+also pass unchanged.
+
+The full Node suite passes 217 tests with two real `vsce` README regressions:
+LF/CRLF source preservation and a negative relative-link fixture. The helper
+asserts that the processor actually ran. Both tests also run in the focused
+Windows job. Independent review found no blockers in this correction and
+confirmed the Windows payload gate and workload harness remain unchanged.
