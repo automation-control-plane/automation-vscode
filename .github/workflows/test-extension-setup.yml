@@ -39,9 +39,9 @@ jobs:
       - name: Compile and run focused Windows regressions (path-sensitive host mocks are Linux-only)
         if: runner.os == 'Windows'
         working-directory: sema4ai
-        run: npm run compile && node --test tests/rcc_setup.test.js tests/diagnostics_help.test.js tests/rcc_profiles.test.js tests/runbook_environment_versions.test.js
+        run: npm run compile && node --test tests/rcc_setup.test.js tests/diagnostics_help.test.js tests/rcc_profiles.test.js tests/runbook_environment_versions.test.js tests/package_yaml_schema.test.js
       - name: Install Python regression dependencies
-        run: python -m pip install pytest pytest-timeout pyyaml actions-core==1.1.0
+        run: python -m pip install pytest pytest-timeout pyyaml jsonschema actions-core==1.1.0
       - name: Check package paths and action runtime setup
         shell: python
         run: |
@@ -50,6 +50,10 @@ jobs:
           subprocess.run([
               sys.executable, '-m', 'pytest', '--noconftest', '-q',
               'sema4ai/tests/test_package_pythonpath.py',
+              'sema4ai/tests/test_package_yaml_schema.py',
+              'sema4ai/tests/sema4ai_code_tests/test_package_yaml_code_actions.py',
+              'sema4ai/tests/sema4ai_code_tests/robo/test_collect_actions_ast_discovery.py',
               'sema4ai/tests/sema4ai_code_tests/test_rcc_retry_cache.py',
               'sema4ai/tests/sema4ai_code_tests/robo/test_action_runtime.py',
+              *(['sema4ai/tests/test_published_smoke_candidate_manifest.py'] if sys.platform == 'linux' else []),
           ], env=env, check=True)

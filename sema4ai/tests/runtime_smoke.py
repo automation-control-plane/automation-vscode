@@ -1,6 +1,7 @@
 """Start the unchanged published wrapper and invoke an authored Action over HTTP."""
 
 import json
+import hashlib
 from pathlib import Path
 import socket
 import subprocess
@@ -10,7 +11,8 @@ import uuid
 
 
 def serve_action(
-    *, executable: str, package: Path, env: dict[str, str], log: Path
+    *, executable: str, package: Path, env: dict[str, str], log: Path,
+    expected_version: str,
 ) -> dict:
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
@@ -71,20 +73,30 @@ def serve_action(
         assert result == "Hello HTTP Dakota", result
         with urllib.request.urlopen(base + "/config", timeout=5) as response:
             config = json.load(response)
-        assert config["version"] == "1.0.4", config
-        bundled = (
+        assert config["version"] == expected_version, config
+        bundled_directory = (
             Path(env["HOME"])
-            / ".actions/bin/action-server/internal/1.0.4/_internal/actions/server/bin/rcc-18.19.3"
+            / ".actions/bin/action-server/internal"
+            / expected_version
+            / "_internal/actions/server/bin"
         )
-        bundled_version = subprocess.check_output(
-            [str(bundled), "--version"], env=env, text=True
-        ).strip()
+        bundled_rcc = []
+        for bundled in sorted(bundled_directory.glob("rcc-*")):
+            bundled_rcc.append({
+                "name": bundled.name,
+                "sha256": hashlib.sha256(bundled.read_bytes()).hexdigest(),
+                "version": subprocess.check_output(
+                    [str(bundled), "--version"],
+                    env={**env, "ACTIONS_SKIP_UPDATE_CHECK": "1"},
+                    text=True,
+                ).strip(),
+            })
         evidence = {
             "command": command,
             "result": result,
             "datadir": str(datadir),
             "runtime_version": config["version"],
-            "bundled_rcc_version": bundled_version,
+            "bundled_rcc": bundled_rcc,
         }
         return evidence
     finally:

@@ -27,7 +27,7 @@
         "compile": "cd vscode-client && tsc -p ./ && cd ..",
         "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
         "pretest": "cd vscode-client && tsc -p ./ && cd ..",
-        "test": "node --test tests/extension_storage.test.js tests/diagnostics_help.test.js tests/rcc_profiles.test.js tests/rcc_setup.test.js tests/runbook_environment_versions.test.js tests/action_nondebug.test.js tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js tests/runtime_restart.test.js tests/resources_tree.test.js tests/owned_workflow.test.js tests/work_items_editor.test.js tests/work_items_editor_state.test.js tests/work_items_runtime_client.test.js tests/managed_work_items_client.test.js tests/managed_execution_selection.test.js tests/managed_execution_client.test.js tests/managed_execution_view.test.js tests/owned_bootstrap.test.js tests/managed_work_items_view.test.js tests/managed_work_items_editor.test.js tests/work_items_form.test.js tests/work_item_proposals.test.js tests/runbook_workspace.test.js tests/runtime_reconnect.test.js tests/legacy_surfaces.test.js tests/inspector_shell.test.js tests/inspector_host_context.test.js tests/runbook_forms.test.js tests/runbook_host.test.js tests/language_server_startup.test.js tests/action_inputs_editor.test.js tests/action_inputs_editor_host.test.js tests/action_inputs_editor_ui.test.js tests/codegen_package_inventory.test.js tests/windows_trusted_entry.test.cjs",
+        "test": "node --test tests/extension_storage.test.js tests/diagnostics_help.test.js tests/rcc_profiles.test.js tests/rcc_setup.test.js tests/runbook_environment_versions.test.js tests/package_yaml_schema.test.js tests/action_nondebug.test.js tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js tests/runtime_restart.test.js tests/resources_tree.test.js tests/owned_workflow.test.js tests/work_items_editor.test.js tests/work_items_editor_state.test.js tests/work_items_runtime_client.test.js tests/managed_work_items_client.test.js tests/managed_execution_selection.test.js tests/managed_execution_client.test.js tests/managed_execution_view.test.js tests/owned_bootstrap.test.js tests/managed_work_items_view.test.js tests/managed_work_items_editor.test.js tests/work_items_form.test.js tests/work_item_proposals.test.js tests/runbook_workspace.test.js tests/runtime_reconnect.test.js tests/legacy_surfaces.test.js tests/inspector_shell.test.js tests/inspector_host_context.test.js tests/runbook_forms.test.js tests/runbook_host.test.js tests/language_server_startup.test.js tests/action_inputs_editor.test.js tests/action_inputs_editor_host.test.js tests/action_inputs_editor_ui.test.js tests/codegen_package_inventory.test.js tests/windows_trusted_entry.test.cjs",
         "test:host": "node ./vscode-client/out/tests/runTests.js",
         "prettier": "npx prettier -c vscode-client/**/*.ts",
         "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
@@ -239,107 +239,123 @@
         "onLanguage:python"
     ],
     "contributes": {
-        "configuration": {
-            "title": "Automation Control Plane",
-            "type": "object",
-            "properties": {
-                "sema4ai.legacyVendorIntegrations.enabled": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Expose retained third-party Studio and Control Room compatibility integrations. These external services are not owned or provided by Automation Control Plane. Disabled by default; local package build, export and Runtime do not require them."
-                },
-                "sema4ai.actionServer.port": {
-                    "type": "number",
-                    "default": 8082,
-                    "description": "Loopback port for Actions Runtime. Choose an unused integer from 1 to 65535. Existing listeners are never stopped or adopted automatically."
-                },
-                "sema4ai.language-server.tcp-port": {
-                    "type": "number",
-                    "default": 0,
-                    "description": "If the port is specified, connect to the language server previously started at the given port. Requires a VSCode restart to take effect."
-                },
-                "sema4ai.language-server.args": {
-                    "type": "array",
-                    "default": [],
-                    "description": "Specifies the arguments to be passed to the Automation language server (i.e.: [\"-vv\", \"--log-file=~/automation-vscode.log\"]). Requires a VSCode restart to take effect."
-                },
-                "sema4ai.language-server.python": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Specifies the path to the python executable to be used for the Automation Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect."
-                },
-                "sema4ai.rcc.location": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Specifies the location of the rcc tool."
-                },
-                "sema4ai.actionServer.location": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Path to an explicitly configured Actions Runtime executable. No download or replacement is attempted for this path."
-                },
-                "sema4ai.agentCli.location": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Path to an explicitly configured compatible Agent CLI. This port has no published Agent CLI download mapping yet."
-                },
-                "sema4ai.rcc.endpoint": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Can be used to specify a different endpoint for rcc."
-                },
-                "sema4ai.rcc.config_location": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Specifies the config location used by rcc."
-                },
-                "sema4ai.home": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Legacy tooling root. Actions and Robots use separate actions/ and robots/ children. ACTIONS_HOME and ROBOTS_HOME override their respective children. No data is migrated."
-                },
-                "sema4ai.verifyLSP": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Verify if the Robot Framework Language Server is installed?"
-                },
-                "sema4ai.autoSetPythonExtensionInterpreter": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "If a file in a Robot is opened, the python extension interpreter is automatically set to match the Robot interpreter."
-                },
-                "sema4ai.autoSetPythonExtensionDisableActivateTerminal": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Automatically sets the value of \"python.terminal.activateEnvironment\" to false to avoid wrong auto-activation when Robot terminal is created."
-                },
-                "sema4ai.proceedWithLongPathsDisabled": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enables Automation to be started even with long paths disabled."
-                },
-                "sema4ai.vaultTokenTimeoutInMinutes": {
-                    "type": "number",
-                    "default": 30,
-                    "description": "Specifies the timeout in minutes for the token generated to access the vault when a launch is made. Note: max 60, min 5, additional timeout may be added internally to reuse the token in future runs (use the separately managed legacy Control Room for longer runs)."
-                },
-                "sema4ai.codeLens.roboLaunch": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Specifies whether the 'Run Task' and 'Debug Task' code lenses should be shown."
-                },
-                "sema4ai.codeLens.actionsLaunch": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Specifies whether the 'Run Action' and 'Debug Action' code lenses should be shown."
-                },
-                "sema4ai.codeLens.devTask": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Specifies whether the 'Run Task' and 'Debug Task' code lenses should be shown in `dev-tasks` in `package.yaml`."
+        "yamlValidation": [
+            {
+                "fileMatch": "**/package.yaml",
+                "url": "./resources/action-package.schema.json"
+            }
+        ],
+        "configuration": [
+            {
+                "id": "sema4ai",
+                "title": "Automation Control Plane settings",
+                "type": "object",
+                "properties": {
+                    "sema4ai.legacyVendorIntegrations.enabled": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Expose retained third-party Studio and Control Room compatibility integrations. These external services are not owned or provided by Automation Control Plane. Disabled by default; local package build, export and Runtime do not require them."
+                    },
+                    "sema4ai.actionServer.port": {
+                        "type": "number",
+                        "default": 8082,
+                        "description": "Loopback port for Actions Runtime. Choose an unused integer from 1 to 65535. Existing listeners are never stopped or adopted automatically."
+                    },
+                    "sema4ai.language-server.tcp-port": {
+                        "type": "number",
+                        "default": 0,
+                        "description": "If the port is specified, connect to the language server previously started at the given port. Requires a VSCode restart to take effect."
+                    },
+                    "sema4ai.language-server.args": {
+                        "type": "array",
+                        "default": [],
+                        "description": "Specifies the arguments to be passed to the Automation language server (i.e.: [\"-vv\", \"--log-file=~/automation-vscode.log\"]). Requires a VSCode restart to take effect."
+                    },
+                    "sema4ai.language-server.python": {
+                        "type": "string",
+                        "default": "",
+                        "description": "Specifies the path to the python executable to be used for the Automation Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect."
+                    },
+                    "sema4ai.rcc.location": {
+                        "type": "string",
+                        "default": "",
+                        "description": "Specifies the location of the rcc tool."
+                    },
+                    "sema4ai.actionServer.location": {
+                        "type": "string",
+                        "default": "",
+                        "description": "Path to an explicitly configured Actions Runtime executable. No download or replacement is attempted for this path."
+                    },
+                    "sema4ai.agentCli.location": {
+                        "type": "string",
+                        "default": "",
+                        "description": "Path to an explicitly configured compatible Agent CLI. This port has no published Agent CLI download mapping yet."
+                    },
+                    "sema4ai.rcc.endpoint": {
+                        "type": "string",
+                        "default": "",
+                        "description": "Can be used to specify a different endpoint for rcc."
+                    },
+                    "sema4ai.rcc.config_location": {
+                        "type": "string",
+                        "default": "",
+                        "description": "Specifies the config location used by rcc."
+                    },
+                    "sema4ai.home": {
+                        "type": "string",
+                        "default": "",
+                        "description": "Legacy tooling root. Actions and Robots use separate actions/ and robots/ children. ACTIONS_HOME and ROBOTS_HOME override their respective children. No data is migrated."
+                    },
+                    "sema4ai.verifyLSP": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Verify if the Robot Framework Language Server is installed?"
+                    },
+                    "sema4ai.autoSetPythonExtensionInterpreter": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "If a file in a Robot is opened, the python extension interpreter is automatically set to match the Robot interpreter."
+                    },
+                    "sema4ai.autoSetPythonExtensionDisableActivateTerminal": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Automatically sets the value of \"python.terminal.activateEnvironment\" to false to avoid wrong auto-activation when Robot terminal is created."
+                    },
+                    "sema4ai.proceedWithLongPathsDisabled": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Enables Automation to be started even with long paths disabled."
+                    },
+                    "sema4ai.vaultTokenTimeoutInMinutes": {
+                        "type": "number",
+                        "default": 30,
+                        "description": "Specifies the timeout in minutes for the token generated to access the vault when a launch is made. Note: max 60, min 5, additional timeout may be added internally to reuse the token in future runs (use the separately managed legacy Control Room for longer runs)."
+                    }
+                }
+            },
+            {
+                "id": "sema4ai.codeLens",
+                "title": "Automation Control Plane editor settings",
+                "type": "object",
+                "properties": {
+                    "sema4ai.codeLens.roboLaunch": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Specifies whether the 'Run Task' and 'Debug Task' code lenses should be shown."
+                    },
+                    "sema4ai.codeLens.actionsLaunch": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Specifies whether the 'Run Action' and 'Debug Action' code lenses should be shown."
+                    },
+                    "sema4ai.codeLens.devTask": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Specifies whether the 'Run Task' and 'Debug Task' code lenses should be shown in `dev-tasks` in `package.yaml`."
+                    }
                 }
             }
-        },
+        ],
         "viewsContainers": {
             "activitybar": [
                 {

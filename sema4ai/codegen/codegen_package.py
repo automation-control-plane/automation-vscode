@@ -29,6 +29,18 @@ def get_menus():
 def get_json_contents():
     from sema4ai_code import __version__
 
+    setting_properties = get_settings_for_json()
+    runtime_setting_properties = {
+        key: value
+        for key, value in setting_properties.items()
+        if not key.startswith("sema4ai.codeLens.")
+    }
+    editor_setting_properties = {
+        key: value
+        for key, value in setting_properties.items()
+        if key.startswith("sema4ai.codeLens.")
+    }
+
     base_package_contents = {
         "name": "automation-vscode",
         "publisher": "automation-control-plane",
@@ -54,7 +66,7 @@ def get_json_contents():
             "compile": "cd vscode-client && tsc -p ./ && cd ..",
             "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
             "pretest": "cd vscode-client && tsc -p ./ && cd ..",
-            "test": "node --test tests/extension_storage.test.js tests/diagnostics_help.test.js tests/rcc_profiles.test.js tests/rcc_setup.test.js tests/runbook_environment_versions.test.js tests/action_nondebug.test.js tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js tests/runtime_restart.test.js tests/resources_tree.test.js tests/owned_workflow.test.js tests/work_items_editor.test.js tests/work_items_editor_state.test.js tests/work_items_runtime_client.test.js tests/managed_work_items_client.test.js tests/managed_execution_selection.test.js tests/managed_execution_client.test.js tests/managed_execution_view.test.js tests/owned_bootstrap.test.js tests/managed_work_items_view.test.js tests/managed_work_items_editor.test.js tests/work_items_form.test.js tests/work_item_proposals.test.js tests/runbook_workspace.test.js tests/runtime_reconnect.test.js tests/legacy_surfaces.test.js tests/inspector_shell.test.js tests/inspector_host_context.test.js tests/runbook_forms.test.js tests/runbook_host.test.js tests/language_server_startup.test.js tests/action_inputs_editor.test.js tests/action_inputs_editor_host.test.js tests/action_inputs_editor_ui.test.js tests/codegen_package_inventory.test.js tests/windows_trusted_entry.test.cjs",
+            "test": "node --test tests/extension_storage.test.js tests/diagnostics_help.test.js tests/rcc_profiles.test.js tests/rcc_setup.test.js tests/runbook_environment_versions.test.js tests/package_yaml_schema.test.js tests/action_nondebug.test.js tests/runtime_paths.test.js tests/branding.test.js tests/python_integration.test.js tests/work_items_launch.test.js tests/runtime_server.test.js tests/runtime_restart.test.js tests/resources_tree.test.js tests/owned_workflow.test.js tests/work_items_editor.test.js tests/work_items_editor_state.test.js tests/work_items_runtime_client.test.js tests/managed_work_items_client.test.js tests/managed_execution_selection.test.js tests/managed_execution_client.test.js tests/managed_execution_view.test.js tests/owned_bootstrap.test.js tests/managed_work_items_view.test.js tests/managed_work_items_editor.test.js tests/work_items_form.test.js tests/work_item_proposals.test.js tests/runbook_workspace.test.js tests/runtime_reconnect.test.js tests/legacy_surfaces.test.js tests/inspector_shell.test.js tests/inspector_host_context.test.js tests/runbook_forms.test.js tests/runbook_host.test.js tests/language_server_startup.test.js tests/action_inputs_editor.test.js tests/action_inputs_editor_host.test.js tests/action_inputs_editor_ui.test.js tests/codegen_package_inventory.test.js tests/windows_trusted_entry.test.cjs",
             "test:host": "node ./vscode-client/out/tests/runTests.js",
             "prettier": "npx prettier -c vscode-client/**/*.ts",
             "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
@@ -97,11 +109,26 @@ def get_json_contents():
         + views.get_activation_events_for_json()
         + ["onLanguage:json", "onLanguage:yaml", "onLanguage:python"],
         "contributes": {
-            "configuration": {
-                "title": "Automation Control Plane",
-                "type": "object",
-                "properties": get_settings_for_json(),
-            },
+            "yamlValidation": [
+                {
+                    "fileMatch": "**/package.yaml",
+                    "url": "./resources/action-package.schema.json",
+                }
+            ],
+            "configuration": [
+                {
+                    "id": "sema4ai",
+                    "title": "Automation Control Plane settings",
+                    "type": "object",
+                    "properties": runtime_setting_properties,
+                },
+                {
+                    "id": "sema4ai.codeLens",
+                    "title": "Automation Control Plane editor settings",
+                    "type": "object",
+                    "properties": editor_setting_properties,
+                },
+            ],
             "viewsContainers": views.get_views_containers(),
             "views": views.get_tree_views_for_package_json(),
             "languages": [],
@@ -179,7 +206,7 @@ def write_to_package_json():
     root = os.path.dirname(os.path.dirname(__file__))
     package_json_location = os.path.join(root, "package.json")
     with open(package_json_location, "w", encoding="utf-8", newline="\n") as stream:
-        stream.write(as_str)
+        stream.write(as_str + "\n")
     print(f"Written: {package_json_location}")
 
 

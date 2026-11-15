@@ -129,6 +129,11 @@ class BaseAnalyzer:
                             "range": dep_info.dep_range,
                             "severity": _DiagnosticSeverity.Warning,
                             "source": "sema4ai",
+                            "code": "package-pypi-update-available",
+                            "data": {
+                                "name": dep_info.name,
+                                "version": local_version,
+                            },
                             "message": f"Consider updating '{dep_info.name}' to the latest version: '{latest_cloud_version}'. "
                             + f"Found {len(newer_cloud_versions)} versions newer than the current one: {', '.join(newer_cloud_versions)}.",
                         }
