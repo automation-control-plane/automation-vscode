@@ -3,6 +3,11 @@
 This is separate qualification work based on ready PR #14 at `5068bb85`.
 Production pins and that PR's branch remain unchanged.
 
+[`qualification.json`](qualification.json) records the clean committed-driver
+execution at `e7fe79c4cd5ac1a2bac15765cc9dfddf3fbf55e1`, including exact driver,
+Runtime and authorization-schema hashes. Its full-lifecycle result is explicitly
+false; the successful availability checks do not override the blocked grant.
+
 The exact Linux Runtime 1.1.1 binary (SHA-256
 `8c27fbed198aef16c98cdc7a45230fbc4708b06dff1c3523aeddfcdf7840efd0`,
 source `9bfc6ca5337dac14851e5ef3b2ea3a41485c81b2`) was started on loopback

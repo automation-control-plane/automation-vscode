@@ -8,6 +8,13 @@ That exit code is source-defined for this endpoint: the handler interrupts the s
 
 Runtime 1.1.1 extracted RCC 18.19.8. Its SHA-256 `ea8dc96e66d7a81536b03a344b4eaf44bbd94122585954e70290bd466f5de4b6` matches the current RCC Linux pin in `sema4ai/published-tools.json`. The production pins remain unchanged.
 
+The final committed-driver reproduction is retained separately in
+[`qualification-e7fe79c4.json`](qualification-e7fe79c4.json). It ran at qualification
+head `e7fe79c4cd5ac1a2bac15765cc9dfddf3fbf55e1`; its loaded script hashes match
+that commit. The earlier `qualification.json` remains the dirty-source trial,
+including its explicit execution/validation hash distinction. Neither receipt
+is relabeled as a code-0 shutdown.
+
 ## Exact source trace
 
 At Runtime source commit `9bfc6ca5337dac14851e5ef3b2ea3a41485c81b2`:

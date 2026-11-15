@@ -1,0 +1,41 @@
+{
+  "platform": "win32-x64",
+  "passed": false,
+  "checks": [],
+  "limitations": [
+    "Native debug API/registered adapter acceptance; no fabricated Work Items button or managed-server acceptance.",
+    "Windows managed UI/server, Java inspector, image/recording and external integrations require separate acceptance.",
+    "No Mac or Marketplace publication. No system registry/firewall/service changes."
+  ],
+  "candidate": {
+    "mode": "candidate-windows-only",
+    "source_head": "e7fe79c4cd5ac1a2bac15765cc9dfddf3fbf55e1",
+    "source_tree_sha256_excluding_manifest": "3f11b7933e5c3428c75b799f65b8a70d120b2d79716416e47c6330458fccc66a",
+    "production_manifest_sha256": "a34ec26dfd8adf04752034a63d9877e795b7d0c882d5b23dc62ff692bafb94c2",
+    "candidate_manifest_sha256": "1b96a140f629b39a3eeda2204d2b0794acacd8fc024dedde02a1e8ee46f7c21b",
+    "candidate_manifest_changes_only": [
+      "published-tools.json"
+    ],
+    "tools": {
+      "rcc": {
+        "repository": "joshyorko/rcc",
+        "tag": "v18.19.11",
+        "version": "v18.19.11",
+        "source_commit": "953eda18d3d1f4a286c17709f282315a2ed16a16",
+        "windows_asset": "rcc-windows64.exe",
+        "sha256": "58f43a3b3c54032740f224cb4a8bbf68c47c865cf2652084fb139b8ecc01cfd0",
+        "size": 20732928
+      },
+      "action-server": {
+        "repository": "joshyorko/actions",
+        "tag": "actions-runtime-1.1.1",
+        "version": "1.1.1",
+        "source_commit": "9bfc6ca5337dac14851e5ef3b2ea3a41485c81b2",
+        "windows_asset": "actions-runtime-1.1.1-windows64.exe",
+        "sha256": "0388d7f2e4080ba5c3a800bb556f8f01a65aa4834f3698eceb240888288fd8d2",
+        "size": 71853568
+      }
+    }
+  },
+  "blocker": "driver-boundaries failed with exit 1; private diagnostics retained"
+}

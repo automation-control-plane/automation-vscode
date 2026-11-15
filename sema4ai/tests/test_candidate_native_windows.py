@@ -1,5 +1,7 @@
 import hashlib
+import importlib.util
 import json
+from pathlib import Path
 import subprocess
 
 import pytest
@@ -175,3 +177,20 @@ def test_candidate_driver_failure_receipt_keeps_safe_reason_and_hides_paths(tmp_
     assert candidate_driver_failure(private_log) == (
         "Candidate provenance or staged manifest does not match the checked source"
     )
+
+
+def test_candidate_windows_home_does_not_inherit_or_mutate_runner_profile(tmp_path):
+    spec = importlib.util.spec_from_file_location(
+        "native_driver_home", Path(__file__).with_name("qualify_native_windows.py")
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    inherited = {"USERPROFILE": "unowned-profile", "APPDATA": "unowned-appdata",
+                 "PATH": "prepared-tools", "SSL_CERT_FILE": "existing-ca-policy"}
+    original = inherited.copy()
+    result = module.candidate_home_environment(inherited, tmp_path)
+    assert inherited == original
+    assert result["USERPROFILE"] == str(tmp_path / "home")
+    assert all(Path(result[key]).is_relative_to(tmp_path) for key in ("APPDATA", "LOCALAPPDATA", "TEMP", "TMP"))
+    assert result["PATH"] == inherited["PATH"]
+    assert result["SSL_CERT_FILE"] == inherited["SSL_CERT_FILE"]

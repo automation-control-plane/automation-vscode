@@ -42,6 +42,15 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def candidate_home_environment(environment, root):
+    """Go's Windows UserHomeDir uses USERPROFILE, not HOME."""
+    home = root / "home"
+    return {**environment, "USERPROFILE": str(home),
+            "APPDATA": str(home / "AppData/Roaming"),
+            "LOCALAPPDATA": str(home / "AppData/Local"),
+            "TEMP": str(root / "tmp"), "TMP": str(root / "tmp")}
+
+
 def code_path(path):
     """Match Code's drive-letter URI spelling without changing the owned path."""
     value = ntpath.normpath(str(path))
@@ -163,6 +172,11 @@ def main():
     })
     for name in ("home", "actions", "robots", "debugpy-private"):
         (root / name).mkdir()
+    if candidate_provenance:
+        env = candidate_home_environment(env, root)
+        for key in ("APPDATA", "LOCALAPPDATA", "TEMP"):
+            Path(env[key]).mkdir(parents=True, exist_ok=True)
+        report["candidate_home_isolation"] = "HOME, USERPROFILE, AppData and temporary directories are task-owned"
     child = None
     node = None
 
@@ -177,7 +191,10 @@ def main():
             raise RuntimeError(f"{name} failed with exit {result.returncode}; private diagnostics retained")
 
     try:
-        run([sys.executable, str(extension / "tests/test_windows_qualification_driver.py"), "-v"], "driver-boundaries")
+        # The checkout-byte test needs Git's attributes and HEAD. The candidate
+        # archive has neither; package/workload checks below still use its copy.
+        run([sys.executable, str(production_extension / "tests/test_windows_qualification_driver.py"), "-v"],
+            "driver-boundaries", cwd=production_extension)
         report["checks"].append("Environment and archive boundaries pass on native Windows")
         # Read-only prerequisite. Never enable long paths or request elevation.
         import winreg
@@ -316,6 +333,19 @@ def main():
         if status != 0 or not host.exists() or not json.loads(host.read_text()).get("passed"):
             raise RuntimeError("Actual installed Extension Host did not pass; see sanitized host receipt")
         report["checks"].append("Actual installed Extension Host completed all required native gates")
+        if candidate_provenance:
+            runtime_version = candidate_provenance["tools"]["action-server"]["version"]
+            internal = root / "home/.actions/bin/action-server/internal" / runtime_version / "_internal/actions/server/bin"
+            baseline = json.loads((production_extension / "published-tools.json").read_text())["rcc"]
+            bundled = []
+            for path in sorted(internal.glob("rcc-*")):
+                if path.is_file():
+                    bundled.append({"name": path.name, "sha256": digest(path),
+                        "version": subprocess.check_output([str(path), "--version"], env=env, text=True).strip(),
+                        "matches_production_rcc_asset": digest(path) == baseline["assets"]["win32-x64"]["sha256"]})
+            if not bundled:
+                raise RuntimeError("Candidate Runtime's task-owned bundled RCC was not found")
+            report["candidate_runtime_embedded_rcc"] = bundled
         report["passed"] = True
     except Exception as error:
         report["blocker"] = str(error)
