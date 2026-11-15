@@ -30,6 +30,12 @@ exports.run = async () => {
     assert.ok(vscode.workspace.isTrusted, 'Exact workspace trust must be granted through native UI');
     report.workspaceTrust.currentWorkspaceGranted = true;
     save();
+    if (process.env.AUTOMATION_WINDOWS_TRUST_ONLY === '1') {
+        report.scope = 'Trust preparation only; no workload acceptance harness imported';
+        report.passed = true;
+        save();
+        return;
+    }
     const identity = JSON.parse(fs.readFileSync(path.join(root, 'public/installed-identity.json')));
     const deadline = Date.now() + 60000;
     while (!vscode.extensions.getExtension(identity.id) && Date.now() < deadline) {

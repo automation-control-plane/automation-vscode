@@ -233,18 +233,30 @@ def main():
         run([sys.executable, "-m", "venv", str(driver_venv)], "ui-driver-venv")
         ui_python = driver_venv / "Scripts/python.exe"
         run([str(ui_python), "-m", "pip", "install", "--disable-pip-version-check", "--no-input", "playwright==1.52.0"], "ui-driver-dependencies")
-        with (root / "extension-host.private.log").open("wb") as log:
-            child = subprocess.Popen([code_path(code), f"--user-data-dir={code_path(profile)}",
-                f"--extensions-dir={code_path(extensions)}", f"--extensionDevelopmentPath={code_path(controller)}",
-                f"--extensionTestsPath={code_path(entry_path)}", "--skip-welcome", "--skip-release-notes",
-                "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=18527",
-                code_path(workspace)], env=env, stdout=log, stderr=subprocess.STDOUT)
-            run([str(ui_python), str(extension / "tests/windows_workspace_trust.py"),
-                 "--state", str(root)], "workspace-trust-ui")
-            try:
-                status = child.wait(timeout=2400)
-            except subprocess.TimeoutExpired:
-                raise RuntimeError("Native Extension Host acceptance timed out; no replay attempted")
+        # Trust changes can leave the test-mode Extension Host's registry stale.
+        # Prepare trust without workloads, then launch acceptance with trust already
+        # established through native UI. Both phases retain the same exact profile.
+        for phase, trust_only in (("trust-preparation", True), ("acceptance", False)):
+            for receipt in ("trust-entry.json", "workspace-trust.json"):
+                (public / receipt).unlink(missing_ok=True)
+            phase_env = {**env, "AUTOMATION_WINDOWS_TRUST_ONLY": "1" if trust_only else "0"}
+            with (root / (phase + ".private.log")).open("wb") as log:
+                child = subprocess.Popen([code_path(code), f"--user-data-dir={code_path(profile)}",
+                    f"--extensions-dir={code_path(extensions)}", f"--extensionDevelopmentPath={code_path(controller)}",
+                    f"--extensionTestsPath={code_path(entry_path)}", "--skip-welcome", "--skip-release-notes",
+                    "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=18527",
+                    code_path(workspace)], env=phase_env, stdout=log, stderr=subprocess.STDOUT)
+                run([str(ui_python), str(extension / "tests/windows_workspace_trust.py"),
+                     "--state", str(root)], phase + "-workspace-trust-ui")
+                try:
+                    status = child.wait(timeout=2400)
+                except subprocess.TimeoutExpired:
+                    raise RuntimeError(f"{phase} timed out; no workload replay attempted")
+            trust = json.loads((public / "trust-entry.json").read_text())
+            for receipt in ("trust-entry.json", "workspace-trust.json"):
+                shutil.copyfile(public / receipt, public / (phase + "-" + receipt))
+            if status != 0 or trust.get("passed") is not True:
+                raise RuntimeError(f"{phase} failed; inspect its native trust/registration receipt")
         host = public / "installed-host.json"
         if status != 0 or not host.exists() or not json.loads(host.read_text()).get("passed"):
             raise RuntimeError("Actual installed Extension Host did not pass; see sanitized host receipt")

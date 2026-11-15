@@ -70,3 +70,13 @@ registry. Its source was the PR merge 48d2a3b2; it is not qualification for new
 bytes. Available Node/Python checks, exact archive scans, source association,
 Linux installation checks, independent re-review and asset hashes remain gates.
 Unrun expanded native harness work is retained separately, outside this release.
+
+## Latest operator direction: green CI, then release and close scoped issues
+
+Josh subsequently requires hosted CI to be green before merge/publication. The
+local VM remains cancelled. A minimal harness correction grants exact-fixture
+trust in a workload-free preparation launch, then starts a fresh Code process
+for the unchanged native acceptance assertions. Trust enforcement remains on.
+After green CI, independent review, merge and publication, close #3/#4/#10/#11/#12
+as explicitly requested. #10 remains unmeasured; closing it does not claim a
+performance fix or speedup. Preserve that disclosure in the release notes.

@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const vm = require('node:vm');
 
-async function exercise({trustEnabled = true, grant = true, registered = true} = {}) {
+async function exercise({trustEnabled = true, grant = true, registered = true, trustOnly = false} = {}) {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'trust-import-unit-'));
     const events = [];
     try {
@@ -32,7 +32,7 @@ async function exercise({trustEnabled = true, grant = true, registered = true} =
         };
         const exported = {};
         vm.runInNewContext("const originalHarness = 'fixture-harness';\n" + fs.readFileSync(path.join(__dirname, 'windows_trusted_entry.cjs'), 'utf8'), {
-            exports: exported, process: {env: {AUTOMATION_WINDOWS_QA: root}},
+            exports: exported, process: {env: {AUTOMATION_WINDOWS_QA: root, AUTOMATION_WINDOWS_TRUST_ONLY: trustOnly ? '1' : '0'}},
             Date: {now: () => tick++ * 120001}, setTimeout,
             require: name => {
                 if (name === 'vscode') return api;
@@ -75,4 +75,16 @@ test('controller entry refuses missing product registration after trust', async 
     const {events, error} = await exercise({registered: false});
     assert.match(error.message, /must be registered/);
     assert.deepEqual(events, ['native-trust-command']);
+});
+
+test('separate trust preparation does not import workload acceptance', async () => {
+    const {events, error} = await exercise({registered: false, trustOnly: true});
+    assert.equal(error, undefined);
+    assert.deepEqual(events, ['native-trust-command']);
+});
+
+test('trust preparation still refuses disabled trust enforcement', async () => {
+    const {events, error} = await exercise({trustEnabled: false, trustOnly: true});
+    assert.ok(error);
+    assert.deepEqual(events, []);
 });
