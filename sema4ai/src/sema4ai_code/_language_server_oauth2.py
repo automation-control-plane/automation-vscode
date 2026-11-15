@@ -288,11 +288,11 @@ class _OAuth2:
                 ssl_keyfile = oauth2_config.get("sslKeyfile", "")
                 ssl_certfile = oauth2_config.get("sslCertfile", "")
 
-        extension_datadir = self._rcc.get_robocorp_code_datadir()
-        cwd = extension_datadir / "oauth2" / "cwd"
-        datadir = extension_datadir / "oauth2" / "datadir"
-        cwd.mkdir(parents=True, exist_ok=True)
-        datadir.mkdir(parents=True, exist_ok=True)
+        from sema4ai_code.storage import oauth2_storage_directories
+        from sema4ai_code.runtime_paths import runtime_homes
+
+        runtime_home = runtime_homes(self._rcc.get_robocorp_home_from_settings())["actions"]
+        cwd, datadir = oauth2_storage_directories(runtime_home)
 
         port, protocol = self._get_redirect_uri(requires_https)
 

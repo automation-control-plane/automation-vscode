@@ -21,6 +21,10 @@ directories just to inspect a path:
 The editor supplies its extension-owned `ExtensionContext.globalStorageUri`
 when neither explicit override is set. It passes the effective root to Python
 with `AUTOMATION_EXTENSION_STORAGE`, including managed execution subprocesses.
+The editor resolves that root to an absolute path before binding it, so typed
+Action input paths and Python cache paths remain anchored to the same directory
+when the workload uses a different working directory. Standalone Python callers
+also resolve relative overrides to an absolute path in their own process.
 The compatibility override remains a base directory; it no longer creates a
 vendor-named child. No setting, environment variable or user directory is
 rewritten as part of resolution.
@@ -45,6 +49,7 @@ source and exact archive members, including generated JavaScript.
 | --- | --- | --- |
 | `robocorp_language_server.py::RobocorpLanguageServer.__init__` | Former user-home vendor cache → owned root `/cache` | Extension. Move normal cache reads/writes together through the single resolver. |
 | `rcc.py::Rcc.get_robocorp_code_datadir` | Selected runtime home `/.automation-vscode` | Extension interpreter/space metadata. Rebuild disposable metadata; retain old directory untouched. |
+| `_language_server_oauth2.py::_OAuth2._collect_info` and `get_action_server_for_oauth2` | `extension_storage()/oauth2/<sha256(resolved Actions home)>/{cwd,datadir}` | Persistent OAuth reference ID and Action Server state. New state is per selected Actions home and outside disposable metadata cleanup. |
 | `rcc.ts::getBaseAsZipDownloadLocation` | Target metadata directory plus prebuilt archive name | Extension-owned optional vendor prebuilt cache. New namespace; acquisition remains integration-gated. |
 | `rcc.ts::collectBaseEnv` | Target metadata directory `/vscode-base-*/rcc-env-info.json` and `last_usage` | Extension bootstrap metadata. Reader/writer/validation use the same new path; no old metadata copy. |
 | `clear.ts::clearRobocorpCodeCaches` | Selected target's new metadata directory only | Extension cleanup. Await completion; absent root is harmless; refuse linked/non-directory roots. Never clean the old directory or either runtime parent recursively. |
@@ -69,6 +74,24 @@ source and exact archive members, including generated JavaScript.
 No additional default Sema4ai storage creator was found in authoritative/vendored
 core, packaged templates, bootstrap descriptors or resource assets. Old module,
 protocol and display strings remain where they do not construct filesystem paths.
+
+OAuth is a persistent consumer of the former runtime metadata accessor: the
+`.vscode_reference_id` in `cwd` is passed to Action Server login, status and
+logout, while `datadir` is passed to the Action Server OAuth service. New state
+uses the extension-owned persistent root and a hash of the resolved Actions
+home, keeping distinct home overrides separate. The normal cache cleanup only
+removes the selected runtime home's `.automation-vscode` metadata and therefore
+does not remove OAuth state.
+
+For compatibility, an existing legacy `Actions home/.sema4ai_code/oauth2`
+store is used in place only when `cwd` and `datadir` are real directories and
+`cwd/.vscode_reference_id` is an existing regular file; symlinked components do
+not qualify. This preserves that exact reference and its associated data
+without copying or deleting anything. When the complete legacy store is absent,
+the resolver does not create or probe by creating any vendor directory; it
+creates new state only under the extension-owned root. This preserves the
+established local reference contract without claiming that any token or
+certificate was migrated or validated.
 
 ## Existing data and migration
 
@@ -100,18 +123,60 @@ python -m pytest --noconftest tests/test_extension_storage.py tests/test_filesys
 python tests/scan_filesystem_ownership.py --source-root .. --vsix /path/to/candidate-linux-x64.vsix --vsix /path/to/candidate-win32-x64.vsix --output /tmp/automation-filesystem-inventory.json
 ```
 
-The scan records every Sema4ai-name match with location and disposition, rejects
-known old owned-path literals and flags new path constructors for review. Source
-and archive identities are distinct inputs. Comments, imports, module resources,
-settings and display text are classified separately. This is a static ownership
-gate, not proof that a native editor flow executed.
+The scan records every Sema4ai-name match with location and disposition. It
+rejects known old owned-path literals, a literal user-home `sema4ai_code`
+directory, and unresolved assignments of a vendor namespace that could be
+composed into a path. Line-local path constructors also require review unless
+they have a narrow ownership classification; arbitrary module-name substrings
+do not grant the installed-resource exemption. That exemption is limited to
+the exact source-tree-relative language-server core and vendored core paths,
+the exact extension-relative debug adapter and Work Items helper paths, the
+two package-preparation source/destination paths, and generated `commands.py`
+and `settings.py` paths. Those anchors identify code resources, not user data.
+
+Read-only Studio discovery is retained only for the exact POSIX/Windows home
+expressions in `runtime_paths.py` and `runtimePaths.ts`; the version and PID
+compatibility reads are classified by their exact marker filenames. Gallery
+classification remains limited to the existing `Sema4.ai` workspace namespace
+and its explicit reader. The `ACCOUNT_NAME` and imported Gallery `action_kind`
+values are non-path identity values. Source and archive identities are
+distinct inputs. This is a static ownership gate, not proof that a native
+editor flow executed.
+
+The source-plus-generated scan on this change's source tree read 461 files and
+classified 3,396 marker matches: 3,331 identifier/display values, 30 comments
+or documentation lines, 10 installed-module resource paths, 9 read-only Studio
+discovery paths, 5 Gallery namespace paths/readers, 10 target-execution storage
+paths, and the 1 legacy OAuth compatibility root. It reported 0 forbidden or
+unreviewed paths. The reviewed installed-module anchors are exactly:
+
+| Location | Classification reason |
+| --- | --- |
+| `sema4ai_code/__init__.py` source checkout `sema4ai-python-ls-core/src` | Development import root, checked as an existing directory and added to `sys.path`; no user data is written there. |
+| `sema4ai_code/__init__.py` `src_folder/sema4ai_code/vendored` | Packaged vendored Python module import root; code resources only. |
+| `debugger.ts` and `workItemsNative.ts`, plus compiled `out` copies | Exact extension-relative debug adapter and Work Items Python entrypoints. |
+| `scripts/prepare-package.js` source/destination | Copies the authoritative core package into the extension's vendored module tree during packaging. |
+| `codegen/codegen_package.py` `commands.py` and `settings.py` | Generates Python modules under the extension source package. |
+
+The scanner also preserves the exact Studio home reads on POSIX and Windows,
+the `sema4ai-studio/version.txt` and `external-api-server.pid` compatibility
+reads, and the two explicit `actions/Sema4.ai` import/use paths plus the
+existing edit-warning reader. Compiled JavaScript copies receive the same narrow
+classification as their source modules. New uses outside these exact anchors
+remain review-required.
 
 The focused filesystem checks instantiate the actual language-server constructor
 in separate processes, verify cache store/load across restarts, default/explicit/
 legacy-base roots, untouched synthetic private/vendor records, target-specific
-metadata resolution, unique input directories, awaited cleanup and refusal to
-follow a linked metadata root. The standalone native Action launcher helper is
-also exercised without changing workload `PYTHONPATH` precedence.
+metadata resolution, distinct editor/workload working directories for both
+relative override forms, absolute input filenames, unique input directories,
+OAuth legacy-reference selection, persistent OAuth data outside cache cleanup,
+no legacy-directory creation, awaited cleanup and refusal to follow a linked
+metadata root. The standalone native Action launcher helper is also exercised
+without changing workload `PYTHONPATH` precedence. Scanner regressions reject
+both computed vendor paths and user-home `sema4ai_code` directories while
+retaining only the explicitly classified read-only Studio, Gallery and
+installation-resource cases.
 
 Release acceptance additionally requires exact installed Windows/Linux payload
 checks and native activation/run/inspector/cleanup flows with isolated homes.

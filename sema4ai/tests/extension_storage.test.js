@@ -18,6 +18,28 @@ test("owned storage preserves explicit roots, legacy base semantics and platform
     assert.equal(storage.runtimeMetadataDirectory("/actions", "linux"), "/actions/.automation-vscode");
 });
 
+test("relative override roots are bound to an absolute editor path", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "automation-storage-relative-"));
+    const previous = process.cwd();
+    const keys = ["AUTOMATION_EXTENSION_STORAGE", "ROBOCORP_CODE_USER_HOME"];
+    const original = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+    try {
+        process.chdir(root);
+        process.env.AUTOMATION_EXTENSION_STORAGE = "relative-owned";
+        assert.equal(storage.extensionStorage(), path.join(root, "relative-owned"));
+        process.env.ROBOCORP_CODE_USER_HOME = "legacy-base";
+        delete process.env.AUTOMATION_EXTENSION_STORAGE;
+        assert.equal(storage.extensionStorage(), path.join(root, "legacy-base", ".automation-vscode"));
+    } finally {
+        process.chdir(previous);
+        for (const key of keys) {
+            if (original[key] === undefined) delete process.env[key];
+            else process.env[key] = original[key];
+        }
+        fs.rmSync(root, {recursive: true, force: true});
+    }
+});
+
 test("concurrent Action inputs have private distinct directories and retain previous input", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "automation-storage-inputs-"));
     const previous = process.env.AUTOMATION_EXTENSION_STORAGE;
@@ -56,13 +78,17 @@ test("cleanup awaits removal only from selected owned metadata, preserving vendo
     try {
         const owned = path.join(root, ".automation-vscode");
         const legacy = path.join(root, ".sema4ai_code");
+        const persistentOAuth = path.join(root, "global-storage", "oauth2", "target", "datadir");
         fs.mkdirSync(path.join(owned, "cache"), {recursive: true});
         fs.mkdirSync(legacy);
+        fs.mkdirSync(persistentOAuth, {recursive: true});
         fs.writeFileSync(path.join(owned, "cache", "cache.json"), "{}");
         fs.writeFileSync(path.join(legacy, "private-record"), "preserve");
+        fs.writeFileSync(path.join(persistentOAuth, "synthetic-state"), "preserve");
         await cleanup(root);
         assert.deepEqual(fs.readdirSync(owned), []);
         assert.equal(fs.readFileSync(path.join(legacy, "private-record"), "utf8"), "preserve");
+        assert.equal(fs.readFileSync(path.join(persistentOAuth, "synthetic-state"), "utf8"), "preserve");
         await cleanup(path.join(root, "unused-home"));
         assert.equal(fs.existsSync(path.join(root, "unused-home")), false);
     } finally {fs.rmSync(root, {recursive: true, force: true});}
@@ -87,13 +113,14 @@ test("editor storage binding honors operator overrides without mutating the shar
     const original = Object.fromEntries(keys.map(key => [key, process.env[key]]));
     try {
         for (const key of keys) delete process.env[key];
-        assert.equal(storage.initializeExtensionStorage("editor-owned"), "editor-owned");
-        assert.equal(storage.getExtensionStorage(), "editor-owned");
+        const editorRoot = path.resolve("editor-owned");
+        assert.equal(storage.initializeExtensionStorage("editor-owned"), editorRoot);
+        assert.equal(storage.getExtensionStorage(), editorRoot);
         assert.equal(process.env.AUTOMATION_EXTENSION_STORAGE, undefined);
         process.env.ROBOCORP_CODE_USER_HOME = "operator-base";
-        assert.equal(storage.initializeExtensionStorage("editor-owned"), path.join("operator-base", ".automation-vscode"));
+        assert.equal(storage.initializeExtensionStorage("editor-owned"), path.resolve("operator-base", ".automation-vscode"));
         process.env.AUTOMATION_EXTENSION_STORAGE = "operator-exact";
-        assert.equal(storage.initializeExtensionStorage("editor-owned"), "operator-exact");
+        assert.equal(storage.initializeExtensionStorage("editor-owned"), path.resolve("operator-exact"));
         assert.equal(process.env.ROBOCORP_CODE_USER_HOME, "operator-base");
     } finally {
         for (const key of keys) {

@@ -7,19 +7,20 @@ let editorStorageRoot: string | undefined;
 /** Resolve only; vendor data and legacy caches are never copied or removed. */
 export function extensionStorage(env: NodeJS.ProcessEnv = process.env, platform = process.platform): string {
     const paths = platform === "win32" ? path.win32 : path.posix;
+    let root: string;
     if (env.AUTOMATION_EXTENSION_STORAGE) {
-        return env.AUTOMATION_EXTENSION_STORAGE;
-    }
-    if (env.ROBOCORP_CODE_USER_HOME) {
-        return paths.join(env.ROBOCORP_CODE_USER_HOME, ".automation-vscode");
-    }
-    if (platform === "win32") {
+        root = env.AUTOMATION_EXTENSION_STORAGE;
+    } else if (env.ROBOCORP_CODE_USER_HOME) {
+        root = paths.join(env.ROBOCORP_CODE_USER_HOME, ".automation-vscode");
+    } else if (platform === "win32") {
         if (!env.LOCALAPPDATA) {
             throw new Error("LOCALAPPDATA is required to resolve extension storage.");
         }
-        return paths.join(env.LOCALAPPDATA, "automation-vscode");
+        root = paths.join(env.LOCALAPPDATA, "automation-vscode");
+    } else {
+        root = paths.join(env.XDG_STATE_HOME || paths.join(env.HOME || os.homedir(), ".local", "state"), "automation-vscode");
     }
-    return paths.join(env.XDG_STATE_HOME || paths.join(env.HOME || os.homedir(), ".local", "state"), "automation-vscode");
+    return paths.resolve(root);
 }
 
 export function runtimeMetadataDirectory(home: string, platform = process.platform): string {
@@ -30,7 +31,7 @@ export function runtimeMetadataDirectory(home: string, platform = process.platfo
 export function initializeExtensionStorage(defaultRoot: string): string {
     editorStorageRoot = process.env.AUTOMATION_EXTENSION_STORAGE || process.env.ROBOCORP_CODE_USER_HOME
         ? extensionStorage()
-        : defaultRoot;
+        : path.resolve(defaultRoot);
     return editorStorageRoot;
 }
 
