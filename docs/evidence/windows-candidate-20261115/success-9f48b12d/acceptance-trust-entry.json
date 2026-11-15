@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "workspaceTrust": {
+    "enabled": true,
+    "folderCount": 1,
+    "exactSyntheticWorkspace": true,
+    "canonicalWorkspaceSha256": "ba77e48d990c2f3204b4b6dedef8ebcdf541c28dc29e98cd2397b45907c36aae",
+    "currentWorkspaceGranted": true
+  },
+  "scope": "Controller-local native UI trust before importing unchanged installed acceptance harness"
+}

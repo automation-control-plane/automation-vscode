@@ -1,5 +1,37 @@
 # Isolated hosted Windows candidate qualification
 
+## Verified result
+
+[Candidate run 43759647473](https://github.com/automation-control-plane/automation-vscode/actions/runs/43759647473)
+passed on feature head `9f48b12d1a575efbff7aa599758f25ac6e2e794d`. Its synthetic
+merge source `37d97f893171aa60094b0149ed8bd488580186f6` has exactly the same Git
+tree as that feature head. The candidate step ran; the production-pinned step
+was skipped. [Retained receipts](success-9f48b12d/qualification.json) verify:
+
+- Exact candidate RCC 18.19.11 and Runtime 1.1.1 versions and asset digests.
+- All 758 source/VSIX/installed payloads, exact native extension registration,
+  and trust granted only to the synthetic workspace.
+- All eight Action/Robot file/SQLite run/debug cases exit 0, including four
+  real breakpoints and output, attachment and edited-replay preservation.
+- Action input metadata in flat and `src/` layouts, Runtime terminal start/stop,
+  and occupied-listener refusal without adopting the listener.
+- The actual private Windows Runtime bundle contains `rcc-18.19.8.exe`, SHA-256
+  `f5e868af05382731f6675d98ed6ead7c7e95b250466bc5fee054b41817280a89`.
+
+The exact installed VSIX is SHA-256
+`f8db0d3e8c78b980a831727b33140404a30aae0c1216dfe65ca4a2f0861901f9`.
+Its acceptance-harness digest matches the reviewed source after Git's Windows
+checkout filtering; raw LF/CRLF hashes are not conflated. Transport/adapter-close
+diagnostics remain in the receipt after successful target completion; this is
+not a claim of clean adapter exit codes.
+
+This qualifies the conventional candidate workloads above, not canonical
+managed lifecycle, Settings UI, Java/recording, Windows host-reload recovery,
+or every optional integration. The released native managed provider remains
+Linux-only, and the missing supported retry grant is documented separately.
+Production pins and ready PR #14 remain unchanged. No merge or publication is
+implied by this result.
+
 This work uses the separate qualification branch, not ready PR #14. The opt-in
 workflow verifies GitHub release tags/source commits and asset digests, downloads
 and verifies the bytes, then changes only a private archived source copy's tool

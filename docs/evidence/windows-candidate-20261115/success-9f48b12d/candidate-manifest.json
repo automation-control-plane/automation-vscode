@@ -1,0 +1,26 @@
+{
+  "rcc": {
+    "version": "v18.19.11",
+    "repository": "joshyorko/rcc",
+    "tag": "v18.19.11",
+    "source": "953eda18d3d1f4a286c17709f282315a2ed16a16",
+    "assets": {
+      "win32-x64": {
+        "name": "rcc-windows64.exe",
+        "sha256": "58f43a3b3c54032740f224cb4a8bbf68c47c865cf2652084fb139b8ecc01cfd0"
+      }
+    }
+  },
+  "action-server": {
+    "version": "1.1.1",
+    "repository": "joshyorko/actions",
+    "tag": "actions-runtime-1.1.1",
+    "source": "9bfc6ca5337dac14851e5ef3b2ea3a41485c81b2",
+    "assets": {
+      "win32-x64": {
+        "name": "actions-runtime-1.1.1-windows64.exe",
+        "sha256": "0388d7f2e4080ba5c3a800bb556f8f01a65aa4834f3698eceb240888288fd8d2"
+      }
+    }
+  }
+}
