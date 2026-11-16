@@ -11,6 +11,15 @@ import tarfile
 import zipfile
 
 CODE_SHA256 = "cbdb7bde3d358c7297cf1d9d6adc16dfb1d0179501fb2c152df48593e39e3600"
+CODE_VERSION = "1.146.0"
+CODE_COMMIT = "69047191fc427f2f92828279aae1d90d8eeda7ab"
+
+
+def validate_code_identity(output):
+    identity = output.splitlines()
+    if len(identity) < 2 or identity[:2] != [CODE_VERSION, CODE_COMMIT]:
+        raise RuntimeError("Official Code CLI version/build identity mismatch")
+    return {"version": identity[0], "commit": identity[1], "sha256": CODE_SHA256}
 
 
 def digest(path):
@@ -58,6 +67,18 @@ def main():
         code = executables[0]
         cli_entries = list(code.parent.glob("resources/app/out/cli.js")) + list(code.parent.glob("*/resources/app/out/cli.js"))
         assert len(cli_entries) == 1, "Official Code CLI layout is ambiguous"
+        version_log = root / "code-version.private.log"
+        with version_log.open("wb") as output:
+            subprocess.run(
+                [str(code), str(cli_entries[0]), "--version"],
+                env={**env, "ELECTRON_RUN_AS_NODE": "1"},
+                stdout=output,
+                stderr=subprocess.STDOUT,
+                check=True,
+                timeout=30,
+            )
+        report["code"] = validate_code_identity(version_log.read_text(encoding="utf-8"))
+        report["checks"].append("Official Code CLI version and build commit verified")
         extensions = root / "extensions"
         run([str(code), str(cli_entries[0]), f"--user-data-dir={root / 'profile'}",
              f"--extensions-dir={extensions}", "--install-extension", str(args.vsix.resolve())],

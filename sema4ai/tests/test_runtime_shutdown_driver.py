@@ -46,6 +46,34 @@ class RuntimeShutdownEvidence(unittest.TestCase):
                 "Stopping action server...\nExiting action server...",
             )
 
+    def test_embedded_rcc_uses_receipt_bound_to_exact_runtime_artifact(self):
+        runtime_pin = {"version": "1.1.1", "source": "runtime-source-commit"}
+        runtime_sha = "runtime-artifact-sha"
+        receipt = {
+            "artifacts": {
+                "actions_runtime": {
+                    "version": "1.1.1",
+                    "source_commit": "runtime-source-commit",
+                    "downloaded_file_sha256": runtime_sha,
+                }
+            },
+            "runtime_bundled_rcc": {
+                "version": "v18.19.8",
+                "sha256": "embedded-rcc-sha",
+            },
+        }
+        observed = [{"version": "v18.19.8", "sha256": "embedded-rcc-sha"}]
+        self.assertEqual(
+            driver.validate_embedded_rcc(receipt, runtime_pin, runtime_sha, observed),
+            receipt["runtime_bundled_rcc"],
+        )
+        with self.assertRaisesRegex(RuntimeError, "not bound to this Runtime"):
+            driver.validate_embedded_rcc(receipt, runtime_pin, "wrong-sha", observed)
+        with self.assertRaisesRegex(RuntimeError, "did not match its bound"):
+            driver.validate_embedded_rcc(
+                receipt, runtime_pin, runtime_sha, [{"version": "v18.19.11", "sha256": "other"}]
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

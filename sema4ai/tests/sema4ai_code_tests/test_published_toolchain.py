@@ -1,8 +1,25 @@
+import json
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[no-redef]
 from pathlib import Path
 
 import pytest
 
 from sema4ai_code.runtime_paths import runtime_homes
+
+
+def test_release_version_surfaces_match_codegen_source():
+    extension = Path(__file__).resolve().parents[2]
+    package = json.loads((extension / "package.json").read_text(encoding="utf-8"))
+    lock = json.loads((extension / "package-lock.json").read_text(encoding="utf-8"))
+    pyproject = tomllib.loads((extension / "pyproject.toml").read_text(encoding="utf-8"))
+    from sema4ai_code import __version__
+
+    assert package["version"] == "2.20.29"
+    assert lock["version"] == lock["packages"][""]["version"] == "2.20.29"
+    assert pyproject["tool"]["poetry"]["version"] == __version__ == "2.20.29"
 
 
 def test_default_homes_are_separate():
@@ -178,9 +195,10 @@ def test_release_composition_uses_public_runtime_and_rcc_without_mac_fallback(
     monkeypatch.setattr(platform, "machine", lambda: "x86_64")
     runtime = published_tool("action-server", "linux")
     rcc_tool = published_tool("rcc", "linux")
-    assert runtime["version"] == "1.1.0"
+    mac_rcc = published_tool("rcc", "darwin-arm64")
+    assert runtime["version"] == "1.1.1"
     assert runtime["sha256"] == (
-        "e163684dc296f632a177e95d4f355ac6d4f2299c62aab53789f43a642f41c0f1"
+        "8c27fbed198aef16c98cdc7a45230fbc4708b06dff1c3523aeddfcdf7840efd0"
     )
     downloads = []
     monkeypatch.setattr(
@@ -190,6 +208,9 @@ def test_release_composition_uses_public_runtime_and_rcc_without_mac_fallback(
     download_action_server("unused-test-runtime", sys_platform="linux")
     assert downloads[0][2] == rcc_tool["version"]
     assert downloads[1][2] == runtime["version"]
+    assert mac_rcc["version"] == "v18.19.11"
+    assert mac_rcc["name"] == "rcc-macosarm64"
+    assert mac_rcc["sha256"] == "23c665387951289b16a3d9be3103498598dce94d55327e103758df944ca067e7"
     assert published_tool("action-server", "win32")["name"].endswith("windows64.exe")
     with pytest.raises(RuntimeError, match="No published action-server artifact"):
         published_tool("action-server", "darwin-arm64")
