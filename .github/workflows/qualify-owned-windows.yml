@@ -91,6 +91,9 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check --no-input poetry
           poetry install --no-interaction
+      - name: Validate release verification drivers
+        working-directory: sema4ai
+        run: poetry run python -m pytest --noconftest tests/test_qualify_release_linux.py tests/test_published_smoke_installed_imports.py tests/test_published_smoke_candidate_manifest.py -q
       - name: Package exact Linux VSIX
         id: package
         working-directory: sema4ai
