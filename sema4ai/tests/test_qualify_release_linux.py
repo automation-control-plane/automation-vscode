@@ -3,8 +3,11 @@ import io
 import json
 import os
 import stat
+from pathlib import Path
+import subprocess
 
 import pytest
+import yaml
 
 import qualify_linux_vsix
 import qualify_release_linux as qualification
@@ -114,3 +117,28 @@ def test_official_code_archive_cli_must_report_expected_version_and_commit():
     assert identity["commit"] == "69047191fc427f2f92828279aae1d90d8eeda7ab"
     with pytest.raises(RuntimeError, match="version/build identity mismatch"):
         qualify_linux_vsix.validate_code_identity("1.145.2\nwrong-commit\nx64\n")
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Linux release shell contract")
+def test_release_caches_are_resolved_in_a_runtime_step(tmp_path):
+    workflow = yaml.load(
+        (Path(__file__).parents[2] / ".github/workflows/qualify-owned-windows.yml").read_text(),
+        Loader=yaml.BaseLoader,
+    )
+    job = workflow["jobs"]["linux-release-vsix"]
+    assert "runner.temp" not in json.dumps(job.get("env", {}))
+    step = next(s for s in job["steps"] if s.get("name") == "Use task-owned release caches")
+    runner_temp = tmp_path / "runner temp"
+    runner_temp.mkdir()
+    output = tmp_path / "github env"
+    subprocess.run(
+        ["/bin/bash", "-euo", "pipefail"], input=step["run"], text=True, check=True,
+        env={"RUNNER_TEMP": str(runner_temp), "GITHUB_ENV": str(output)},
+    )
+    values = dict(line.split("=", 1) for line in output.read_text().splitlines())
+    assert values == {
+        "POETRY_CACHE_DIR": str(runner_temp / "poetry-cache"),
+        "POETRY_VIRTUALENVS_PATH": str(runner_temp / "poetry-venvs"),
+        "PIP_CACHE_DIR": str(runner_temp / "pip-cache"),
+        "npm_config_cache": str(runner_temp / "npm-cache"),
+    }
