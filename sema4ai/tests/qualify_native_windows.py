@@ -42,6 +42,23 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def candidate_home_environment(environment, root):
+    """Keep the LOCALAPPDATA-based wrapper cache and other user paths private."""
+    home = root / "home"
+    return {**environment, "USERPROFILE": str(home),
+            "APPDATA": str(home / "AppData/Roaming"),
+            "LOCALAPPDATA": str(home / "AppData/Local"),
+            "TEMP": str(root / "tmp"), "TMP": str(root / "tmp")}
+
+
+def candidate_runtime_internal_directory(environment, runtime_version):
+    local = environment.get("LOCALAPPDATA")
+    if not local:
+        raise ValueError("Candidate Runtime requires task-owned LOCALAPPDATA")
+    return (Path(local) / "actions/bin/action-server/internal" / runtime_version
+            / "_internal/actions/server/bin")
+
+
 def code_path(path):
     """Match Code's drive-letter URI spelling without changing the owned path."""
     value = ntpath.normpath(str(path))
@@ -85,20 +102,75 @@ def extract_archive(archive, destination):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--state", type=Path, required=True)
+    parser.add_argument("--extension-source", type=Path)
+    parser.add_argument("--candidate-provenance", type=Path)
     args = parser.parse_args()
+    if (args.extension_source is None) != (args.candidate_provenance is None):
+        raise ValueError("Candidate source and provenance must be provided together")
     if sys.platform != "win32":
         raise RuntimeError("Native Windows is required; packaging on Linux is not acceptance")
     root = args.state.resolve()
+    repository = Path(__file__).resolve().parents[2]
+    production_extension = repository / "sema4ai"
+    extension = args.extension_source.resolve() if args.extension_source else production_extension
+    if not (extension / "package.json").is_file():
+        raise RuntimeError("Extension source copy is missing its package manifest")
+    candidate_provenance = None
+    if args.candidate_provenance:
+        from qualify_candidate_native_windows import verify_staged_source
+
+        provenance = json.loads(args.candidate_provenance.read_text(encoding="utf-8"))
+        if not isinstance(provenance, dict):
+            raise RuntimeError("Candidate provenance has an invalid shape")
+        source_head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=repository, text=True
+        ).strip()
+        candidate_manifest = extension / "published-tools.json"
+        candidate_tools = json.loads(candidate_manifest.read_text(encoding="utf-8"))
+        provenance_tools = provenance.get("tools")
+        if not isinstance(candidate_tools, dict):
+            raise RuntimeError("Candidate manifest has an invalid shape")
+        if (
+            provenance.get("source_head") != source_head
+            or provenance.get("production_manifest_sha256")
+            != digest(production_extension / "published-tools.json")
+            or provenance.get("candidate_manifest_sha256") != digest(candidate_manifest)
+            or provenance.get("candidate_manifest_changes_only") != ["published-tools.json"]
+            or set(candidate_tools) != {"rcc", "action-server"}
+            or not isinstance(provenance_tools, dict)
+            or set(provenance_tools) != {"rcc", "action-server"}
+        ):
+            raise RuntimeError("Candidate provenance or staged manifest does not match the checked source")
+        verify_staged_source(extension.parent, provenance)
+        for tool, expected in provenance_tools.items():
+            manifest_tool = candidate_tools.get(tool)
+            if not isinstance(manifest_tool, dict) or not isinstance(expected, dict):
+                raise RuntimeError("Candidate manifest pin has an invalid shape")
+            assets = manifest_tool.get("assets")
+            asset = assets.get("win32-x64") if isinstance(assets, dict) else None
+            if (
+                manifest_tool.get("version") != expected.get("version")
+                or manifest_tool.get("tag") != expected.get("tag")
+                or manifest_tool.get("source") != expected.get("source_commit")
+                or not isinstance(asset, dict)
+                or asset.get("name") != expected.get("windows_asset")
+                or asset.get("sha256") != expected.get("sha256")
+            ):
+                raise RuntimeError("Candidate manifest pin does not match its verified release provenance")
+        candidate_provenance = provenance
+
     root.mkdir(parents=True, exist_ok=False)
     public = root / "public"
     public.mkdir()
-    repository = Path(__file__).resolve().parents[2]
-    extension = repository / "sema4ai"
     report = {"platform": "win32-x64", "passed": False, "checks": [], "limitations": [
         "Native debug API/registered adapter acceptance; no fabricated Work Items button or managed-server acceptance.",
         "Windows managed UI/server, Java inspector, image/recording and external integrations require separate acceptance.",
         "No Mac or Marketplace publication. No system registry/firewall/service changes.",
     ]}
+    if candidate_provenance:
+        report["candidate"] = candidate_provenance
+        shutil.copyfile(args.candidate_provenance, public / "candidate-provenance.json")
+        shutil.copyfile(extension / "published-tools.json", public / "candidate-manifest.json")
     env = clean_environment(os.environ, {
         "HOME": str(root / "home"), "ACTIONS_HOME": str(root / "actions"),
         "ROBOTS_HOME": str(root / "robots"), "RCC_HOLOTREE_MODE": "private",
@@ -108,6 +180,11 @@ def main():
     })
     for name in ("home", "actions", "robots", "debugpy-private"):
         (root / name).mkdir()
+    if candidate_provenance:
+        env = candidate_home_environment(env, root)
+        for key in ("APPDATA", "LOCALAPPDATA", "TEMP"):
+            Path(env[key]).mkdir(parents=True, exist_ok=True)
+        report["candidate_home_isolation"] = "HOME, USERPROFILE, AppData and temporary directories are task-owned"
     child = None
     node = None
 
@@ -122,7 +199,10 @@ def main():
             raise RuntimeError(f"{name} failed with exit {result.returncode}; private diagnostics retained")
 
     try:
-        run([sys.executable, str(extension / "tests/test_windows_qualification_driver.py"), "-v"], "driver-boundaries")
+        # The checkout-byte test needs Git's attributes and HEAD. The candidate
+        # archive has neither; package/workload checks below still use its copy.
+        run([sys.executable, str(production_extension / "tests/test_windows_qualification_driver.py"), "-v"],
+            "driver-boundaries", cwd=production_extension)
         report["checks"].append("Environment and archive boundaries pass on native Windows")
         # Read-only prerequisite. Never enable long paths or request elevation.
         import winreg
@@ -261,6 +341,20 @@ def main():
         if status != 0 or not host.exists() or not json.loads(host.read_text()).get("passed"):
             raise RuntimeError("Actual installed Extension Host did not pass; see sanitized host receipt")
         report["checks"].append("Actual installed Extension Host completed all required native gates")
+        if candidate_provenance:
+            runtime_version = candidate_provenance["tools"]["action-server"]["version"]
+            internal = candidate_runtime_internal_directory(env, runtime_version)
+            report["candidate_runtime_internal_relative_path"] = internal.relative_to(root).as_posix()
+            baseline = json.loads((production_extension / "published-tools.json").read_text())["rcc"]
+            bundled = []
+            for path in sorted(internal.glob("rcc-*")):
+                if path.is_file():
+                    bundled.append({"name": path.name, "sha256": digest(path),
+                        "version": subprocess.check_output([str(path), "--version"], env=env, text=True).strip(),
+                        "matches_production_rcc_asset": digest(path) == baseline["assets"]["win32-x64"]["sha256"]})
+            if not bundled:
+                raise RuntimeError("Candidate Runtime's task-owned bundled RCC was not found")
+            report["candidate_runtime_embedded_rcc"] = bundled
         report["passed"] = True
     except Exception as error:
         report["blocker"] = str(error)

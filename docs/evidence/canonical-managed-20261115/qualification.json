@@ -1,0 +1,46 @@
+{
+  "runtime_version": "1.1.1",
+  "runtime_sha256": "8c27fbed198aef16c98cdc7a45230fbc4708b06dff1c3523aeddfcdf7840efd0",
+  "runtime_source": "9bfc6ca5337dac14851e5ef3b2ea3a41485c81b2",
+  "qualification_head": "e7fe79c4cd5ac1a2bac15765cc9dfddf3fbf55e1",
+  "worktree_dirty": false,
+  "driver_sha256": "28f635750dbdfb255f21ee329421dbe5b35fa1d5028d40d32fe43fa50e9fe5a1",
+  "scope": "Actual released binary, private SQLite/auth bootstrap; not fixture-host substitution",
+  "checks": [
+    {
+      "check": "canonical unauthenticated denial",
+      "status": 401
+    },
+    {
+      "check": "released canonical schema",
+      "status": 200
+    },
+    {
+      "check": "fresh SQL grants remain denied",
+      "status": 403,
+      "error_code": "forbidden"
+    },
+    {
+      "check": "published authorize-local grant schema",
+      "exit_code": 0,
+      "queue_permissions": [
+        "work_items.read",
+        "work_items.enqueue",
+        "work_items.claim",
+        "work_items.complete",
+        "work_items.cancel",
+        "work_items.review",
+        "work_items.artifact.read"
+      ],
+      "retry_supported": false,
+      "schema_sha256": "e8f3f4aef9267d5fdba40e49dac9bba3c08fb9c80402ac13db72fe3db2dbf142"
+    }
+  ],
+  "schema_matches_extension": true,
+  "blocker": "Full lifecycle cannot be qualified through the released supported grant route: work_items.retry is absent; no fabricated grants, profiles or fixture-host fallback used",
+  "workspace_id": "3aeb70c3-f023-4dbd-990d-d370f2ccc50b",
+  "shutdown_status": 200,
+  "forced_termination": false,
+  "runtime_exit_code": 1,
+  "full_lifecycle_qualified": false
+}

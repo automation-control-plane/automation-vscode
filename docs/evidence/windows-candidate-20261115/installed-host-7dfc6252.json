@@ -1,0 +1,59 @@
+{
+  "platform": "win32",
+  "scope": "Actual installed Windows Code Extension Host, native registered debug adapters and SDK outputs; not a panel-button or Windows managed acceptance claim.",
+  "cases": [],
+  "checks": [
+    "Installed cold RCC Windows bootstrap and real language-server activation"
+  ],
+  "passed": false,
+  "workspaceTrust": {
+    "enabled": true,
+    "initiallyTrusted": true,
+    "folderCount": 1,
+    "exactSyntheticWorkspace": true,
+    "canonicalWorkspaceSha256": "ba77e48d990c2f3204b4b6dedef8ebcdf541c28dc29e98cd2397b45907c36aae",
+    "currentWorkspaceGranted": true
+  },
+  "extensionDiscovery": {
+    "initiallyAvailable": true,
+    "initialRegistry": [
+      {
+        "id": "automation-control-plane.automation-vscode",
+        "version": "2.20.28",
+        "directory": "automation-control-plane.automation-vscode-2.20.28"
+      },
+      {
+        "id": "ms-python.debugpy",
+        "version": "2026.6.0",
+        "directory": "ms-python.debugpy-2026.6.0-win32-x64"
+      },
+      {
+        "id": "ms-python.python",
+        "version": "2026.10.0",
+        "directory": "ms-python.python-2026.10.0-win32-x64"
+      },
+      {
+        "id": "task-local.windows-qualification",
+        "version": "0.0.1",
+        "directory": "controller"
+      }
+    ],
+    "expectedDirectory": "automation-control-plane.automation-vscode-2.20.28",
+    "expectedVersion": "2.20.28",
+    "actualDirectory": "automation-control-plane.automation-vscode-2.20.28",
+    "exactCanonicalDirectoryMatch": true,
+    "exactManifestMatch": true
+  },
+  "version": "2.20.28",
+  "debugger": [
+    {
+      "id": "ms-python.python",
+      "version": "2026.10.0"
+    },
+    {
+      "id": "ms-python.debugpy",
+      "version": "2026.6.0"
+    }
+  ],
+  "blocker": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(acquired?.success)\n"
+}

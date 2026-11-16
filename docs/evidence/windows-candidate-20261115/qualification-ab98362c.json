@@ -1,0 +1,71 @@
+{
+  "platform": "win32-x64",
+  "passed": false,
+  "checks": [
+    "Environment and archive boundaries pass on native Windows",
+    "Optional Python integration unit contracts pass on native Windows (not installed-host proof)",
+    "Windows x64 VSIX packaged on native Windows",
+    "Actual installed Extension Host completed all required native gates"
+  ],
+  "limitations": [
+    "Native debug API/registered adapter acceptance; no fabricated Work Items button or managed-server acceptance.",
+    "Windows managed UI/server, Java inspector, image/recording and external integrations require separate acceptance.",
+    "No Mac or Marketplace publication. No system registry/firewall/service changes."
+  ],
+  "candidate": {
+    "mode": "candidate-windows-only",
+    "source_head": "9cbfe22ab6804412522236df128b865e0c5d28ec",
+    "source_tree_sha256_excluding_manifest": "ca9728a75639fba4ac37e16acb0c6d4534420d5b16ce93805267c0ee84bd6c99",
+    "production_manifest_sha256": "a34ec26dfd8adf04752034a63d9877e795b7d0c882d5b23dc62ff692bafb94c2",
+    "candidate_manifest_sha256": "1b96a140f629b39a3eeda2204d2b0794acacd8fc024dedde02a1e8ee46f7c21b",
+    "candidate_manifest_changes_only": [
+      "published-tools.json"
+    ],
+    "tools": {
+      "rcc": {
+        "repository": "joshyorko/rcc",
+        "tag": "v18.19.11",
+        "version": "v18.19.11",
+        "source_commit": "953eda18d3d1f4a286c17709f282315a2ed16a16",
+        "windows_asset": "rcc-windows64.exe",
+        "sha256": "58f43a3b3c54032740f224cb4a8bbf68c47c865cf2652084fb139b8ecc01cfd0",
+        "size": 20732928
+      },
+      "action-server": {
+        "repository": "joshyorko/actions",
+        "tag": "actions-runtime-1.1.1",
+        "version": "1.1.1",
+        "source_commit": "9bfc6ca5337dac14851e5ef3b2ea3a41485c81b2",
+        "windows_asset": "actions-runtime-1.1.1-windows64.exe",
+        "sha256": "0388d7f2e4080ba5c3a800bb556f8f01a65aa4834f3698eceb240888288fd8d2",
+        "size": 71853568
+      }
+    }
+  },
+  "candidate_home_isolation": "HOME, USERPROFILE, AppData and temporary directories are task-owned",
+  "prepared_python_on_code_path": true,
+  "source": "9cbfe22ab6804412522236df128b865e0c5d28ec",
+  "artifact": {
+    "filename": "automation-vscode-2.20.28-win32-x64.vsix",
+    "sha256": "0c6eda74dcc0ac35112199d031db7e689cbaeda2dbaa8350cb2449be6567d5aa",
+    "size": 2236426
+  },
+  "disk_registered_extension_ids": [
+    "automation-control-plane.automation-vscode",
+    "ms-python.debugpy",
+    "ms-python.python"
+  ],
+  "payloads_verified": 758,
+  "code": {
+    "version": "1.146.0",
+    "sha256": "0d47f5bbff72499c6a4a92f6d72dd8cc5ba4606185f624465032626614119d61"
+  },
+  "acceptance_harness_sha256": "6d57da16270482e1471417c6a04f53d40f7ad2c890add5bdf40813ac5e364def",
+  "controller_entry_sha256": "1ac71f747b342b4f66eee181d578ac8fa21f84921de41d40eb919c644141541d",
+  "debugger_versions": {
+    "ms-python.python": "2026.10.0",
+    "ms-python.debugpy": "2026.6.0"
+  },
+  "blocker": "Candidate Runtime's task-owned bundled RCC was not found",
+  "private_adapter_log_collection_exit": 0
+}

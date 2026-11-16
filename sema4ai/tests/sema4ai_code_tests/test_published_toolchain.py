@@ -167,20 +167,29 @@ def test_unsupported_architecture_has_no_vendor_fallback(monkeypatch):
         published_tool("rcc", "linux")
 
 
-def test_release_composition_uses_public_runtime_and_rcc_without_mac_fallback(monkeypatch):
+def test_release_composition_uses_public_runtime_and_rcc_without_mac_fallback(
+    monkeypatch,
+):
     import platform
-    from sema4ai_code.action_server import ACTION_SERVER_VERSION
+    from sema4ai_code.action_server import download_action_server
     from sema4ai_code.published_tools import published_tool
     from sema4ai_code import rcc, tools
 
     monkeypatch.setattr(platform, "machine", lambda: "x86_64")
     runtime = published_tool("action-server", "linux")
-    assert runtime["version"] == ACTION_SERVER_VERSION == "1.1.0"
-    assert runtime["sha256"] == "e163684dc296f632a177e95d4f355ac6d4f2299c62aab53789f43a642f41c0f1"
+    rcc_tool = published_tool("rcc", "linux")
+    assert runtime["version"] == "1.1.0"
+    assert runtime["sha256"] == (
+        "e163684dc296f632a177e95d4f355ac6d4f2299c62aab53789f43a642f41c0f1"
+    )
     downloads = []
-    monkeypatch.setattr(tools, "download_tool", lambda *args, **kwargs: downloads.append(args))
-    rcc.download_rcc("unused-test-download")
-    assert published_tool("rcc", "linux")["version"] == downloads[0][2] == "v18.19.8"
+    monkeypatch.setattr(
+        tools, "download_tool", lambda *args, **kwargs: downloads.append(args)
+    )
+    rcc.download_rcc("unused-test-rcc", sys_platform="linux")
+    download_action_server("unused-test-runtime", sys_platform="linux")
+    assert downloads[0][2] == rcc_tool["version"]
+    assert downloads[1][2] == runtime["version"]
     assert published_tool("action-server", "win32")["name"].endswith("windows64.exe")
     with pytest.raises(RuntimeError, match="No published action-server artifact"):
         published_tool("action-server", "darwin-arm64")

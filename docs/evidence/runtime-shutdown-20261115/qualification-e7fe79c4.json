@@ -1,0 +1,42 @@
+{
+  "result": "pass",
+  "platform": "linux-x64",
+  "runtime_source_commit": "9bfc6ca5337dac14851e5ef3b2ea3a41485c81b2",
+  "rcc_candidate": {
+    "version": "v18.19.11",
+    "sha256": "4d68609044d3a39a1728d571d54c77a6174215adb40eb9acd69ce5ad34a6db1f"
+  },
+  "runtime_candidate": {
+    "version": "1.1.1",
+    "sha256": "8c27fbed198aef16c98cdc7a45230fbc4708b06dff1c3523aeddfcdf7840efd0"
+  },
+  "actions_core": "1.1.0",
+  "action_result": "Hello HTTP Dakota",
+  "shutdown_http_status": 200,
+  "forced_termination": false,
+  "runtime_exit_code": 1,
+  "exit_classification": "Runtime 1.1.1 HTTP shutdown interrupts the CLI main thread and returns its source-defined status 1",
+  "shutdown_log_markers": [
+    "Stopping action server...",
+    "Exiting action server...",
+    "Error executing action-server: exit status 1"
+  ],
+  "runtime_embedded_rcc": [
+    {
+      "name": "rcc-18.19.8",
+      "sha256": "ea8dc96e66d7a81536b03a344b4eaf44bbd94122585954e70290bd466f5de4b6",
+      "version": "v18.19.8"
+    }
+  ],
+  "embedded_rcc_matches_current_manifest": true,
+  "qualification_source": {
+    "head": "e7fe79c4cd5ac1a2bac15765cc9dfddf3fbf55e1",
+    "script_files_sha256": {
+      "sema4ai/tests/runtime_shutdown_smoke.py": "e8c84d8e5194b00a4089f299c3bf51ad2ba01bc3bf404607917d6a8b2a537178",
+      "sema4ai/tests/runtime_smoke.py": "039f276e75494e4d9f7e89cb14c1aa5fb422553983a8d049c50440b9db1a1cf0",
+      "sema4ai/src/sema4ai_code/rcc.py": "302803174fbafb0b3056779d2b7eff1665366e4ea8d264bd7beeddfdc2d838bf",
+      "sema4ai/src/sema4ai_code/action_server.py": "e64c13e01f3902b5303dd22a5aaa33bcce1bca20a7a6e05a483ad8c578fc4316"
+    },
+    "raw_receipt_sha256": "65137d50778de7727b788e372afbdd18e257debf6b6fbd145a05d6221d6f5bb7"
+  }
+}

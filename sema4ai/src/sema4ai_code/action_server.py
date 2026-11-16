@@ -29,7 +29,6 @@ from sema4ai_code.protocols import (
 log = get_logger(__name__)
 
 ONE_MINUTE_S = 60
-ACTION_SERVER_VERSION = "1.1.0"
 
 if typing.TYPE_CHECKING:
     from sema4ai_code.vendored_deps.url_callback_server import LastRequestInfoTypedDict
@@ -75,7 +74,7 @@ def is_port_free(port: int) -> bool:
 
 def download_action_server(
     location: str,
-    action_server_version=ACTION_SERVER_VERSION,
+    action_server_version: str | None = None,
     force: bool = False,
     sys_platform: str | None = None,
     endpoint: IEndPoint | None = None,
@@ -86,11 +85,18 @@ def download_action_server(
 
     Args:
         location: The location to store the Action Server executable in the filesystem.
-        action_server_version: Version of the Action Server to download. Defaults to latest.
+        action_server_version: Optional exact version to download. Defaults to the
+            published manifest pin.
         force: Whether we should overwrite an existing installation.
         sys_platform: The target platform of downloaded artifact.
     """
+    from sema4ai_code.published_tools import published_tool
     from sema4ai_code.tools import Tool, download_tool
+
+    if action_server_version is None:
+        action_server_version = published_tool(
+            Tool.ACTION_SERVER.value, sys_platform
+        )["version"]
 
     download_tool(
         Tool.ACTION_SERVER,
