@@ -1,37 +1,37 @@
 {
     "rcc": {
-        "version": "v18.19.8",
+        "version": "v18.19.11",
         "repository": "joshyorko/rcc",
-        "tag": "v18.19.8",
-        "source": "f7960076843500d15835b476c07e60d7264027c1",
+        "tag": "v18.19.11",
+        "source": "953eda18d3d1f4a286c17709f282315a2ed16a16",
         "assets": {
             "linux-x64": {
                 "name": "rcc-linux64",
-                "sha256": "ea8dc96e66d7a81536b03a344b4eaf44bbd94122585954e70290bd466f5de4b6"
+                "sha256": "4d68609044d3a39a1728d571d54c77a6174215adb40eb9acd69ce5ad34a6db1f"
             },
             "win32-x64": {
                 "name": "rcc-windows64.exe",
-                "sha256": "f5e868af05382731f6675d98ed6ead7c7e95b250466bc5fee054b41817280a89"
+                "sha256": "58f43a3b3c54032740f224cb4a8bbf68c47c865cf2652084fb139b8ecc01cfd0"
             },
             "darwin-arm64": {
                 "name": "rcc-macosarm64",
-                "sha256": "bf11dcee5a1e009a3f5b456bc8a24eb8f3f5d064eb7962c5e90956f13d4dfcba"
+                "sha256": "23c665387951289b16a3d9be3103498598dce94d55327e103758df944ca067e7"
             }
         }
     },
     "action-server": {
-        "version": "1.1.0",
+        "version": "1.1.1",
         "repository": "joshyorko/actions",
-        "tag": "actions-runtime-1.1.0",
-        "source": "ced70e0879f93054f8a56a067b584c4c31fc3cb3",
+        "tag": "actions-runtime-1.1.1",
+        "source": "9bfc6ca5337dac14851e5ef3b2ea3a41485c81b2",
         "assets": {
             "linux-x64": {
-                "name": "actions-runtime-1.1.0-linux64",
-                "sha256": "e163684dc296f632a177e95d4f355ac6d4f2299c62aab53789f43a642f41c0f1"
+                "name": "actions-runtime-1.1.1-linux64",
+                "sha256": "8c27fbed198aef16c98cdc7a45230fbc4708b06dff1c3523aeddfcdf7840efd0"
             },
             "win32-x64": {
-                "name": "actions-runtime-1.1.0-windows64.exe",
-                "sha256": "44507e8dcd82fb367c616c699957611096bc05ff2ae5e0f41a11b98a98332098"
+                "name": "actions-runtime-1.1.1-windows64.exe",
+                "sha256": "0388d7f2e4080ba5c3a800bb556f8f01a65aa4834f3698eceb240888288fd8d2"
             }
         }
     }

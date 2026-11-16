@@ -32,6 +32,30 @@ def validate_shutdown(shutdown_status: int, exit_code: int, forced: bool, log: s
     return "Runtime 1.1.1 HTTP shutdown interrupts the CLI main thread and returns its source-defined status 1"
 
 
+def validate_embedded_rcc(
+    runtime_receipt: dict,
+    runtime_pin: dict,
+    runtime_sha256: str,
+    observed: list[dict],
+) -> dict:
+    qualified_runtime = runtime_receipt["artifacts"]["actions_runtime"]
+    if (
+        qualified_runtime["version"] != runtime_pin["version"]
+        or qualified_runtime["source_commit"] != runtime_pin["source"]
+        or qualified_runtime["downloaded_file_sha256"] != runtime_sha256
+    ):
+        raise RuntimeError("Embedded RCC receipt is not bound to this Runtime artifact")
+
+    embedded = runtime_receipt["runtime_bundled_rcc"]
+    if not any(
+        item["version"] == embedded["version"]
+        and item["sha256"] == embedded["sha256"]
+        for item in observed
+    ):
+        raise RuntimeError("Runtime embedded RCC did not match its bound qualification receipt")
+    return embedded
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--rcc", type=Path, required=True)
@@ -181,9 +205,15 @@ def main() -> int:
         log,
     )
 
-    baseline_rcc = json.loads((extension / "published-tools.json").read_text(encoding="utf-8"))
     embedded_rcc = runtime_result["bundled_rcc"]
-    expected_embedded_sha = baseline_rcc["rcc"]["assets"]["linux-x64"]["sha256"]
+    runtime_receipt = json.loads(
+        (repository / "docs/evidence/dogfood-setup-20261115/qualification.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    expected_embedded_rcc = validate_embedded_rcc(
+        runtime_receipt, runtime_pin, digest(args.runtime), embedded_rcc
+    )
     report = {
         "result": "pass",
         "platform": "linux-x64",
@@ -202,12 +232,9 @@ def main() -> int:
             "Error executing action-server: exit status 1",
         ],
         "runtime_embedded_rcc": embedded_rcc,
-        "embedded_rcc_matches_current_manifest": any(
-            entry["sha256"] == expected_embedded_sha for entry in embedded_rcc
-        ),
+        "qualified_embedded_rcc": expected_embedded_rcc,
+        "embedded_rcc_matches_runtime_receipt": True,
     }
-    if not report["embedded_rcc_matches_current_manifest"]:
-        raise RuntimeError("Runtime embedded RCC did not match the checkout's current pin")
     (state / "qualification.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
     return 0

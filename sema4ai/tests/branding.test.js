@@ -39,7 +39,7 @@ test("vsce preserves explicitly linked README bytes across line endings", async 
     const source = fs.readFileSync(path.join(root, "README.md"));
     const sourceText = source.toString("utf8");
     const manifestUrl = "https://github.com/automation-control-plane/automation-vscode/blob/master/sema4ai/published-tools.json";
-    const evidenceUrl = "https://github.com/automation-control-plane/automation-vscode/blob/4d65f565aba1ee36f87fb5606086c74e8f831c1d/docs/evidence/dogfood-setup-20261115/README.md";
+    const evidenceUrl = `https://github.com/automation-control-plane/automation-vscode/blob/master/docs/evidence/release-20261116/${manifest.version}/README.md`;
     assert.ok(sourceText.includes(manifestUrl));
     assert.ok(sourceText.includes(evidenceUrl));
 

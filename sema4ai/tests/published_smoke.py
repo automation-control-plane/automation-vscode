@@ -91,10 +91,10 @@ def stage_candidate_extension(manifest: Path, work_root: Path) -> Path:
 def worker(args):
     if args.extension_root:
         sys.path.insert(0, str(Path(args.extension_root) / "src"))
+        sys.path.insert(0, str(Path(args.extension_root) / "src/sema4ai_code/vendored"))
         import sema4ai_code
 
         sema4ai_code.import_robocorp_ls_core()
-        sys.path.insert(0, str(Path(args.extension_root) / "src/sema4ai_code/vendored"))
     import yaml
     from sema4ai_code.action_server import ActionServer
     from sema4ai_code.published_tools import published_tool
