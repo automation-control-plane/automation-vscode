@@ -32,6 +32,18 @@ export function publishedTool(name: "rcc" | "action-server", platform = process.
     };
 }
 
+export function publishedToolVersion(name: "rcc" | "action-server"): string | undefined {
+    try {
+        const manifest: unknown = JSON.parse(
+            fs.readFileSync(path.resolve(__dirname, "../../published-tools.json"), "utf8")
+        );
+        const tool = isRecord(manifest) ? manifest[name] : undefined;
+        return isRecord(tool) && typeof tool.version === "string" ? tool.version : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
 export function extensionIdentity() {
     const manifest: unknown = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../package.json"), "utf8"));
     if (

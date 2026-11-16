@@ -24,6 +24,7 @@ export async function downloadWithProgress(
 
     OUTPUT_CHANNEL.appendLine("Downloading from: " + url);
     for (let i = 0; i < maxTries; i++) {
+        progress.report({ message: `Connecting to download source (attempt ${i + 1} of ${maxTries})...` });
         function onProgress(currLen: number, totalLen: number) {
             if (timing.elapsedFromLastMeasurement(300) || currLen == totalLen) {
                 currLen /= 1024 * 1024;

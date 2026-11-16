@@ -53,7 +53,45 @@ test("Packages tree does not discover or reuse cached packages before language s
 });
 
 test("Default contributions hide vendor publishing/navigation while keeping stable compatibility IDs", () => {
-    assert.equal(manifest.contributes.configuration.properties["sema4ai.legacyVendorIntegrations.enabled"].default, false);
+    const configurations = manifest.contributes.configuration;
+    assert.deepEqual(configurations.map(({id, title}) => ({id, title})), [
+        {id: "sema4ai", title: "Automation Control Plane settings"},
+        {id: "sema4ai.codeLens", title: "Automation Control Plane editor settings"},
+    ]);
+    for (const {id, title, properties} of configurations) {
+        assert.ok(title.startsWith("Automation Control Plane"));
+        for (const [settingId, property] of Object.entries(properties)) {
+            assert.ok(settingId.startsWith(`${id}.`), `${settingId} must match category ${id}`);
+            assert.ok(!/sema4(?:\.ai)?/i.test(property.description), `${settingId} description must use current branding`);
+        }
+    }
+    const settingProperties = Object.assign({}, ...configurations.map(category => category.properties));
+    const settingIds = Object.keys(settingProperties).sort();
+    assert.deepEqual(settingIds, [
+        "sema4ai.actionServer.location",
+        "sema4ai.actionServer.port",
+        "sema4ai.agentCli.location",
+        "sema4ai.autoSetPythonExtensionDisableActivateTerminal",
+        "sema4ai.autoSetPythonExtensionInterpreter",
+        "sema4ai.codeLens.actionsLaunch",
+        "sema4ai.codeLens.devTask",
+        "sema4ai.codeLens.roboLaunch",
+        "sema4ai.home",
+        "sema4ai.language-server.args",
+        "sema4ai.language-server.python",
+        "sema4ai.language-server.tcp-port",
+        "sema4ai.legacyVendorIntegrations.enabled",
+        "sema4ai.proceedWithLongPathsDisabled",
+        "sema4ai.rcc.config_location",
+        "sema4ai.rcc.endpoint",
+        "sema4ai.rcc.location",
+        "sema4ai.vaultTokenTimeoutInMinutes",
+        "sema4ai.verifyLSP",
+    ]);
+    assert.equal(settingProperties["sema4ai.legacyVendorIntegrations.enabled"].default, false);
+    assert.equal(settingProperties["sema4ai.actionServer.port"].default, 8082);
+    assert.equal(settingProperties["sema4ai.actionServer.port"].scope, undefined);
+    assert.equal(settingProperties["sema4ai.codeLens.roboLaunch"].default, true);
     for (const command of manifest.contributes.commands) {
         if (!legacyCommands.includes(command.command)) continue;
         assert.ok(command.enablement.includes(gate), command.command);

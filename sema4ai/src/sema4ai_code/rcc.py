@@ -192,12 +192,6 @@ class RobotInfoEnv:
 
 
 class Rcc:
-    # Note that this is stored in the class, not in the instance.
-    # It should store the contents of conda which couldn't be resolved.
-    # After being stored once here, it'll only be tried again when
-    # the user restarts the language server (or changes the conda config).
-    broken_conda_configs: dict[tuple[str, str], ActionResult] = {}
-
     def __init__(self, config_provider: IConfigProvider) -> None:
         self._config_provider = weakref.ref(config_provider)
 
@@ -943,7 +937,6 @@ class Rcc:
             send_to_stdin=conda_yaml_contents,
         )
         if not run_rcc_result.success:
-            _cache_hash[key] = run_rcc_result
             return run_rcc_result
 
         try:
@@ -970,28 +963,12 @@ class Rcc:
         on_env_creation_error=None,
     ) -> ActionResult[IRobotYamlEnvInfo]:
         from sema4ai_code.holetree_manager import HolotreeManager
-        from sema4ai_code.rcc_space_info import format_conda_contents_to_compare
 
         kind: RuntimeKind = "robots" if robot_yaml_path is not None else "actions"
         if holotree_manager is None:
             holotree_manager = HolotreeManager(
                 self, directory=self.get_robocorp_code_datadir(kind)
             )
-
-        formatted_conda_yaml_contents = format_conda_contents_to_compare(
-            conda_yaml_contents
-        )
-
-        failure_key = (
-            str(self.get_robocorp_code_datadir(kind).resolve()),
-            formatted_conda_yaml_contents,
-        )
-        broken_action_result = self.broken_conda_configs.get(failure_key)
-
-        if broken_action_result is not None:
-            msg = f"Environment from previously broken {conda_or_package_yaml_path.name} requested: {conda_or_package_yaml_path}.\n-- VSCode restart required to retry."
-            log.critical(msg)
-            return ActionResult(False, msg, None)
 
         space_info: RCCSpaceInfo = holotree_manager.compute_valid_space_info(
             conda_or_package_yaml_path, conda_yaml_contents
@@ -1099,8 +1076,7 @@ class Rcc:
             log.critical(
                 (
                     "Unable to create environment from:\n%s\n"
-                    "To recreate the environment, please change the related conda yaml\n"
-                    "or restart VSCode to retry with the same conda yaml contents."
+                    "The environment setup can be retried with the same conda yaml contents."
                 ),
                 conda_or_package_yaml_path,
             )
@@ -1112,15 +1088,9 @@ class Rcc:
                 False, msg, None
             )
 
-            self.broken_conda_configs[failure_key] = action_result
-
             with space_info.acquire_lock():
                 # If some failure happened, mark this as just created (so, it
-                # can be reused).
-                # But still, mark this conda yaml explicitly as invalid (i.e.:
-                # it's expected that trying to resolve it again won't work, so,
-                # the user must either restart vscode or change the conda yaml
-                # for it to be requested again).
+                # can be reused on the next request).
                 space_info.state_path.write_text(SpaceState.CREATED.value, "utf-8")
 
             return action_result

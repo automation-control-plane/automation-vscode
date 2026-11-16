@@ -14,6 +14,7 @@ import {globalOutputViewState} from "./output/outViewRunIntegration";
 import {getRuntimeStatus, reconnectActionServer} from "./actionServer";
 import {getLanguageServerStartup, onLanguageServerStartupChanged} from "./languageServerStartup";
 import {logError} from "./channel";
+import {publishedToolVersion} from "./publishedTools";
 
 const OPEN = "automation.runbook.open";
 const SETTINGS: [string, string, string][] = [
@@ -161,6 +162,7 @@ export function registerRunbookWorkspace(context: vscode.ExtensionContext): void
         await panel.webview.postMessage({type: "state", route, routes: RUNBOOK_ROUTES, title: title(),
             packages: roots.filter(root => root.robot).map(root => describePackage(root.robot)),
             selected: metadata ? describePackage(metadata) : undefined, runnable, busy, error, startup,
+            publishedTools: {runtimeVersion: publishedToolVersion("action-server"), extensionRccVersion: publishedToolVersion("rcc")},
             environment: metadata ? environments.get(metadata.filePath) || {status: "Not checked", message: "Check explicitly to resolve or build this package's Python environment."} : undefined,
             homes, homeError, runtime, runs, platform: process.platform, trusted: vscode.workspace.isTrusted,
             settings: SETTINGS.filter(([key]) => key !== "sema4ai.vaultTokenTimeoutInMinutes" || vscode.workspace.getConfiguration().get("sema4ai.legacyVendorIntegrations.enabled", false))

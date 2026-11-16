@@ -12,6 +12,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import shutil
 
 
 def main():
@@ -21,10 +22,20 @@ def main():
     parser.add_argument("--worker-root")
     parser.add_argument("--work-root")
     parser.add_argument("--extension-root")
+    parser.add_argument(
+        "--candidate-tools",
+        type=Path,
+        help="Use an explicit RCC/Runtime manifest staged beside the source checkout.",
+    )
     args = parser.parse_args()
     if not args.worker_root:
+        work_root = Path(args.work_root) if args.work_root else Path(tempfile.mkdtemp(prefix="automation-published-work-"))
+        work_root.mkdir(parents=True, exist_ok=True)
+        extension_root = args.extension_root
+        if args.candidate_tools:
+            extension_root = str(stage_candidate_extension(args.candidate_tools, work_root))
         root = Path(
-            tempfile.mkdtemp(prefix="automation-published-smoke-", dir=args.work_root)
+            tempfile.mkdtemp(prefix="automation-published-smoke-", dir=work_root)
         )
         task_home = root / "os-home"
         task_home.mkdir(mode=0o700)
@@ -54,16 +65,35 @@ def main():
             "--worker-root",
             str(root),
         ]
-        if args.extension_root:
-            worker_args.extend(["--extension-root", args.extension_root])
+        if extension_root:
+            worker_args.extend(["--extension-root", extension_root])
         result = subprocess.run(worker_args, env=child_environment)
         return result.returncode
     return worker(args)
 
 
+def stage_candidate_extension(manifest: Path, work_root: Path) -> Path:
+    """Stage a source-linked extension view with a private candidate manifest."""
+    repository = Path(__file__).resolve().parents[2]
+    source = repository / "sema4ai"
+    staging = Path(tempfile.mkdtemp(prefix="candidate-extension-", dir=work_root))
+    extension = staging / "extension"
+    extension.mkdir()
+    for name in ("src", "vscode-client", "templates"):
+        item = source / name
+        (extension / name).symlink_to(item, target_is_directory=True)
+    shutil.copyfile(manifest, extension / "published-tools.json")
+    core = repository / "sema4ai-python-ls-core"
+    (staging / core.name).symlink_to(core, target_is_directory=True)
+    return extension
+
+
 def worker(args):
     if args.extension_root:
         sys.path.insert(0, str(Path(args.extension_root) / "src"))
+        import sema4ai_code
+
+        sema4ai_code.import_robocorp_ls_core()
         sys.path.insert(0, str(Path(args.extension_root) / "src/sema4ai_code/vendored"))
     import yaml
     from sema4ai_code.action_server import ActionServer
@@ -76,20 +106,47 @@ def worker(args):
         import sema4ai_ls_core
 
         assert Path(sema4ai_code.__file__).is_relative_to(Path(args.extension_root))
-        assert Path(sema4ai_ls_core.__file__).is_relative_to(Path(args.extension_root))
+        core = Path(sema4ai_ls_core.__file__)
+        extension = Path(args.extension_root)
+        assert core.is_relative_to(extension) or core.is_relative_to(
+            extension.parent / "sema4ai-python-ls-core"
+        )
     root = Path(args.worker_root)
     extension = (
         Path(args.extension_root)
         if args.extension_root
         else Path(__file__).resolve().parents[1]
     )
+    repository = Path(__file__).resolve().parents[2]
+    source_files = {
+        "sema4ai/src/sema4ai_code/rcc.py": extension / "src/sema4ai_code/rcc.py",
+        "sema4ai/src/sema4ai_code/action_server.py": extension / "src/sema4ai_code/action_server.py",
+        "sema4ai/src/sema4ai_code/published_tools.py": extension / "src/sema4ai_code/published_tools.py",
+        "sema4ai/src/sema4ai_code/runtime_paths.py": extension / "src/sema4ai_code/runtime_paths.py",
+        "sema4ai/vscode-client/out/runtimePaths.js": extension / "vscode-client/out/runtimePaths.js",
+        "sema4ai/tests/published_smoke.py": Path(__file__).resolve(),
+        "sema4ai/tests/runtime_smoke.py": Path(__file__).with_name("runtime_smoke.py").resolve(),
+    }
     report = {
         "root": str(root),
         "source_sha": subprocess.check_output(
             ["git", "rev-parse", "HEAD"],
-            cwd=Path(__file__).resolve().parents[1],
+            cwd=repository,
             text=True,
         ).strip(),
+        "working_tree_dirty": bool(
+            subprocess.check_output(
+                ["git", "status", "--porcelain"], cwd=repository, text=True
+            ).strip()
+        ),
+        "candidate_manifest_sha256": hashlib.sha256(
+            (extension / "published-tools.json").read_bytes()
+        ).hexdigest(),
+        "qualification_source_sha256": {
+            name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for name, path in source_files.items()
+            if path.is_file()
+        },
         "real_executions": [],
         "commands": [],
     }
@@ -165,7 +222,7 @@ def worker(args):
     assert created.success, created.message
     package_yaml = action_dir / "package.yaml"
     package = yaml.safe_load(package_yaml.read_text())
-    assert "actions-core=1.0.3" in package["dependencies"]["pypi"]
+    assert "actions-core=1.1.0" in package["dependencies"]["pypi"]
     # These are authored dependencies in the synthetic project, not extension dependencies.
     package["dependencies"]["pypi"].extend(
         ["actions-work-items=0.4.4", "debugpy=1.8.22"]
@@ -212,6 +269,19 @@ def consume() -> str:
     assert action_environment.success, action_environment.message
     action_env = {**os.environ, **action_environment.result.env}
     action_python = action_env["PYTHON_EXE"]
+    sdk_versions = json.loads(
+        command(
+            [
+                action_python,
+                "-c",
+                "import importlib.metadata as m, json; print(json.dumps({name: m.version(name) for name in ('actions-core', 'actions-work-items')}))",
+            ],
+            cwd=action_dir,
+            env=action_env,
+        )
+    )
+    assert sdk_versions == {"actions-core": "1.1.0", "actions-work-items": "0.4.4"}, sdk_versions
+    passed("Resolved Action SDK package metadata", packages=sdk_versions)
     target_cli = extension / "src/sema4ai_code/robo/action_runtime.py"
     collected = json.loads(
         command(
@@ -425,6 +495,7 @@ def smoke():
         package=action_dir,
         env=action_env,
         log=root / "runtime-http.log",
+        expected_version=published_tool("action-server")["version"],
     )
     passed("Published Runtime wrapper HTTP Action execution", **runtime_result)
     built = server.package_build(str(action_dir), str(root / "dist"))

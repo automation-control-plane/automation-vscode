@@ -113,6 +113,13 @@ test('Runbook mount and refresh discover real-shaped packages and runnables with
     assert.deepEqual(h.businessRequests(),[]);
 });
 
+test('Environment version state follows the published manifest without asserting embedded RCC or qualification',async()=>{
+    const manifest=JSON.parse(fs.readFileSync(path.join(__dirname,'../published-tools.json'),'utf8'));
+    const h=host();await h.open('environments');
+    assert.deepEqual(h.state().publishedTools,{runtimeVersion:manifest['action-server'].version,
+        extensionRccVersion:manifest.rcc.version});
+});
+
 test('Package selection and explicit Action/Robot operations pass authoritative discovered entries, not webview arguments',async()=>{
     const h=host();await h.open();
     const action=h.state().runnable[0];

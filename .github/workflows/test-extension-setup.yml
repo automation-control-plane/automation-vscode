@@ -1,0 +1,63 @@
+name: Test extension setup
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/test-extension-setup.yml'
+      - 'sema4ai/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: extension-setup-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node-tests:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11'
+      - name: Install extension dependencies
+        working-directory: sema4ai
+        run: npm ci --ignore-scripts
+      - name: Compile and run the full Node suite on Linux
+        if: runner.os == 'Linux'
+        working-directory: sema4ai
+        run: npm test
+      - name: Compile and run focused Windows regressions (path-sensitive host mocks are Linux-only)
+        if: runner.os == 'Windows'
+        working-directory: sema4ai
+        run: npm run compile && node --test tests/rcc_setup.test.js tests/diagnostics_help.test.js tests/rcc_profiles.test.js tests/runbook_environment_versions.test.js tests/package_yaml_schema.test.js
+      - name: Install Python regression dependencies
+        run: python -m pip install pytest pytest-timeout pyyaml jsonschema actions-core==1.1.0
+      - name: Verify README packaging bytes on Windows
+        if: runner.os == 'Windows'
+        working-directory: sema4ai
+        run: node --test --test-name-pattern="vsce " tests/branding.test.js
+      - name: Check package paths and action runtime setup
+        shell: python
+        run: |
+          import os, subprocess, sys
+          env = {**os.environ, 'PYTHONPATH': os.pathsep.join(['sema4ai/src', 'sema4ai-python-ls-core/src'])}
+          subprocess.run([
+              sys.executable, '-m', 'pytest', '--noconftest', '-q',
+              'sema4ai/tests/test_package_pythonpath.py',
+              'sema4ai/tests/test_package_yaml_schema.py',
+              'sema4ai/tests/sema4ai_code_tests/test_package_yaml_code_actions.py',
+              'sema4ai/tests/sema4ai_code_tests/robo/test_collect_actions_ast_discovery.py',
+              'sema4ai/tests/sema4ai_code_tests/test_rcc_retry_cache.py',
+              'sema4ai/tests/sema4ai_code_tests/robo/test_action_runtime.py',
+              *(['sema4ai/tests/test_published_smoke_candidate_manifest.py'] if sys.platform == 'linux' else []),
+          ], env=env, check=True)

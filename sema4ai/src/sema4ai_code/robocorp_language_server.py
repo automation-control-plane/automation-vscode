@@ -510,7 +510,191 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
                 }
             )
 
+        code_action_list.extend(
+            self._package_yaml_pypi_quickfixes(
+                params["textDocument"]["uri"], params.get("range"), diagnostics
+            )
+        )
+
         return code_action_list
+
+    def _package_yaml_pypi_quickfixes(self, doc_uri, request_range, diagnostics):
+        if not isinstance(doc_uri, str) or not isinstance(request_range, dict):
+            return []
+
+        candidates = [
+            diagnostic
+            for diagnostic in diagnostics
+            if isinstance(diagnostic, dict)
+            and diagnostic.get("source") == "sema4ai"
+            and diagnostic.get("code") == "package-pypi-update-available"
+        ]
+        if not candidates:
+            return []
+
+        path = sema4ai_ls_core.uris.to_fs_path(doc_uri)
+        if not path or Path(path).name.casefold() != "package.yaml":
+            return []
+
+        workspace = self.workspace
+        if workspace is None:
+            return []
+
+        doc = workspace.get_document(doc_uri, accept_from_file=False)
+        if doc is None or doc.version is None:
+            return []
+        try:
+            document_version = int(doc.version)
+        except (TypeError, ValueError):
+            return []
+
+        def position(value):
+            if not isinstance(value, dict):
+                return None
+            line = value.get("line")
+            character = value.get("character")
+            if (
+                not isinstance(line, int)
+                or isinstance(line, bool)
+                or not isinstance(character, int)
+                or isinstance(character, bool)
+                or line < 0
+                or character < 0
+            ):
+                return None
+            return line, character
+
+        request_start = position(request_range.get("start"))
+        request_end = position(request_range.get("end"))
+        if request_start is None or request_end is None or request_end < request_start:
+            return []
+
+        def intersects_request(diag_range):
+            if not isinstance(diag_range, dict):
+                return False
+            diag_start = position(diag_range.get("start"))
+            diag_end = position(diag_range.get("end"))
+            if diag_start is None or diag_end is None or diag_end < diag_start:
+                return False
+            if request_start == request_end:
+                return diag_start <= request_start < diag_end
+            return request_start < diag_end and diag_start < request_end
+
+        candidates = [
+            diagnostic
+            for diagnostic in candidates
+            if intersects_request(diagnostic.get("range"))
+        ]
+        if not candidates:
+            return []
+
+        try:
+            from sema4ai_code.vendored_deps.package_deps.analyzer import (
+                PackageYamlAnalyzer,
+            )
+            from sema4ai_code.vendored_deps.package_deps.pip_impl import (
+                pip_packaging_version,
+            )
+
+            analyzer = PackageYamlAnalyzer(
+                doc.source, doc.path, self.conda_cloud, self.pypi_cloud
+            )
+            analyzer._load_yaml_info()
+        except Exception:
+            # Package parsing failures must not produce an edit.
+            return []
+
+        actions = []
+        for diagnostic in candidates:
+            data = diagnostic.get("data")
+            if not isinstance(data, dict):
+                continue
+            diag_range = diagnostic.get("range")
+            start = position(diag_range.get("start"))
+            end = position(diag_range.get("end"))
+            if start is None or end is None or start[0] != end[0]:
+                continue
+            dep = analyzer.find_pip_dep_at(start[0], start[1])
+            constraints = dep.constraints if dep is not None else None
+            if (
+                dep is None
+                or dep.dep_range != diag_range
+                or dep.name != data.get("name")
+                or dep.extras
+                or dep.marker
+                or dep.url
+                or not constraints
+                or len(constraints) != 1
+                or constraints[0][0] != "=="
+                or constraints[0][1] != data.get("version")
+            ):
+                continue
+
+            line = doc.get_line(start[0])
+            raw_value = line[start[1] : end[1]]
+            current_version = data["version"]
+            match = next(
+                (
+                    quote
+                    for quote in ("", "'", '"')
+                    if raw_value
+                    == f"{quote}{dep.name}={current_version}{quote}"
+                ),
+                None,
+            )
+            if match is None:
+                continue
+
+            try:
+                parsed_current = pip_packaging_version.parse(current_version)
+                newer_versions = self.pypi_cloud.get_versions_newer_than(
+                    dep.name, parsed_current
+                )
+                latest_version = newer_versions[-1]
+                if (
+                    not isinstance(latest_version, str)
+                    or pip_packaging_version.parse(latest_version) <= parsed_current
+                ):
+                    continue
+            except Exception:
+                # A failed or unavailable PyPI lookup must not offer an edit.
+                continue
+
+            quote = match
+            edit_range = {
+                "start": {
+                    "line": start[0],
+                    "character": len(line[: start[1]].encode("utf-16-le")) // 2,
+                },
+                "end": {
+                    "line": end[0],
+                    "character": len(line[: end[1]].encode("utf-16-le")) // 2,
+                },
+            }
+            actions.append(
+                {
+                    "title": f"Update {dep.name} to latest PyPI version {latest_version}",
+                    "kind": "quickfix",
+                    "diagnostics": [diagnostic],
+                    "edit": {
+                        "documentChanges": [
+                            {
+                                "textDocument": {
+                                    "uri": doc_uri,
+                                    "version": document_version,
+                                },
+                                "edits": [
+                                    {
+                                        "range": edit_range,
+                                        "newText": f"{quote}{dep.name}={latest_version}{quote}",
+                                    }
+                                ],
+                            }
+                        ]
+                    },
+                }
+            )
+        return actions
 
     def m_text_document__completion(self, **kwargs):
         return []

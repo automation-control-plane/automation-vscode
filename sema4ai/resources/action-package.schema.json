@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Action Package",
+    "description": "Dependency structure for package.yaml Action Packages.",
+    "type": "object",
+    "properties": {
+        "dependencies": {
+            "$ref": "#/definitions/dependency-groups"
+        },
+        "dev-dependencies": {
+            "$ref": "#/definitions/dependency-groups"
+        }
+    },
+    "definitions": {
+        "dependency-groups": {
+            "type": "object",
+            "properties": {
+                "conda-forge": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "pypi": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "local-wheels": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                }
+            }
+        }
+    }
+}

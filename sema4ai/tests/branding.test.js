@@ -5,6 +5,14 @@ const path = require("node:path");
 const Module = require("node:module");
 const root = path.resolve(__dirname, "..");
 const manifest = require("../package.json");
+const { ReadmeProcessor } = require("@vscode/vsce/out/package");
+
+async function processReadme(contents) {
+    const processor = new ReadmeProcessor(manifest);
+    const result = await processor.onFile({ path: "extension/README.md", contents });
+    assert.equal(processor.filesProcessed, 1, "the actual README processor must run");
+    return result.contents;
+}
 
 test("Owned display branding retains stable extension and integration IDs", () => {
     assert.equal(`${manifest.publisher}.${manifest.name}`, "automation-control-plane.automation-vscode");
@@ -25,6 +33,35 @@ test("Owned display branding retains stable extension and integration IDs", () =
     assert.ok(readme.startsWith("# Automation Control Plane\n"));
     assert.ok(!readme.includes("marketplace.visualstudio.com/items?itemName=sema4ai"));
     assert.ok(!readme.includes("images/gif_run.gif"));
+});
+
+test("vsce preserves explicitly linked README bytes across line endings", async () => {
+    const source = fs.readFileSync(path.join(root, "README.md"));
+    const sourceText = source.toString("utf8");
+    const manifestUrl = "https://github.com/automation-control-plane/automation-vscode/blob/master/sema4ai/published-tools.json";
+    const evidenceUrl = "https://github.com/automation-control-plane/automation-vscode/blob/4d65f565aba1ee36f87fb5606086c74e8f831c1d/docs/evidence/dogfood-setup-20261115/README.md";
+    assert.ok(sourceText.includes(manifestUrl));
+    assert.ok(sourceText.includes(evidenceUrl));
+
+    const lf = Buffer.from(sourceText.replace(/\r\n/g, "\n"), "utf8");
+    const crlf = Buffer.from(sourceText.replace(/\r?\n/g, "\r\n"), "utf8");
+    for (const input of [lf, crlf]) {
+        assert.deepEqual(await processReadme(input), input);
+    }
+});
+
+test("vsce relative README links transform and fail the source byte gate", async () => {
+    const source = fs.readFileSync(path.join(root, "README.md"));
+    const relative = Buffer.from(
+        source.toString("utf8").replace(
+            "https://github.com/automation-control-plane/automation-vscode/blob/master/sema4ai/published-tools.json",
+            "published-tools.json",
+        ),
+        "utf8",
+    );
+    const packaged = await processReadme(relative);
+
+    assert.notDeepEqual(packaged, relative);
 });
 
 test("Issue UI opens the private repository draft without vendor upload or account lookup", async () => {

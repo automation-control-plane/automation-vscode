@@ -1,5 +1,6 @@
 import ast as ast_module
 from collections.abc import Iterator
+import os
 from pathlib import Path
 from typing import Any, Literal, TypedDict
 
@@ -16,12 +17,64 @@ from sema4ai_ls_core.protocols import (
 log = get_logger(__name__)
 
 
+_EXCLUDED_DIRECTORY_NAMES = frozenset(
+    {
+        ".git",
+        ".hg",
+        ".svn",
+        ".venv",
+        "venv",
+        "virtualenv",
+        ".virtualenv",
+        "node_modules",
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".cache",
+        ".tox",
+        ".nox",
+        "build",
+        "dist",
+        "generated",
+        "site-packages",
+        "dist-packages",
+    }
+)
+
+
 def _collect_py_files(root_path: Path) -> Iterator[Path]:
-    for item in root_path.iterdir():
-        if item.is_dir():
-            yield from _collect_py_files(item)
-        elif item.suffix == ".py":
-            yield item
+    pending = [root_path]
+    visited: set[Path] = set()
+    while pending:
+        directory = pending.pop()
+        try:
+            resolved = directory.resolve(strict=True)
+        except (OSError, RuntimeError):
+            continue
+        if resolved in visited:
+            continue
+        visited.add(resolved)
+
+        try:
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    try:
+                        if entry.is_symlink():
+                            continue
+                        if entry.is_dir(follow_symlinks=False):
+                            if entry.name.casefold() not in _EXCLUDED_DIRECTORY_NAMES and not os.path.isfile(
+                                os.path.join(entry.path, "pyvenv.cfg")
+                            ):
+                                pending.append(Path(entry.path))
+                        elif entry.name.endswith(".py") and entry.is_file(
+                            follow_symlinks=False
+                        ):
+                            yield Path(entry.path)
+                    except OSError:
+                        continue
+        except OSError:
+            continue
 
 
 def _iter_nodes(
@@ -273,13 +326,6 @@ def _get_ast_node_range(
     }
 
 
-DEFAULT_ACTION_SEARCH_GLOB = (
-    "*action*.py|*query*.py|*queries*.py|*predict*.py|*datasource*.py|*data_source*.py"
-)
-
-globs = DEFAULT_ACTION_SEARCH_GLOB.split("|")
-
-
 def iter_actions_and_datasources(
     root_directory: Path,
     collect_datasources: bool = False,
@@ -289,71 +335,55 @@ def iter_actions_and_datasources(
     give complete information, rather, it is a fast way to provide just simple
     metadata such as the action name and location).
     """
-    import fnmatch
-
     f: Path
     for f in _collect_py_files(root_directory):
-        for glob in globs:
-            if fnmatch.fnmatch(f.name, glob):
-                try:
-                    action_contents_file = f.read_bytes()
-                    ast = ast_module.parse(action_contents_file, "<string>")
-                    uri = uris.from_fs_path(str(f))
+        try:
+            action_contents_file = f.read_bytes()
+            ast = ast_module.parse(action_contents_file, "<string>")
+            uri = uris.from_fs_path(str(f))
 
-                    for node_info_action in _collect_actions_from_ast(ast):
-                        function_def_node = node_info_action["node"]
-                        node_range = _get_ast_node_range(function_def_node)
-                        yield ActionInfoTypedDict(
-                            uri=uri,
-                            range=node_range,
-                            name=function_def_node.name,
-                            kind=node_info_action["kind"],
-                        )
+            for node_info_action in _collect_actions_from_ast(ast):
+                function_def_node = node_info_action["node"]
+                node_range = _get_ast_node_range(function_def_node)
+                yield ActionInfoTypedDict(
+                    uri=uri,
+                    range=node_range,
+                    name=function_def_node.name,
+                    kind=node_info_action["kind"],
+                )
 
-                    if collect_datasources:
-                        variables = _collect_variables(ast)
-                        # Note: Instead of iterating over all nodes to collect datasources, we
-                        # try to find the following structure:
-                        #
-                        # DataSourceVarName = Annotated[DataSource, DataSourceSpec(name="my_datasource")]
-                        #
-                        # Note that the DataSourceSpec(...) is a Call node inside the Annotated[...]
-                        # which in turn must be inside an Assign node.
-
-                        if collect_datasources:
-                            for node_info_datasource in _collect_datasources(
-                                ast, variables
-                            ):
-                                ast_node = node_info_datasource["node"]
-                                node_range = _get_ast_node_range(ast_node)
-                                yield DatasourceInfoTypedDict(
-                                    range=node_range,
-                                    uri=uri,
-                                    name=node_info_datasource.get("name")
-                                    or "<name not found>",
-                                    engine=node_info_datasource.get(
-                                        "engine",
-                                    )
-                                    or "<engine not found>",
-                                    model_name=node_info_datasource.get("model_name"),
-                                    created_table=node_info_datasource.get(
-                                        "created_table"
-                                    ),
-                                    kind="datasource",
-                                    python_variable_name=node_info_datasource.get(
-                                        "python_variable_name"
-                                    ),
-                                    setup_sql=node_info_datasource.get("setup_sql"),
-                                    setup_sql_files=node_info_datasource.get(
-                                        "setup_sql_files"
-                                    ),
-                                    description=node_info_datasource.get("description"),
-                                    file=node_info_datasource.get("file"),
-                                )
-                except Exception as e:
-                    log.error(
-                        f"Unable to collect @action/@query/@predict/datasources from {f}. Error: {e}"
+            if collect_datasources:
+                variables = _collect_variables(ast)
+                # Note: Instead of iterating over all nodes to collect datasources, we
+                # try to find the following structure:
+                #
+                # DataSourceVarName = Annotated[DataSource, DataSourceSpec(name="my_datasource")]
+                #
+                # Note that the DataSourceSpec(...) is a Call node inside the Annotated[...]
+                # which in turn must be inside an Assign node.
+                for node_info_datasource in _collect_datasources(ast, variables):
+                    ast_node = node_info_datasource["node"]
+                    node_range = _get_ast_node_range(ast_node)
+                    yield DatasourceInfoTypedDict(
+                        range=node_range,
+                        uri=uri,
+                        name=node_info_datasource.get("name") or "<name not found>",
+                        engine=node_info_datasource.get("engine") or "<engine not found>",
+                        model_name=node_info_datasource.get("model_name"),
+                        created_table=node_info_datasource.get("created_table"),
+                        kind="datasource",
+                        python_variable_name=node_info_datasource.get(
+                            "python_variable_name"
+                        ),
+                        setup_sql=node_info_datasource.get("setup_sql"),
+                        setup_sql_files=node_info_datasource.get("setup_sql_files"),
+                        description=node_info_datasource.get("description"),
+                        file=node_info_datasource.get("file"),
                     )
+        except Exception as e:
+            log.error(
+                f"Unable to collect @action/@query/@predict/datasources from {f}. Error: {e}"
+            )
 
 
 def get_action_signature(
